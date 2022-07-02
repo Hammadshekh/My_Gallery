@@ -1,0 +1,15 @@
+package com.example.selector.animations
+
+import android.animation.Animator
+import android.animation.ObjectAnimator
+import android.view.View
+import androidx.recyclerview.widget.RecyclerView
+
+class SlideInBottomAnimationAdapter(adapter: RecyclerView.Adapter<*>?) :
+    BaseAnimationAdapter(adapter) {
+    protected fun getAnimators(view: View): Array<Animator> {
+        return arrayOf(
+            ObjectAnimator.ofFloat(view, "translationY", view.measuredHeight.toFloat(), 0f)
+        )
+    }
+}
