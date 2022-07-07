@@ -9,7 +9,7 @@ interface OnPermissionDescriptionListener {
      * @param fragment
      * @param permissionArray
      */
-    fun onPermissionDescription(fragment: Fragment?, permissionArray: Array<String?>?)
+    fun onPermissionDescription(fragment: Fragment?, permissionArray: Array<String>)
 
     /**
      * onDismiss

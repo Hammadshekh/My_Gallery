@@ -4,11 +4,18 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
+import com.example.mygallery.R
+import com.example.selector.config.PictureMimeType
+import com.example.selector.config.PictureSelectionConfig
+import com.example.selector.style.SelectMainStyle
+import com.example.selector.utils.MediaUtils
+import com.example.selector.utils.StyleUtils
+import com.luck.picture.lib.entity.LocalMedia
 
 class ImageViewHolder(itemView: View, config: PictureSelectionConfig?) :
-    BaseRecyclerMediaHolder(itemView, config) {
-    private val ivEditor: ImageView
-    private val tvMediaTag: TextView
+    BaseRecyclerMediaHolder(itemView, config!!) {
+    private val ivEditor: ImageView = itemView.findViewById(R.id.ivEditor)
+    private val tvMediaTag: TextView = itemView.findViewById(R.id.tv_media_tag)
     override fun bindData(media: LocalMedia, position: Int) {
         super.bindData(media, position)
         if (media.isEditorImage() && media.isCut()) {
@@ -17,36 +24,39 @@ class ImageViewHolder(itemView: View, config: PictureSelectionConfig?) :
             ivEditor.visibility = View.GONE
         }
         tvMediaTag.visibility = View.VISIBLE
-        if (PictureMimeType.isHasGif(media.getMimeType())) {
-            tvMediaTag.setText(mContext.getString(R.string.ps_gif_tag))
-        } else if (PictureMimeType.isHasWebp(media.getMimeType())) {
-            tvMediaTag.setText(mContext.getString(R.string.ps_webp_tag))
-        } else if (MediaUtils.isLongImage(media.getWidth(), media.getHeight())) {
-            tvMediaTag.setText(mContext.getString(R.string.ps_long_chart))
-        } else {
-            tvMediaTag.visibility = View.GONE
+        when {
+            media.mimeType?.let { PictureMimeType.isHasGif(it) } == true -> {
+                tvMediaTag.text = mContext?.getString(R.string.ps_gif_tag)
+            }
+            PictureMimeType.isHasWebp(media.mimeType) -> {
+                tvMediaTag.text = mContext?.getString(R.string.ps_webp_tag)
+            }
+            MediaUtils.isLongImage(media.width, media.height) -> {
+                tvMediaTag.text = mContext?.getString(R.string.ps_long_chart)
+            }
+            else -> {
+                tvMediaTag.visibility = View.GONE
+            }
         }
     }
 
     init {
-        tvMediaTag = itemView.findViewById(R.id.tv_media_tag)
-        ivEditor = itemView.findViewById(R.id.ivEditor)
         val adapterStyle: SelectMainStyle =
-            PictureSelectionConfig.selectorStyle.getSelectMainStyle()
-        val imageEditorRes: Int = adapterStyle.getAdapterImageEditorResources()
+            PictureSelectionConfig.selectorStyle?.selectMainStyle!!
+        val imageEditorRes: Int = adapterStyle.adapterImageEditorResources
         if (StyleUtils.checkStyleValidity(imageEditorRes)) {
             ivEditor.setImageResource(imageEditorRes)
         }
-        val editorGravity: IntArray = adapterStyle.getAdapterImageEditorGravity()
+        val editorGravity: IntArray? = adapterStyle.adapterImageEditorGravity
         if (StyleUtils.checkArrayValidity(editorGravity)) {
             if (ivEditor.layoutParams is RelativeLayout.LayoutParams) {
                 (ivEditor.layoutParams as RelativeLayout.LayoutParams).removeRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
-                for (i in editorGravity) {
+                for (i in editorGravity!!) {
                     (ivEditor.layoutParams as RelativeLayout.LayoutParams).addRule(i)
                 }
             }
         }
-        val tagGravity: IntArray = adapterStyle.getAdapterTagGravity()
+        val tagGravity: IntArray = adapterStyle.adapterTagGravity!!
         if (StyleUtils.checkArrayValidity(tagGravity)) {
             if (tvMediaTag.layoutParams is RelativeLayout.LayoutParams) {
                 (tvMediaTag.layoutParams as RelativeLayout.LayoutParams).removeRule(RelativeLayout.ALIGN_PARENT_END)
@@ -56,15 +66,15 @@ class ImageViewHolder(itemView: View, config: PictureSelectionConfig?) :
                 }
             }
         }
-        val background: Int = adapterStyle.getAdapterTagBackgroundResources()
+        val background: Int = adapterStyle.adapterTagBackgroundResources
         if (StyleUtils.checkStyleValidity(background)) {
             tvMediaTag.setBackgroundResource(background)
         }
-        val textSize: Int = adapterStyle.getAdapterTagTextSize()
+        val textSize: Int = adapterStyle.adapterTagTextSize
         if (StyleUtils.checkSizeValidity(textSize)) {
             tvMediaTag.textSize = textSize.toFloat()
         }
-        val textColor: Int = adapterStyle.getAdapterTagTextColor()
+        val textColor: Int = adapterStyle.adapterTagTextColor
         if (StyleUtils.checkStyleValidity(textColor)) {
             tvMediaTag.setTextColor(textColor)
         }

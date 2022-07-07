@@ -1,5 +1,6 @@
 package com.example.selector.basic
 
+import PictureSelectorFragment
 import android.app.Activity
 import android.content.Intent
 import android.text.TextUtils
@@ -8,6 +9,16 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
+import com.example.mygallery.R
+import com.example.selector.config.*
+import com.example.selector.engine.*
+import com.example.selector.interfaces.*
+import com.example.selector.manager.SelectedManager
+import com.example.selector.style.PictureSelectorStyle
+import com.example.selector.style.PictureWindowAnimationStyle
+import com.example.selector.utils.DoubleUtils
+import com.example.selector.utils.SdkVersionUtils
+import com.luck.picture.lib.entity.LocalMedia
 import java.lang.NullPointerException
 import java.util.*
 
@@ -128,7 +139,7 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
      */
     @Deprecated("")
     fun setSandboxFileEngine(engine: SandboxFileEngine): PictureSelectionModel {
-        if (SdkVersionUtils.isQ()) {
+        if (SdkVersionUtils.isQ) {
             PictureSelectionConfig.sandboxFileEngine = engine
             selectionConfig.isSandboxFileEngine = true
         } else {
@@ -144,7 +155,7 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
      * @return
      */
     fun setSandboxFileEngine(engine: UriToFileTransformEngine): PictureSelectionModel {
-        if (SdkVersionUtils.isQ()) {
+        if (SdkVersionUtils.isQ) {
             PictureSelectionConfig.uriToFileTransformEngine = engine
             selectionConfig.isSandboxFileEngine = true
         } else {
@@ -330,7 +341,7 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
      * @return
      */
     fun setAddBitmapWatermarkListener(listener: OnBitmapWatermarkEventListener): PictureSelectionModel {
-        if (selectionConfig.chooseMode !== SelectMimeType.ofAudio()) {
+        if (selectionConfig.chooseMode != SelectMimeType.ofAudio()) {
             PictureSelectionConfig.onBitmapWatermarkListener = listener
         }
         return this
@@ -343,7 +354,7 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
      * @return
      */
     fun setVideoThumbnailListener(listener: OnVideoThumbnailEventListener): PictureSelectionModel {
-        if (selectionConfig.chooseMode !== SelectMimeType.ofAudio()) {
+        if (selectionConfig.chooseMode != SelectMimeType.ofAudio()) {
             PictureSelectionConfig.onVideoThumbnailEventListener = listener
         }
         return this
@@ -387,7 +398,7 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
      */
     fun setSelectionMode(selectionMode: Int): PictureSelectionModel {
         selectionConfig.selectionMode = selectionMode
-        selectionConfig.maxSelectNum = if (selectionConfig.selectionMode ===
+        selectionConfig.maxSelectNum = if (selectionConfig.selectionMode ==
             SelectModeConfig.SINGLE
         ) 1 else selectionConfig.maxSelectNum
         return this
@@ -401,7 +412,7 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
      */
     fun isWithSelectVideoImage(isWithVideoImage: Boolean): PictureSelectionModel {
         selectionConfig.isWithVideoImage =
-            selectionConfig.chooseMode === SelectMimeType.ofAll() && isWithVideoImage
+            selectionConfig.chooseMode == SelectMimeType.ofAll() && isWithVideoImage
         return this
     }
 
@@ -463,7 +474,7 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
      */
     fun setMaxSelectNum(maxSelectNum: Int): PictureSelectionModel {
         selectionConfig.maxSelectNum =
-            if (selectionConfig.selectionMode === SelectModeConfig.SINGLE) 1 else maxSelectNum
+            if (selectionConfig.selectionMode == SelectModeConfig.SINGLE) 1 else maxSelectNum
         return this
     }
 
@@ -498,7 +509,7 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
             selectionConfig.isFastSlidingSelect = false
         }
         selectionConfig.isDirectReturnSingle =
-            selectionConfig.selectionMode === SelectModeConfig.SINGLE && isDirectReturn
+            selectionConfig.selectionMode == SelectModeConfig.SINGLE && isDirectReturn
         return this
     }
 
@@ -954,8 +965,8 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
      * @return
      */
     fun setQueryOnlyMimeType(vararg mimeTypes: String?): PictureSelectionModel {
-        if (mimeTypes != null && mimeTypes.size > 0) {
-            selectionConfig.queryOnlyList.addAll(Arrays.asList(*mimeTypes))
+        if (mimeTypes.isNotEmpty()) {
+            selectionConfig.queryOnlyList?.addAll(listOf(*mimeTypes))
         }
         return this
     }
@@ -967,8 +978,8 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
      * @return
      */
     fun setSkipCropMimeType(vararg mimeTypes: String?): PictureSelectionModel {
-        if (mimeTypes != null && mimeTypes.size > 0) {
-            selectionConfig.skipCropList.addAll(Arrays.asList(*mimeTypes))
+        if (mimeTypes.isNotEmpty()) {
+            mutableListOf(*mimeTypes).let { selectionConfig.skipCropList?.addAll(it) }
         }
         return this
     }
@@ -1036,7 +1047,7 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
      * @return
      */
     fun isPreviewZoomEffect(isPreviewZoomEffect: Boolean): PictureSelectionModel {
-        if (selectionConfig.chooseMode === SelectMimeType.ofAudio()) {
+        if (selectionConfig.chooseMode == SelectMimeType.ofAudio()) {
             selectionConfig.isPreviewZoomEffect = false
         } else {
             selectionConfig.isPreviewZoomEffect = isPreviewZoomEffect
@@ -1185,7 +1196,7 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
         if (selectedList == null) {
             return this
         }
-        if (selectionConfig.selectionMode === SelectModeConfig.SINGLE && selectionConfig.isDirectReturnSingle) {
+        if (selectionConfig.selectionMode == SelectModeConfig.SINGLE && selectionConfig.isDirectReturnSingle) {
             SelectedManager.clearSelectResult()
         } else {
             SelectedManager.addAllSelectResult(ArrayList<Any?>(selectedList))
@@ -1211,8 +1222,8 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
      * @param call
      */
     fun forResult(call: OnResultCallbackListener<LocalMedia?>?) {
-        if (!DoubleUtils.isFastDoubleClick()) {
-            val activity: Activity = selector.getActivity()
+        if (!DoubleUtils.isFastDoubleClick) {
+            val activity: Activity = selector.activity
                 ?: throw NullPointerException("Activity cannot be null")
             if (call == null) {
                 throw NullPointerException("OnResultCallbackListener cannot be null")
@@ -1221,13 +1232,13 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
             selectionConfig.isResultListenerBack = true
             selectionConfig.isActivityResultBack = false
             PictureSelectionConfig.onResultCallListener = call
-            if (PictureSelectionConfig.imageEngine == null && selectionConfig.chooseMode !== SelectMimeType.ofAudio()) {
+            if (PictureSelectionConfig.imageEngine == null && selectionConfig.chooseMode != SelectMimeType.ofAudio()) {
                 throw NullPointerException("imageEngine is null,Please implement ImageEngine")
             }
             val intent = Intent(activity, PictureSelectorSupporterActivity::class.java)
             activity.startActivity(intent)
             val windowAnimationStyle: PictureWindowAnimationStyle =
-                PictureSelectionConfig.selectorStyle.getWindowAnimationStyle()
+                PictureSelectionConfig.selectorStyle?.windowAnimationStyle!!
             activity.overridePendingTransition(windowAnimationStyle.activityEnterAnimation,
                 R.anim.ps_anim_fade_in)
         }
@@ -1239,23 +1250,19 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
      * @param requestCode
      */
     fun forResult(requestCode: Int) {
-        if (!DoubleUtils.isFastDoubleClick()) {
-            val activity: Activity = selector.getActivity()
+        if (!DoubleUtils.isFastDoubleClick) {
+            val activity: Activity = selector.activity
                 ?: throw NullPointerException("Activity cannot be null")
             selectionConfig.isResultListenerBack = false
             selectionConfig.isActivityResultBack = true
-            if (PictureSelectionConfig.imageEngine == null && selectionConfig.chooseMode !== SelectMimeType.ofAudio()) {
+            if (PictureSelectionConfig.imageEngine == null && selectionConfig.chooseMode != SelectMimeType.ofAudio()) {
                 throw NullPointerException("imageEngine is null,Please implement ImageEngine")
             }
             val intent = Intent(activity, PictureSelectorSupporterActivity::class.java)
-            val fragment: Fragment = selector.getFragment()
-            if (fragment != null) {
-                fragment.startActivityForResult(intent, requestCode)
-            } else {
-                activity.startActivityForResult(intent, requestCode)
-            }
+            val fragment: Fragment = selector.fragment!!
+            fragment.startActivityForResult(intent, requestCode)
             val windowAnimationStyle: PictureWindowAnimationStyle =
-                PictureSelectionConfig.selectorStyle.getWindowAnimationStyle()
+                PictureSelectionConfig.selectorStyle?.windowAnimationStyle!!
             activity.overridePendingTransition(windowAnimationStyle.activityEnterAnimation,
                 R.anim.ps_anim_fade_in)
         }
@@ -1267,21 +1274,21 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
      * @param launcher use []
      */
     fun forResult(launcher: ActivityResultLauncher<Intent?>?) {
-        if (!DoubleUtils.isFastDoubleClick()) {
-            val activity: Activity = selector.getActivity()
+        if (!DoubleUtils.isFastDoubleClick) {
+            val activity: Activity = selector.activity
                 ?: throw NullPointerException("Activity cannot be null")
             if (launcher == null) {
                 throw NullPointerException("ActivityResultLauncher cannot be null")
             }
             selectionConfig.isResultListenerBack = false
             selectionConfig.isActivityResultBack = true
-            if (PictureSelectionConfig.imageEngine == null && selectionConfig.chooseMode !== SelectMimeType.ofAudio()) {
+            if (PictureSelectionConfig.imageEngine == null && selectionConfig.chooseMode != SelectMimeType.ofAudio()) {
                 throw NullPointerException("imageEngine is null,Please implement ImageEngine")
             }
             val intent = Intent(activity, PictureSelectorSupporterActivity::class.java)
             launcher.launch(intent)
             val windowAnimationStyle: PictureWindowAnimationStyle =
-                PictureSelectionConfig.selectorStyle.getWindowAnimationStyle()
+                PictureSelectionConfig.selectorStyle?.windowAnimationStyle!!
             activity.overridePendingTransition(windowAnimationStyle.activityEnterAnimation,
                 R.anim.ps_anim_fade_in)
         }
@@ -1296,7 +1303,7 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
      *
      */
     fun build(): PictureSelectorFragment {
-        val activity: Activity = selector.getActivity()
+        val activity: Activity = selector.activity
             ?: throw NullPointerException("Activity cannot be null")
         if (activity !is IBridgePictureBehavior) {
             throw NullPointerException("Use only build PictureSelectorFragment," +
@@ -1319,7 +1326,7 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
         containerViewId: Int,
         call: OnResultCallbackListener<LocalMedia?>?,
     ): PictureSelectorFragment {
-        val activity: Activity = selector.getActivity()
+        val activity: Activity = selector.activity
             ?: throw NullPointerException("Activity cannot be null")
         if (call == null) {
             throw NullPointerException("OnResultCallbackListener cannot be null")
@@ -1344,14 +1351,14 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
         }
         fragmentManager.beginTransaction()
             .add(containerViewId, selectorFragment, selectorFragment.getFragmentTag())
-            .addToBackStack(selectorFragment.getFragmentTag())
+            .addToBackStack(selectorFragment.isFragmentTag())
             .commitAllowingStateLoss()
         return selectorFragment
     }
 
     init {
         this.selector = selector
-        selectionConfig = PictureSelectionConfig.getCleanInstance()
+        selectionConfig = PictureSelectionConfig.cleanInstance!!
         selectionConfig.chooseMode = chooseMode
         setMaxVideoSelectNum(selectionConfig.maxVideoSelectNum)
     }

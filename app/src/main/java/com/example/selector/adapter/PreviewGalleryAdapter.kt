@@ -4,7 +4,6 @@ import android.graphics.ColorFilter
 import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
-import android.view.View.OnLongClickListener
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.RelativeLayout
@@ -18,7 +17,7 @@ import com.example.ucrop.utils.FileUtils.isHasVideo
 import com.luck.picture.lib.entity.LocalMedia
 import java.util.ArrayList
 
-class PreviewGalleryAdapter(private val isBottomPreview: Boolean, list: List<LocalMedia?>?) :
+class PreviewGalleryAdapter(private val isBottomPreview: Boolean, list: List<LocalMedia>) :
     RecyclerView.Adapter<PreviewGalleryAdapter.ViewHolder>() {
     private val mData: MutableList<LocalMedia>
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -39,7 +38,7 @@ class PreviewGalleryAdapter(private val isBottomPreview: Boolean, list: List<Loc
     }
 
     /**
-     * 添加选中的至画廊效果里
+     * Add selected to gallery effect
      *
      * @param currentMedia
      */
@@ -64,7 +63,7 @@ class PreviewGalleryAdapter(private val isBottomPreview: Boolean, list: List<Loc
     }
 
     /**
-     * 移除画廊中未选中的结果
+     * Remove unselected results from gallery
      *
      * @param currentMedia
      */
@@ -83,7 +82,8 @@ class PreviewGalleryAdapter(private val isBottomPreview: Boolean, list: List<Loc
     }
 
     /**
-     * 当前LocalMedia是否选中
+     *
+    Whether the current LocalMedia is selected
      *
      * @param currentMedia
      */
@@ -103,11 +103,12 @@ class PreviewGalleryAdapter(private val isBottomPreview: Boolean, list: List<Loc
     }
 
     /**
-     * 获取画廊上一次选中的位置
+     *
+    Get the last selected position of the gallery
      *
      * @return
      */
-    val lastCheckPosition: Int
+    private val lastCheckPosition: Int
         get() {
             for (i in mData.indices) {
                 val media: LocalMedia = mData[i]
@@ -119,7 +120,8 @@ class PreviewGalleryAdapter(private val isBottomPreview: Boolean, list: List<Loc
         }
 
     /**
-     * 获取当前画廊LocalMedia的位置
+     *
+    Get the location of the current gallery LocalMedia
      *
      * @param currentMedia
      * @return
@@ -128,7 +130,7 @@ class PreviewGalleryAdapter(private val isBottomPreview: Boolean, list: List<Loc
         for (i in mData.indices) {
             val media: LocalMedia = mData[i]
             if (TextUtils.equals(media.getPath(), currentMedia.getPath())
-                || media.id === currentMedia.id
+                || media.id == currentMedia.id
             ) {
                 return i
             }
@@ -154,7 +156,7 @@ class PreviewGalleryAdapter(private val isBottomPreview: Boolean, list: List<Loc
         }
         holder.ivImage.colorFilter = colorFilter
         if (PictureSelectionConfig.imageEngine != null) {
-            PictureSelectionConfig.imageEngine.loadGridImage(holder.itemView.context,
+            PictureSelectionConfig.imageEngine!!.loadGridImage(holder.itemView.context,
                 path,
                 holder.ivImage)
         }
@@ -175,18 +177,14 @@ class PreviewGalleryAdapter(private val isBottomPreview: Boolean, list: List<Loc
     }
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        var ivImage: ImageView
-        var ivPlay: ImageView
-        var ivEditor: ImageView
-        var viewBorder: View
+        var ivImage: ImageView = itemView.findViewById(R.id.ivImage)
+        var ivPlay: ImageView = itemView.findViewById(R.id.ivPlay)
+        var ivEditor: ImageView = itemView.findViewById(R.id.ivEditor)
+        var viewBorder: View = itemView.findViewById(R.id.viewBorder)
 
         init {
-            ivImage = itemView.findViewById(R.id.ivImage)
-            ivPlay = itemView.findViewById(R.id.ivPlay)
-            ivEditor = itemView.findViewById(R.id.ivEditor)
-            viewBorder = itemView.findViewById(R.id.viewBorder)
             val selectMainStyle: SelectMainStyle =
-                PictureSelectionConfig.selectorStyle.getSelectMainStyle()
+                PictureSelectionConfig.selectorStyle?.selectMainStyle!!
             if (StyleUtils.checkStyleValidity(selectMainStyle.adapterImageEditorResources)) {
                 ivEditor.setImageResource(selectMainStyle.adapterImageEditorResources)
             }

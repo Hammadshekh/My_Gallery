@@ -212,20 +212,20 @@ class TitleBar : RelativeLayout, View.OnClickListener {
         titleBarListener = listener
     }
 
-    class OnTitleBarListener {
+    open class OnTitleBarListener {
         /**
          * 双击标题栏
          */
-        fun onTitleDoubleClick() {}
+        open fun onTitleDoubleClick() {}
 
         /**
          * 关闭页面
          */
-        fun onBackPressed() {}
+        open fun onBackPressed() {}
 
         /**
          * 显示专辑列表
          */
-        fun onShowAlbumPopWindow(anchor: View?) {}
+        open fun onShowAlbumPopWindow(anchor: View?) {}
     }
 }

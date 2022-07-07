@@ -230,11 +230,11 @@ open class BottomNavBar : RelativeLayout, View.OnClickListener {
         bottomNavBarListener = listener
     }
 
-    class OnBottomNavBarListener {
+    open class OnBottomNavBarListener {
         /**
          * 预览
          */
-        fun onPreview() {}
+        open fun onPreview() {}
 
         /**
          * 编辑图片
@@ -244,7 +244,7 @@ open class BottomNavBar : RelativeLayout, View.OnClickListener {
         /**
          * 原图发生变化
          */
-        fun onCheckOriginalChange() {}
+        open fun onCheckOriginalChange() {}
 
         /**
          * 首次选择原图并加入选择结果

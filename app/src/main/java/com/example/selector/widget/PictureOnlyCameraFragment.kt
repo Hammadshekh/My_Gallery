@@ -5,6 +5,11 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Environment
 import android.view.View
+import com.example.selector.permissions.PermissionChecker
+import com.example.selector.permissions.PermissionConfig
+import com.example.selector.permissions.PermissionResultCallback
+import com.example.selector.utils.SdkVersionUtils
+import com.luck.picture.lib.entity.LocalMedia
 
 class PictureOnlyCameraFragment : PictureCommonFragment() {
     val resourceId: Int
@@ -17,13 +22,13 @@ class PictureOnlyCameraFragment : PictureCommonFragment() {
             if (SdkVersionUtils.isQ()) {
                 openSelectedCamera()
             } else {
-                PermissionChecker.getInstance().requestPermissions(this,
+                PermissionChecker.instance.requestPermissions(this,
                     PermissionConfig.WRITE_EXTERNAL_STORAGE, object : PermissionResultCallback() {
-                        fun onGranted() {
+                        override fun onGranted() {
                             openSelectedCamera()
                         }
 
-                        fun onDenied() {
+                        override fun onDenied() {
                             handlePermissionDenied(PermissionConfig.WRITE_EXTERNAL_STORAGE)
                         }
                     })
@@ -47,7 +52,7 @@ class PictureOnlyCameraFragment : PictureCommonFragment() {
         }
     }
 
-    fun handlePermissionSettingResult(permissions: Array<String?>?) {
+    fun handlePermissionSettingResult(permissions: Array<String>) {
         onPermissionExplainEvent(false, null)
         var isHasPermissions: Boolean
         if (PictureSelectionConfig.onPermissionsEventListener != null) {

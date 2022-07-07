@@ -53,50 +53,50 @@
 
         <LinearLayout
             android:id="@+id/state_aspect_ratio"
-            style="@style/ucrop_WrapperIconState">
+            style="@style/Theme.AppCompat">
 
             <ImageView
                 android:id="@+id/image_view_state_aspect_ratio"
-                style="@style/ucrop_ImageViewWidgetIcon"
+                style="@style/Theme.AppCompat"
                 android:gravity="center"
                 android:orientation="vertical"
                 app:srcCompat="@drawable/ucrop_crop" />
 
             <TextView
                 android:id="@+id/text_view_crop"
-                style="@style/ucrop_TextViewWidget"
+                style="@style/Theme.AppCompat"
                 android:text="@string/ucrop_crop" />
 
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/state_rotate"
-            style="@style/ucrop_WrapperIconState">
+            style="@style/Theme.AppCompat">
 
             <ImageView
                 android:id="@+id/image_view_state_rotate"
-                style="@style/ucrop_ImageViewWidgetIcon"
+                style="@style/Theme.AppCompat"
                 app:srcCompat="@drawable/ucrop_rotate" />
 
             <TextView
                 android:id="@+id/text_view_rotate"
-                style="@style/ucrop_TextViewWidget"
+                style="@style/Theme.AppCompat"
                 android:text="@string/ucrop_rotate" />
 
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/state_scale"
-            style="@style/ucrop_WrapperIconState">
+            style="@style/Theme.AppCompat">
 
             <ImageView
                 android:id="@+id/image_view_state_scale"
-                style="@style/ucrop_ImageViewWidgetIcon"
+                style="@style/Theme.AppCompat"
                 app:srcCompat="@drawable/ucrop_scale" />
 
             <TextView
                 android:id="@+id/text_view_scale"
-                style="@style/ucrop_TextViewWidget"
+                style="@style/Theme.AppCompat"
                 android:text="@string/ucrop_scale" />
 
         </LinearLayout>

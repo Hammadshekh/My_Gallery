@@ -5,5 +5,5 @@ interface OnKeyValueResultCallbackListener {
      * @param srcPath
      * @param resultPath
      */
-    fun onCallback(srcPath: String?, resultPath: String?)
+    fun onCallback(srcPath: String?, resultPath: String)
 }

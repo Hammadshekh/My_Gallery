@@ -20,8 +20,8 @@ import java.util.ArrayList
 
 class PictureAlbumAdapter : RecyclerView.Adapter<PictureAlbumAdapter.ViewHolder>() {
     private var albumList: List<LocalMediaFolder>? = null
-    fun bindAlbumData(albumList: List<LocalMediaFolder?>?) {
-        this.albumList = ArrayList<LocalMediaFolder>(albumList)
+    fun bindAlbumData(albumList: List<LocalMediaFolder?>) {
+        this.albumList = ArrayList(albumList)
     }
 
     fun getAlbumList(): List<LocalMediaFolder> {
@@ -45,14 +45,14 @@ class PictureAlbumAdapter : RecyclerView.Adapter<PictureAlbumAdapter.ViewHolder>
         val imageNum: Int = folder.folderTotalNum
         val imagePath: String = folder.firstImagePath.toString()
         holder.tvSelectTag.visibility = if (folder.isSelectTag) View.VISIBLE else View.INVISIBLE
-        val currentLocalMediaFolder: LocalMediaFolder = SelectedManager.currentLocalMediaFolder
-        holder.itemView.isSelected = (folder.bucketId == currentLocalMediaFolder.bucketId)
+        val currentLocalMediaFolder: LocalMediaFolder? = SelectedManager.currentLocalMediaFolder
+        holder.itemView.isSelected = (folder.bucketId == currentLocalMediaFolder?.bucketId)
         val firstMimeType: String = folder.firstMimeType.toString()
         if (isHasAudio(firstMimeType)) {
             holder.ivFirstImage.setImageResource(R.drawable.ps_audio_placeholder)
         } else {
             if (PictureSelectionConfig.imageEngine != null) {
-                PictureSelectionConfig.imageEngine.loadAlbumCover(holder.itemView.context,
+                PictureSelectionConfig.imageEngine!!.loadAlbumCover(holder.itemView.context,
                     imagePath, holder.ivFirstImage)
             }
         }
@@ -71,16 +71,14 @@ class PictureAlbumAdapter : RecyclerView.Adapter<PictureAlbumAdapter.ViewHolder>
     }
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        var ivFirstImage: ImageView
-        var tvFolderName: TextView
+        var ivFirstImage: ImageView = itemView.findViewById(R.id.first_image)
+        var tvFolderName: TextView = itemView.findViewById(R.id.tv_folder_name)
         var tvSelectTag: TextView
 
         init {
-            ivFirstImage = itemView.findViewById(R.id.first_image)
-            tvFolderName = itemView.findViewById(R.id.tv_folder_name)
             tvSelectTag = itemView.findViewById(R.id.tv_select_tag)
-            val selectorStyle: PictureSelectorStyle = PictureSelectionConfig.selectorStyle
-            val albumWindowStyle: AlbumWindowStyle = selectorStyle.albumWindowStyle!!
+            val selectorStyle: PictureSelectorStyle? = PictureSelectionConfig.selectorStyle
+            val albumWindowStyle: AlbumWindowStyle = selectorStyle?.albumWindowStyle!!
             val itemBackground: Int = albumWindowStyle.albumAdapterItemBackground
             if (itemBackground != 0) {
                 itemView.setBackgroundResource(itemBackground)
@@ -103,7 +101,7 @@ class PictureAlbumAdapter : RecyclerView.Adapter<PictureAlbumAdapter.ViewHolder>
     private var onAlbumItemClickListener: OnAlbumItemClickListener? = null
 
     /**
-     * 专辑列表桥接类
+     *Album list bridge class
      *
      * @param listener
      */

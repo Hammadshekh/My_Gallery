@@ -3,7 +3,6 @@ package com.example.selector.adapter.holder
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
-import android.view.View.OnLongClickListener
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -19,13 +18,13 @@ import com.example.selector.utils.MediaUtils
 import com.luck.picture.lib.entity.LocalMedia
 
 open class BasePreviewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-    protected val screenWidth: Int
-    protected val screenHeight: Int
-    protected val screenAppInHeight: Int
+    protected val screenWidth: Int = DensityUtil.getRealScreenWidth(itemView.context)
+    protected val screenHeight: Int = DensityUtil.getScreenHeight(itemView.context)
+    protected val screenAppInHeight: Int = DensityUtil.getRealScreenHeight(itemView.context)
     protected var media: LocalMedia? = null
-    protected val config: PictureSelectionConfig
+    protected val config: PictureSelectionConfig = PictureSelectionConfig.instance!!
     var coverImageView: PhotoView? = null
-    protected fun findViews(itemView: View) {
+    private fun findViews(itemView: View) {
         coverImageView = itemView.findViewById(R.id.preview_image)
     }
 
@@ -35,7 +34,7 @@ open class BasePreviewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
      * @param media
      * @param position
      */
-    fun bindData(media: LocalMedia, position: Int) {
+    open fun bindData(media: LocalMedia, position: Int) {
         this.media = media
         val size = getRealSizeFromMedia(media)
         val maxImageSize: IntArray = BitmapUtils.getMaxImageSize(size[0], size[1])
@@ -57,11 +56,11 @@ open class BasePreviewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
         if (PictureSelectionConfig.imageEngine != null) {
             val availablePath: String = media.availablePath!!
             if (maxWidth == PictureConfig.UNSET && maxHeight == PictureConfig.UNSET) {
-                PictureSelectionConfig.imageEngine.loadImage(itemView.context,
+                PictureSelectionConfig.imageEngine!!.loadImage(itemView.context,
                     availablePath,
                     coverImageView)
             } else {
-                PictureSelectionConfig.imageEngine.loadImage(itemView.context,
+                PictureSelectionConfig.imageEngine!!.loadImage(itemView.context,
                     coverImageView,
                     availablePath,
                     maxWidth,
@@ -70,7 +69,7 @@ open class BasePreviewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
         }
     }
 
-    protected fun setOnClickEventListener() {
+    private fun setOnClickEventListener() {
         coverImageView?.setOnViewTapListener(object : OnViewTapListener {
             override fun onViewTap(view: View?, x: Float, y: Float) {
                 if (mPreviewEventListener != null) {
@@ -80,16 +79,16 @@ open class BasePreviewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
         })
     }
 
-    protected fun setOnLongClickEventListener() {
-        coverImageView?.setOnLongClickListener(OnLongClickListener {
+    private fun setOnLongClickEventListener() {
+        coverImageView?.setOnLongClickListener {
             if (mPreviewEventListener != null) {
                 mPreviewEventListener!!.onLongPressDownload(media)
             }
             false
-        })
+        }
     }
 
-    protected fun getRealSizeFromMedia(media: LocalMedia): IntArray {
+    private fun getRealSizeFromMedia(media: LocalMedia): IntArray {
         return if (media.isCut() && media.cropImageWidth > 0 && media.cropImageHeight > 0) {
             intArrayOf(media.cropImageWidth, media.cropImageHeight)
         } else {
@@ -97,7 +96,7 @@ open class BasePreviewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
         }
     }
 
-    protected fun setCoverScaleType(media: LocalMedia) {
+    private fun setCoverScaleType(media: LocalMedia) {
         if (MediaUtils.isLongImage(media.width, media.height)) {
             coverImageView?.scaleType = ImageView.ScaleType.CENTER_CROP
         } else {
@@ -105,7 +104,7 @@ open class BasePreviewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
         }
     }
 
-    protected fun setScaleDisplaySize(media: LocalMedia) {
+    open fun setScaleDisplaySize(media: LocalMedia) {
         if (!config.isPreviewZoomEffect && screenWidth < screenHeight) {
             if (media.width > 0 && media.height > 0) {
                 val layoutParams = coverImageView?.layoutParams as FrameLayout.LayoutParams
@@ -119,12 +118,12 @@ open class BasePreviewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
     /**
      * onViewAttachedToWindow
      */
-    fun onViewAttachedToWindow() {}
+    open fun onViewAttachedToWindow() {}
 
     /**
      * onViewDetachedFromWindow
      */
-    fun onViewDetachedFromWindow() {}
+    open fun onViewDetachedFromWindow() {}
     protected var mPreviewEventListener: OnPreviewEventListener? = null
     fun setOnPreviewEventListener(listener: OnPreviewEventListener?) {
         mPreviewEventListener = listener
@@ -138,17 +137,17 @@ open class BasePreviewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
 
     companion object {
         /**
-         * 图片
+         * picture
          */
         const val ADAPTER_TYPE_IMAGE = 1
 
         /**
-         * 视频
+         * video
          */
-        const val ADAPTER_TYPE_VIDEO = 2
+        private const val ADAPTER_TYPE_VIDEO = 2
 
         /**
-         * 音频
+         * Audio
          */
         private const val ADAPTER_TYPE_AUDIO = 3
         fun generate(parent: ViewGroup, viewType: Int, resource: Int): BasePreviewHolder {
@@ -168,10 +167,6 @@ open class BasePreviewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
     }
 
     init {
-        config = PictureSelectionConfig.instance!!
-        screenWidth = DensityUtil.getRealScreenWidth(itemView.context)
-        screenHeight = DensityUtil.getScreenHeight(itemView.context)
-        screenAppInHeight = DensityUtil.getRealScreenHeight(itemView.context)
         findViews(itemView)
     }
 }

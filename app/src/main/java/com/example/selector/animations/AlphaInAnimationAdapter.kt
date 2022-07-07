@@ -5,12 +5,12 @@ import android.animation.ObjectAnimator
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 
-class AlphaInAnimationAdapter @JvmOverloads constructor(
+class AlphaInAnimationAdapter (
     adapter: RecyclerView.Adapter<*>?,
     private val mFrom: Float = DEFAULT_ALPHA_FROM,
 ) :
-    BaseAnimationAdapter(adapter) {
-    protected fun getAnimators(view: View?): Array<Animator> {
+    BaseAnimationAdapter(adapter as RecyclerView.Adapter<RecyclerView.ViewHolder>) {
+    override fun getAnimators(view: View?): Array<Animator> {
         return arrayOf(ObjectAnimator.ofFloat(view, "alpha", mFrom, 1f))
     }
 

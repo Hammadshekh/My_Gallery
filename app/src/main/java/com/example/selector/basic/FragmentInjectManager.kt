@@ -1,9 +1,11 @@
 package com.example.selector.basic
 
-import android.R
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
+import com.example.mygallery.R
+import com.example.selector.PictureSelectorPreviewFragment
+import com.example.selector.utils.ActivityCompatHelper
 
 object FragmentInjectManager {
     /**
@@ -16,11 +18,11 @@ object FragmentInjectManager {
     fun injectFragment(
         activity: FragmentActivity,
         targetFragmentTag: String?,
-        targetFragment: Fragment?,
+        targetFragment: PictureSelectorPreviewFragment,
     ) {
         if (ActivityCompatHelper.checkFragmentNonExits(activity, targetFragmentTag)) {
             activity.supportFragmentManager.beginTransaction()
-                .add(R.id.fragment_container, targetFragment!!, targetFragmentTag)
+                .add(R.id.fragment_container, targetFragment, targetFragmentTag)
                 .addToBackStack(targetFragmentTag)
                 .commitAllowingStateLoss()
         }

@@ -10,6 +10,16 @@ import android.view.ViewGroup
 import android.widget.PopupWindow
 import android.widget.RelativeLayout
 import androidx.recyclerview.widget.RecyclerView
+import com.example.mygallery.R
+import com.example.selector.adapter.PictureAlbumAdapter
+import com.example.selector.config.PictureConfig
+import com.example.selector.decoration.WrapContentLinearLayoutManager
+import com.example.selector.entity.LocalMediaFolder
+import com.example.selector.interfaces.OnAlbumItemClickListener
+import com.example.selector.manager.SelectedManager
+import com.example.selector.utils.DensityUtil
+import com.example.selector.utils.SdkVersionUtils
+import com.luck.picture.lib.entity.LocalMedia
 
 class AlbumListPopWindow(private val mContext: Context?) : PopupWindow() {
     private var windMask: View? = null
@@ -18,15 +28,15 @@ class AlbumListPopWindow(private val mContext: Context?) : PopupWindow() {
     private var windowMaxHeight = 0
     private var mAdapter: PictureAlbumAdapter? = null
     private fun initViews() {
-        windowMaxHeight = (DensityUtil.getScreenHeight(mContext) * 0.6)
+        windowMaxHeight = ((mContext?.let { DensityUtil.getScreenHeight(it) }!! * 0.6).toInt())
         mRecyclerView = contentView.findViewById(R.id.folder_list)
         windMask = contentView.findViewById(R.id.rootViewBg)
-        mRecyclerView.setLayoutManager(WrapContentLinearLayoutManager(mContext))
+        mRecyclerView!!.layoutManager = WrapContentLinearLayoutManager(mContext)
         mAdapter = PictureAlbumAdapter()
-        mRecyclerView.setAdapter(mAdapter)
-        windMask.setOnClickListener(View.OnClickListener { dismiss() })
+        mRecyclerView!!.adapter = mAdapter
+        windMask!!.setOnClickListener { dismiss() }
         contentView.findViewById<View>(R.id.rootView).setOnClickListener {
-            if (SdkVersionUtils.isMinM()) {
+            if (SdkVersionUtils.isMinM) {
                 dismiss()
             }
         }
@@ -34,26 +44,26 @@ class AlbumListPopWindow(private val mContext: Context?) : PopupWindow() {
 
     @SuppressLint("NotifyDataSetChanged")
     fun bindAlbumData(list: List<LocalMediaFolder?>) {
-        mAdapter.bindAlbumData(list)
-        mAdapter.notifyDataSetChanged()
+        mAdapter?.bindAlbumData(list)
+        mAdapter?.notifyDataSetChanged()
         val lp = mRecyclerView!!.layoutParams
         lp.height =
             if (list.size > ALBUM_MAX_COUNT) windowMaxHeight else ViewGroup.LayoutParams.WRAP_CONTENT
     }
 
     val albumList: List<Any>?
-        get() = mAdapter.getAlbumList()
+        get() = mAdapter?.getAlbumList()
 
     fun getFolder(position: Int): LocalMediaFolder? {
-        return if (mAdapter.getAlbumList().size() > 0
-            && position < mAdapter.getAlbumList().size()
-        ) mAdapter.getAlbumList().get(position) else null
+        return if (mAdapter?.getAlbumList()?.isNotEmpty() == true
+            && position < mAdapter!!.getAlbumList().size
+        ) mAdapter!!.getAlbumList()[position] else null
     }
 
-    val firstAlbumImageCount: Int
-        get() = if (folderCount > 0) getFolder(0).getFolderTotalNum() else 0
+    val firstAlbumImageCount: Int?
+        get() = if (folderCount > 0) getFolder(0)?.folderTotalNum else 0
     val folderCount: Int
-        get() = mAdapter.getAlbumList().size()
+        get() = mAdapter?.getAlbumList()?.size!!
 
     /**
      * 专辑列表桥接类
@@ -61,14 +71,14 @@ class AlbumListPopWindow(private val mContext: Context?) : PopupWindow() {
      * @param listener
      */
     fun setOnIBridgeAlbumWidget(listener: OnAlbumItemClickListener?) {
-        mAdapter.setOnIBridgeAlbumWidget(listener)
+        mAdapter?.setOnIBridgeAlbumWidget(listener)
     }
 
     override fun showAsDropDown(anchor: View) {
-        if (albumList == null || albumList!!.size == 0) {
+        if (albumList == null || albumList!!.isEmpty()) {
             return
         }
-        if (SdkVersionUtils.isN()) {
+        if (SdkVersionUtils.isN) {
             val location = IntArray(2)
             anchor.getLocationInWindow(location)
             showAtLocation(anchor, Gravity.NO_GRAVITY, 0, location[1] + anchor.height)
@@ -84,22 +94,25 @@ class AlbumListPopWindow(private val mContext: Context?) : PopupWindow() {
     }
 
     /**
-     * 设置选中状态
+     *
+    set selected state
      */
-    fun changeSelectedAlbumStyle() {
-        val folders: List<LocalMediaFolder> = mAdapter.getAlbumList()
-        for (i in folders.indices) {
-            val folder: LocalMediaFolder = folders[i]
-            folder.setSelectTag(false)
-            mAdapter.notifyItemChanged(i)
-            for (j in 0 until SelectedManager.getSelectCount()) {
-                val media: LocalMedia = SelectedManager.getSelectedResult().get(j)
-                if (TextUtils.equals(folder.getFolderName(), media.getParentFolderName())
-                    || folder.getBucketId() === PictureConfig.ALL
-                ) {
-                    folder.setSelectTag(true)
-                    mAdapter.notifyItemChanged(i)
-                    break
+    private fun changeSelectedAlbumStyle() {
+        val folders: List<LocalMediaFolder>? = mAdapter?.getAlbumList()
+        if (folders != null) {
+            for (i in folders.indices) {
+                val folder: LocalMediaFolder = folders[i]
+                folder.isSelectTag = (false)
+                mAdapter?.notifyItemChanged(i)
+                for (j in 0 until SelectedManager.selectCount) {
+                    val media: LocalMedia = SelectedManager.getSelectedResult()[j]
+                    if (TextUtils.equals(folder.getFolderName(), media.parentFolderName)
+                        || folder.bucketId.equals(PictureConfig.ALL)
+                    ) {
+                        folder.isSelectTag=(true)
+                        mAdapter?.notifyItemChanged(i)
+                        break
+                    }
                 }
             }
         }

@@ -12,7 +12,7 @@ interface OnPermissionDeniedListener {
      */
     fun onDenied(
         fragment: Fragment?,
-        permissionArray: Array<String?>?,
+        permissionArray: Array<String>,
         requestCode: Int,
         call: OnCallbackListener<Boolean?>?,
     )

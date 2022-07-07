@@ -1,7 +1,6 @@
 package com.example.selector
 
 import android.app.Activity
-import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -14,7 +13,6 @@ import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContract
 import com.example.mygallery.R
-import com.example.mygallery.adapter.GridImageAdapter.Companion.TAG
 import com.example.selector.basic.PictureCommonFragment
 import com.example.selector.config.PermissionEvent
 import com.example.selector.config.PictureSelectionConfig
@@ -28,7 +26,6 @@ import com.example.selector.permissions.PermissionConfig.READ_WRITE_EXTERNAL_STO
 import com.example.selector.permissions.PermissionResultCallback
 import com.example.selector.utils.SdkVersionUtils
 import com.example.selector.utils.ToastUtils
-import com.luck.picture.lib.entity.LocalMedia
 import java.util.ArrayList
 
 class PictureSelectorSystemFragment : PictureCommonFragment() {
@@ -69,12 +66,12 @@ class PictureSelectorSystemFragment : PictureCommonFragment() {
     fun onApplyPermissionsEvent(event: Int, permissionArray: Array<String?>?) {
         if (event == PermissionEvent.EVENT_SYSTEM_SOURCE_DATA) {
             PictureSelectionConfig.onPermissionsEventListener.requestPermission(this,
-                READ_WRITE_EXTERNAL_STORAGE, object : OnRequestPermissionListener() {
+                READ_WRITE_EXTERNAL_STORAGE, object : OnRequestPermissionListener {
                     override fun onCall(permissionArray: Array<String?>?, isResult: Boolean) {
                         if (isResult) {
                             openSystemAlbum()
                         } else {
-                            handlePermissionDenied(permissionArray!!)
+                            handlePermissionDenied(permissionArray)
                         }
                     }
                 })
@@ -304,7 +301,7 @@ class PictureSelectorSystemFragment : PictureCommonFragment() {
             SelectMimeType.SYSTEM_IMAGE
         }
 
-    override fun handlePermissionSettingResult(permissions: Array<String?>?) {
+    override fun handlePermissionSettingResult(permissions: Array<String>) {
         onPermissionExplainEvent(false, null)
         val isCheckReadStorage: Boolean
         isCheckReadStorage = if (PictureSelectionConfig.onPermissionsEventListener != null) {

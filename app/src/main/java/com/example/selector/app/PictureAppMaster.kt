@@ -1,17 +1,16 @@
 package com.example.selector.app
 
 import android.content.Context
+import com.example.selector.engine.PictureSelectorEngine
 
 class PictureAppMaster private constructor() : IApp {
     override val appContext: Context?
         get() = if (app == null) {
             null
-        } else app.getAppContext()
+        } else app?.appContext
     override val pictureSelectorEngine: PictureSelectorEngine?
         get() {
-            return if (app == null) {
-                null
-            } else app.getPictureSelectorEngine()
+            return app?.pictureSelectorEngine
         }
     var app: IApp? = null
 

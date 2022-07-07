@@ -8,18 +8,16 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.mygallery.R
 import com.example.selector.adapter.holder.BaseRecyclerMediaHolder
 import com.example.selector.config.InjectResourceSource
-import com.example.selector.config.PictureMimeType
 import com.example.selector.config.PictureSelectionConfig
 import com.example.ucrop.utils.FileUtils.isHasAudio
 import com.example.ucrop.utils.FileUtils.isHasVideo
 import com.luck.picture.lib.entity.LocalMedia
 import java.util.ArrayList
 
-class PictureImageGridAdapter(context: Context, mConfig: PictureSelectionConfig) :
+class PictureImageGridAdapter(context: Context, private val mConfig: PictureSelectionConfig) :
     RecyclerView.Adapter<BaseRecyclerMediaHolder>() {
     var isDisplayCamera = false
     private var mData: ArrayList<LocalMedia> = ArrayList<LocalMedia>()
-    private val mConfig: PictureSelectionConfig = mConfig
     private val mContext: Context = context
     fun notifyItemPositionChanged(position: Int) {
         this.notifyItemChanged(position)
@@ -90,11 +88,11 @@ class PictureImageGridAdapter(context: Context, mConfig: PictureSelectionConfig)
 
     override fun onBindViewHolder(holder: BaseRecyclerMediaHolder, position: Int) {
         if (getItemViewType(position) == ADAPTER_TYPE_CAMERA) {
-            holder.itemView.setOnClickListener(View.OnClickListener {
+            holder.itemView.setOnClickListener {
                 if (listener != null) {
                     listener!!.openCameraClick()
                 }
-            })
+            }
         } else {
             val adapterPosition = if (isDisplayCamera) position - 1 else position
             val media: LocalMedia = mData[adapterPosition]
@@ -108,27 +106,28 @@ class PictureImageGridAdapter(context: Context, mConfig: PictureSelectionConfig)
     }
 
     private var listener: OnItemClickListener? = null
-    fun setOnItemClickListener(listener: OnItemClickListener?) {
+    fun setOnItemClickListener(listener: OnItemClickListener) {
         this.listener = listener
     }
 
     interface OnItemClickListener {
         /**
-         * 拍照
+         * Photograph
          */
         fun openCameraClick()
 
         /**
-         * 列表item点击事件
+         * List item click event
          *
-         * @param selectedView 所产生点击事件的View
-         * @param position     当前下标
-         * @param media        当前LocalMedia对象
+         * @param selectedView
+         * @param position
+         * @param media
          */
         fun onItemClick(selectedView: View?, position: Int, media: LocalMedia?)
 
         /**
-         * 列表item长按事件
+         *
+        List item long press event
          *
          * @param itemView
          * @param position
@@ -136,33 +135,35 @@ class PictureImageGridAdapter(context: Context, mConfig: PictureSelectionConfig)
         fun onItemLongClick(itemView: View?, position: Int)
 
         /**
-         * 列表勾选点击事件
          *
-         * @param selectedView 所产生点击事件的View
-         * @param position     当前下标
-         * @param media        当前LocalMedia对象
+        List check click event
+         *
+         * @param selectedView
+         * @param position
+         * @param media
          */
         fun onSelected(selectedView: View?, position: Int, media: LocalMedia?): Int
     }
 
     companion object {
         /**
-         * 拍照
+         * Photograph
          */
         const val ADAPTER_TYPE_CAMERA = 1
 
         /**
-         * 图片
+         *
+        picture
          */
         const val ADAPTER_TYPE_IMAGE = 2
 
         /**
-         * 视频
+         * Video
          */
         const val ADAPTER_TYPE_VIDEO = 3
 
         /**
-         * 音频
+         * audio
          */
         const val ADAPTER_TYPE_AUDIO = 4
     }

@@ -1,6 +1,5 @@
 package com.example.selector.dialog
 
-import android.R
 import android.content.DialogInterface
 import android.os.Bundle
 import android.view.*
@@ -8,6 +7,9 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
+import com.example.mygallery.R
+import com.example.selector.interfaces.OnItemClickListener
+import com.example.selector.utils.DensityUtil
 
 class PhotoItemSelectedDialog : DialogFragment(), View.OnClickListener {
     private var isCancel = true
@@ -47,8 +49,10 @@ class PhotoItemSelectedDialog : DialogFragment(), View.OnClickListener {
         if (dialog != null) {
             val window = dialog.window
             if (window != null) {
-                window.setLayout(DensityUtil.getRealScreenWidth(context),
-                    RelativeLayout.LayoutParams.WRAP_CONTENT)
+                context?.let { DensityUtil.getRealScreenWidth(it) }?.let {
+                    window.setLayout(it,
+                        RelativeLayout.LayoutParams.WRAP_CONTENT)
+                }
                 window.setGravity(Gravity.BOTTOM)
                 window.setWindowAnimations(R.style.PictureThemeDialogFragmentAnim)
             }
@@ -73,10 +77,10 @@ class PhotoItemSelectedDialog : DialogFragment(), View.OnClickListener {
         val id = v.id
         if (onItemClickListener != null) {
             if (id == R.id.ps_tv_photo) {
-                onItemClickListener.onItemClick(v, IMAGE_CAMERA)
+                onItemClickListener!!.onItemClick(v, IMAGE_CAMERA)
                 isCancel = false
             } else if (id == R.id.ps_tv_video) {
-                onItemClickListener.onItemClick(v, VIDEO_CAMERA)
+                onItemClickListener!!.onItemClick(v, VIDEO_CAMERA)
                 isCancel = false
             }
         }

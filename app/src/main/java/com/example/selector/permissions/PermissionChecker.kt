@@ -1,10 +1,8 @@
 package com.example.selector.permissions
 
 import android.Manifest
-import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Build
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -12,7 +10,7 @@ import com.example.selector.basic.PictureCommonFragment
 import com.example.selector.utils.ActivityCompatHelper
 import java.util.ArrayList
 
-class PermissionChecker () {
+class PermissionChecker {
     fun requestPermissions(
         fragment: Fragment,
         permissionArray: Array<String>,
@@ -41,32 +39,27 @@ class PermissionChecker () {
             return
         }
         if (fragment is PictureCommonFragment) {
-            if (Build.VERSION.SDK_INT < 23) {
-                if (permissionResultCallback != null) {
-                    permissionResultCallback.onGranted()
-                }
-                return
-            }
-            val activity: Activity? = fragment.activity
-            val permissionList: ArrayList<String> = ArrayList()
-            for (permissionArray in permissionGroupList) {
-                for (permission in permissionArray) {
-                    if (ContextCompat.checkSelfPermission(activity!!,
-                            permission) != PackageManager.PERMISSION_GRANTED
-                    ) {
-                        permissionList.add(permission)
+            fragment.activity?.let { activity ->
+                val permissionList: ArrayList<String> = ArrayList()
+                for (permissionArray in permissionGroupList) {
+                    for (permission in permissionArray) {
+                        if (ContextCompat.checkSelfPermission(activity,
+                                permission) != PackageManager.PERMISSION_GRANTED
+                        ) {
+                            permissionList.add(permission)
+                        }
                     }
                 }
-            }
-            if (permissionList.size > 0) {
-                (fragment).setPermissionsResultAction(
-                    permissionResultCallback)
-                val requestArray = arrayOfNulls<String>(permissionList.size)
-                permissionList.toArray<String>(requestArray)
-                fragment.requestPermissions(requestArray, requestCode)
-                ActivityCompat.requestPermissions(activity!!, requestArray, requestCode)
-            } else {
-                permissionResultCallback?.onGranted()
+                if (permissionList.size > 0) {
+                    (fragment).setPermissionsResultAction(
+                        permissionResultCallback)
+                    val requestArray = arrayOfNulls<String>(permissionList.size)
+                    permissionList.toArray<String>(requestArray)
+                    fragment.requestPermissions(requestArray, requestCode)
+                    ActivityCompat.requestPermissions(activity, requestArray, requestCode)
+                } else {
+                    permissionResultCallback?.onGranted()
+                }
             }
         }
     }
@@ -101,17 +94,15 @@ class PermissionChecker () {
          * @param permissions
          * @return
          */
-        fun checkSelfPermission(ctx: Context, permissions: Array<String?>?): Boolean {
+        fun checkSelfPermission(ctx: Context, permissions: Array<String>): Boolean {
             var isAllGranted = true
-            if (permissions != null) {
-                for (permission in permissions) {
-                    if (ContextCompat.checkSelfPermission(ctx.applicationContext,
-                            permission!!)
-                        != PackageManager.PERMISSION_GRANTED
-                    ) {
-                        isAllGranted = false
-                        break
-                    }
+            for (permission in permissions) {
+                if (ContextCompat.checkSelfPermission(ctx.applicationContext,
+                        permission)
+                    != PackageManager.PERMISSION_GRANTED
+                ) {
+                    isAllGranted = false
+                    break
                 }
             }
             return isAllGranted
@@ -149,7 +140,7 @@ class PermissionChecker () {
          *
          * @return
          */
-        fun isCheckSelfPermission(context: Context, permissions: Array<String?>?): Boolean {
+        fun isCheckSelfPermission(context: Context, permissions: Array<String>): Boolean {
             return checkSelfPermission(context, permissions)
         }
     }

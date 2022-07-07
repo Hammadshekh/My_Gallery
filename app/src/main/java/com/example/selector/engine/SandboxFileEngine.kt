@@ -1,6 +1,8 @@
 package com.example.selector.engine
 
 import android.content.Context
+import com.example.selector.interfaces.OnCallbackIndexListener
+import com.luck.picture.lib.entity.LocalMedia
 
 interface SandboxFileEngine {
     /**

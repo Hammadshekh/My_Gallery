@@ -7,5 +7,5 @@ interface OnRequestPermissionListener {
      * @param permissionArray
      * @param isResult
      */
-    fun onCall(permissionArray: Array<String?>?, isResult: Boolean)
+    fun onCall(permissionArray: Array<String>, isResult: Boolean)
 }

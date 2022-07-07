@@ -33,6 +33,14 @@ import androidx.recyclerview.widget.SimpleItemAnimator
 import androidx.viewpager2.widget.MarginPageTransformer
 import androidx.viewpager2.widget.ViewPager2
 import androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback
+import com.example.selector.adapter.PreviewGalleryAdapter
+import com.example.selector.basic.PictureCommonFragment
+import com.example.selector.config.InjectResourceSource
+import com.example.selector.manager.SelectedManager
+import com.example.selector.widget.CompleteSelectView
+import com.example.selector.widget.PreviewBottomNavBar
+import com.example.selector.widget.PreviewTitleBar
+import com.luck.picture.lib.entity.LocalMedia
 import java.lang.Exception
 import java.lang.NullPointerException
 import java.util.*
@@ -41,10 +49,9 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
     protected var mData: ArrayList<LocalMedia?>? = ArrayList<LocalMedia?>()
     protected var magicalView: MagicalView? = null
     var viewPager2: ViewPager2? = null
-        protected set
-    protected var viewPageAdapter: PicturePreviewAdapter? = null
-    protected var bottomNarBar: PreviewBottomNavBar? = null
-    protected var titleBar: PreviewTitleBar? = null
+     var viewPageAdapter: PicturePreviewAdapter? = null
+     var bottomNarBar: PreviewBottomNavBar? = null
+    var titleBar: PreviewTitleBar? = null
 
     /**
      * if there more

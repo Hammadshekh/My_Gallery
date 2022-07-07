@@ -4,16 +4,15 @@ import android.text.TextUtils
 import java.lang.Exception
 import java.util.*
 
-open class PictureMimeType {
+object PictureMimeType {
 
-    /**
-     * isGif
-     *
-     * @param mimeType
-     * @return
+
+    /*   fun isHasGif(mimeType: String?): Boolean {
+           return mimeType != null && (mimeType == "image/gif" || mimeType == "image/GIF")
+       }
      */
-    fun isHasGif(mimeType: String?): Boolean {
-        return mimeType != null && (mimeType == "image/gif" || mimeType == "image/GIF")
+    fun isHasGif(mimeType: String): Boolean {
+        return mimeType == "image/gif" || mimeType == "image/GIF"
     }
 
     /**
@@ -56,7 +55,7 @@ open class PictureMimeType {
      * @return
      */
     fun isUrlHasWebp(url: String): Boolean {
-        return url.toLowerCase().endsWith(".webp")
+        return url.lowercase(Locale.getDefault()).endsWith(".webp")
     }
 
     /**
@@ -65,8 +64,8 @@ open class PictureMimeType {
      * @param mimeType
      * @return
      */
-    fun isHasVideo(mimeType: String?): Boolean {
-        return mimeType != null && mimeType.startsWith(MIME_TYPE_PREFIX_VIDEO)
+    fun isHasVideo(mimeType: String): Boolean {
+        return mimeType.startsWith(MIME_TYPE_PREFIX_VIDEO)
     }
 
     /**
@@ -76,7 +75,7 @@ open class PictureMimeType {
      * @return
      */
     fun isUrlHasVideo(url: String): Boolean {
-        return url.toLowerCase().endsWith(".mp4")
+        return url.lowercase(Locale.getDefault()).endsWith(".mp4")
     }
 
     /**
@@ -96,7 +95,8 @@ open class PictureMimeType {
      * @return
      */
     fun isUrlHasAudio(url: String): Boolean {
-        return url.toLowerCase().endsWith(".amr") || url.toLowerCase().endsWith(".mp3")
+        return url.lowercase(Locale.getDefault()).endsWith(".amr") || url.lowercase(Locale.getDefault())
+            .endsWith(".mp3")
     }
 
     /**
@@ -105,9 +105,10 @@ open class PictureMimeType {
      * @param mimeType
      * @return
      */
-     fun isHasImage(mimeType: String?): Boolean {
+    fun isHasImage(mimeType: String?): Boolean {
         return mimeType != null && mimeType.startsWith(MIME_TYPE_PREFIX_IMAGE)
     }
+
     /**
      * isHasBmp
      *
@@ -117,9 +118,7 @@ open class PictureMimeType {
     fun isHasBmp(mimeType: String): Boolean {
         return if (TextUtils.isEmpty(mimeType)) {
             false
-        } else ofBMP()?.let { mimeType.startsWith(it) } == true
-                || ofXmsBMP()?.let { mimeType.startsWith(it) } == true
-                || ofWapBMP()?.let { mimeType.startsWith(it) } == true
+        } else ofBMP().let { mimeType.startsWith(it) } || ofXmsBMP().let { mimeType.startsWith(it) } || ofWapBMP().let { mimeType.startsWith(it) }
     }
 
     /**
@@ -235,106 +234,108 @@ open class PictureMimeType {
     }
 
 
-    fun ofPNG(): String? {
+    fun ofPNG(): String {
         return MIME_TYPE_PNG
     }
 
-    fun ofJPEG(): String? {
+    fun ofJPEG(): String {
         return MIME_TYPE_JPEG
     }
 
-    fun ofBMP(): String? {
+    private fun ofBMP(): String {
         return MIME_TYPE_BMP
     }
 
-    fun ofXmsBMP(): String? {
+    private fun ofXmsBMP(): String{
         return MIME_TYPE_XMS_BMP
     }
 
-    fun ofWapBMP(): String? {
+    private fun ofWapBMP(): String{
         return MIME_TYPE_WAP_BMP
     }
 
-    fun ofGIF(): String? {
+    fun ofGIF(): String {
         return MIME_TYPE_GIF
     }
 
-    fun ofWEBP(): String? {
+    fun ofWEBP(): String {
         return MIME_TYPE_WEBP
     }
 
-    fun of3GP(): String? {
+    fun of3GP(): String {
         return MIME_TYPE_3GP
     }
 
-    fun ofMP4(): String? {
+    fun ofMP4(): String {
         return MIME_TYPE_MP4
     }
 
-    fun ofMPEG(): String? {
+    fun ofMPEG(): String {
         return MIME_TYPE_MPEG
     }
 
-    fun ofAVI(): String? {
+    fun ofAVI(): String {
         return MIME_TYPE_AVI
     }
 
 
-    val MIME_TYPE_IMAGE = "image/jpeg"
-    val MIME_TYPE_VIDEO = "video/mp4"
-    val MIME_TYPE_AUDIO = "audio/mpeg"
-    val MIME_TYPE_AUDIO_AMR = "audio/amr"
+    const val MIME_TYPE_IMAGE = "image/jpeg"
+    const val MIME_TYPE_VIDEO = "video/mp4"
+    const val MIME_TYPE_AUDIO = "audio/mpeg"
+    const val MIME_TYPE_AUDIO_AMR = "audio/amr"
 
-    val MIME_TYPE_PREFIX_IMAGE = "image"
-    val MIME_TYPE_PREFIX_VIDEO = "video"
-    val MIME_TYPE_PREFIX_AUDIO = "audio"
+    const val MIME_TYPE_PREFIX_IMAGE = "image"
+    const val MIME_TYPE_PREFIX_VIDEO = "video"
+    const val MIME_TYPE_PREFIX_AUDIO = "audio"
 
-    private val MIME_TYPE_PNG = "image/png"
-    val MIME_TYPE_JPEG = "image/jpeg"
-    private val MIME_TYPE_JPG = "image/jpg"
-    private val MIME_TYPE_BMP = "image/bmp"
-    private val MIME_TYPE_XMS_BMP = "image/x-ms-bmp"
-    private val MIME_TYPE_WAP_BMP = "image/vnd.wap.wbmp"
-    private val MIME_TYPE_GIF = "image/gif"
-    private val MIME_TYPE_WEBP = "image/webp"
+    private const val MIME_TYPE_PNG = "image/png"
+    private const val MIME_TYPE_JPEG = "image/jpeg"
+    private const val MIME_TYPE_JPG = "image/jpg"
+    private const val MIME_TYPE_BMP = "image/bmp"
+    private const val MIME_TYPE_XMS_BMP = "image/x-ms-bmp"
+    private const val MIME_TYPE_WAP_BMP = "image/vnd.wap.wbmp"
+    private const val MIME_TYPE_GIF = "image/gif"
+    private const val MIME_TYPE_WEBP = "image/webp"
 
-    private val MIME_TYPE_3GP = "video/3gp"
-    private val MIME_TYPE_MP4 = "video/mp4"
-    private val MIME_TYPE_MPEG = "video/mpeg"
-    private val MIME_TYPE_AVI = "video/avi"
+    private const val MIME_TYPE_3GP = "video/3gp"
+    private const val MIME_TYPE_MP4 = "video/mp4"
+    private const val MIME_TYPE_MPEG = "video/mpeg"
+    private const val MIME_TYPE_AVI = "video/avi"
 
 
-    val JPEG = ".jpeg"
+    const val JPEG = ".jpeg"
 
-    val JPG = ".jpg"
+    val JPG by lazy { ".jpg" }
 
-    val PNG = ".png"
+    const val PNG = ".png"
 
-    val WEBP = ".webp"
+    const val WEBP = ".webp"
 
-    val GIF = ".gif"
+    const val GIF = ".gif"
 
-    val BMP = ".bmp"
+    const val BMP = ".bmp"
 
-    val AMR = ".amr"
+    const val AMR = ".amr"
 
-    val WAV = ".wav"
+    const val WAV = ".wav"
 
-    val MP3 = ".mp3"
+    const val MP3 = ".mp3"
 
-    val MP4 = ".mp4"
+    const val MP4 = ".mp4"
 
-    val AVI = ".avi"
+    const val AVI = ".avi"
 
-    val JPEG_Q = "image/jpeg"
+    const val JPEG_Q = "image/jpeg"
 
-    val PNG_Q = "image/png"
+    const val PNG_Q = "image/png"
 
-    val MP4_Q = "video/mp4"
+    const val MP4_Q = "video/mp4"
 
-    val AVI_Q = "video/avi"
+    const val AVI_Q = "video/avi"
 
-    val AMR_Q = "audio/amr"
+    const val AMR_Q = "audio/amr"
 
-    val WAV_Q = "audio/x-wav"
+    const val WAV_Q = "audio/x-wav"
+
+    const val DCIM = "DCIM/Camera"
 }

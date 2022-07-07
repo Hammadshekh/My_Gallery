@@ -12,7 +12,7 @@ interface OnPermissionsInterceptListener {
      */
     fun requestPermission(
         fragment: Fragment?,
-        permissionArray: Array<String?>?,
+        permissionArray: Array<String>,
         call: OnRequestPermissionListener?,
     )
 
@@ -23,5 +23,5 @@ interface OnPermissionsInterceptListener {
      * @param permissionArray
      * @return
      */
-    fun hasPermissions(fragment: Fragment?, permissionArray: Array<String?>?): Boolean
+    fun hasPermissions(fragment: Fragment?, permissionArray: Array<String>): Boolean
 }

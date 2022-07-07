@@ -6,7 +6,7 @@ object PermissionConfig {
     /**
      * 当前申请权限
      */
-    var CURRENT_REQUEST_PERMISSION: Array<String?>? = null
+    var CURRENT_REQUEST_PERMISSION: Array<String> = emptyArray()
 
     /**
      * 读写权限

@@ -28,9 +28,13 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
+import androidx.camera.core.ImageCapture
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.video.VideoCapture
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
+import com.example.camerax.listener.CameraXOrientationEventListener
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -40,52 +44,14 @@ import java.util.*
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
 
-package com.luck.lib.camerax
-import androidx.camera.core.VideoCapture.ERROR_RECORDING_TOO_SHORT
-import androidx.camera.view.video.OnVideoSavedCallback.ERROR_MUXER
-import androidx.camera.core.AspectRatio
-import androidx.camera.core.Camera
-import androidx.camera.core.CameraControl
-import androidx.camera.core.CameraInfo
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.FocusMeteringAction
-import androidx.camera.core.FocusMeteringResult
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.MeteringPoint
-import androidx.camera.core.MeteringPointFactory
-import androidx.camera.core.Preview
-import androidx.camera.core.UseCaseGroup
-import androidx.camera.core.VideoCapture
-import androidx.camera.core.ZoomState
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.view.LifecycleCameraController
-import androidx.camera.view.PreviewView
-import com.google.common.util.concurrent.ListenableFuture
-import com.luck.lib.camerax.listener.CameraListener
-import com.luck.lib.camerax.listener.CameraXOrientationEventListener
-import com.luck.lib.camerax.listener.CameraXPreviewViewTouchListener
-import com.luck.lib.camerax.listener.CaptureListener
-import com.luck.lib.camerax.listener.ClickListener
-import com.luck.lib.camerax.listener.ImageCallbackListener
-import com.luck.lib.camerax.listener.TypeListener
-import com.luck.lib.camerax.permissions.PermissionChecker
-import com.luck.lib.camerax.permissions.PermissionResultCallback
-import com.luck.lib.camerax.permissions.SimpleXPermissionUtil
-import com.luck.lib.camerax.utils.CameraUtils
-import com.luck.lib.camerax.utils.DensityUtil
-import com.luck.lib.camerax.utils.FileUtils
-import com.luck.lib.camerax.utils.SimpleXSpUtils
-import com.luck.lib.camerax.widget.CaptureLayout
-import com.luck.lib.camerax.widget.FocusImageView
 
 /**
  * @author：luck
  * @date：2020-01-04 13:41
  * @describe：自定义相机View
  */
-class CustomCameraView : RelativeLayout, OnOrientationChangedListener {
+class CustomCameraView : RelativeLayout,
+    CameraXOrientationEventListener.OnOrientationChangedListener {
     private var typeFlash = TYPE_FLASH_OFF
     private var mCameraPreviewView: PreviewView? = null
     private var mCameraProvider: ProcessCameraProvider? = null

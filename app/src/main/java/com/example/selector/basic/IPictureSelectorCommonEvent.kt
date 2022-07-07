@@ -2,11 +2,12 @@ package com.example.selector.basic
 
 import android.content.Intent
 import android.os.Bundle
+import com.luck.picture.lib.entity.LocalMedia
 import java.util.ArrayList
 
 interface IPictureSelectorCommonEvent {
     /**
-     * 创建数据查询器
+     * Create a data querier
      */
     fun onCreateLoader()
 
@@ -28,7 +29,8 @@ interface IPictureSelectorCommonEvent {
     fun onFragmentResume()
 
     /**
-     * 权限被拒
+     *
+    permission denied
      */
     fun handlePermissionDenied(permissionArray: Array<String>)
 
@@ -40,190 +42,209 @@ interface IPictureSelectorCommonEvent {
     fun reStartSavedInstance(savedInstanceState: Bundle?)
 
     /**
-     * 权限设置结果
+     * Permission setting result
      */
-    fun handlePermissionSettingResult(permissions: Array<String?>?)
+    fun handlePermissionSettingResult(permissions: Array<String>)
 
     /**
-     * 设置app语言
+     * Set app language
      */
     fun initAppLanguage()
 
     /**
-     * 重新创建所需引擎
+     *
+    Recreate the required engine
      */
     fun onRecreateEngine()
 
     /**
-     * 选择拍照或拍视频
+     * Choose to take a photo or take a video
      */
     fun onSelectedOnlyCamera()
 
     /**
-     * 选择相机类型；拍照、视频、或录音
+     * Select camera type; take photo, video, or audio recording
      */
     fun openSelectedCamera()
 
     /**
-     * 拍照
+     * Photograph
      */
     fun openImageCamera()
 
     /**
-     * 拍视频
+     * shoot video
      */
     fun openVideoCamera()
 
     /**
-     * 录音
+     *
+    recording
      */
     fun openSoundRecording()
 
     /**
-     * 选择结果
      *
-     * @param currentMedia 当前操作对象
-     * @param isSelected   选中状态
-     * @return 返回当前选择的状态
+    select result
+     *
+     * @param currentMedia
+     * @param isSelected
+     * @return Returns the state of the current selection
      */
-    fun confirmSelect(currentMedia: LocalMedia?, isSelected: Boolean): Int
+    fun confirmSelect(currentMedia: LocalMedia, isSelected: Boolean): Int
 
     /**
-     * 验证共选类型模式可选条件
      *
-     * @param isSelected      资源是否被选中
-     * @param curMimeType     选择的资源类型
-     * @param selectVideoSize 已选的视频数量
-     * @param fileSize        文件大小
-     * @param duration        视频时长
+    Validate co-selection type mode optional conditions
+     *
+     * @param isSelected      Whether the resource is selected
+     * @param curMimeType     Selected resource type
+     * @param selectVideoSize   Number of selected videos
+     * @param fileSizeFile size
+     * @param durationvideo duration
      * @return
      */
     fun checkWithMimeTypeValidity(
         isSelected: Boolean,
-        curMimeType: String?,
+        curMimeType: String,
         selectVideoSize: Int,
         fileSize: Long,
         duration: Long,
     ): Boolean
 
     /**
-     * 验证单一类型模式可选条件
      *
-     * @param isSelected    资源是否被选中
-     * @param curMimeType   选择的资源类型
-     * @param existMimeType 已选的资源类型
-     * @param fileSize      文件大小
-     * @param duration      视频时长
+    Validate a single type schema optional condition
+     *
+     * @param isSelected    Whether the resource is selected
+     * @param curMimeType   Selected resource type
+     * @param existMimeType Selected resource type
+     * @param fileSizeFile size
+     * @param durationvideo duration
      * @return
      */
     fun checkOnlyMimeTypeValidity(
         isSelected: Boolean,
-        curMimeType: String?,
-        existMimeType: String?,
+        curMimeType: String,
+        existMimeType: String,
         fileSize: Long,
         duration: Long,
     ): Boolean
 
     /**
-     * 选择结果数据发生改变
      *
-     * @param isAddRemove  isAddRemove  添加还是移除操作
-     * @param currentMedia 当前操作的对象
+    The selection result data has changed
+     *
+     * @param isAddRemove  isAddRemove
+    Add or remove actions
+     * @param currentMedia
+    the object of the current operation
      */
-    fun onSelectedChange(isAddRemove: Boolean, currentMedia: LocalMedia?)
+    fun onSelectedChange(isAddRemove: Boolean, currentMedia: LocalMedia)
 
     /**
-     * 刷新指定数据
+     * refresh the specified data
      */
-    fun onFixedSelectedChange(oldLocalMedia: LocalMedia?)
+    fun onFixedSelectedChange(oldLocalMedia: LocalMedia)
 
     /**
-     * 分发拍照后生成的LocalMedia
+     *
+    Generated after distributing photos LocalMedia
      *
      * @param media
      */
-    fun dispatchCameraMediaResult(media: LocalMedia?)
+    fun dispatchCameraMediaResult(media: LocalMedia)
 
     /**
-     * 发送选择数据发生变化的通知
+     * Send notification of selection data changes
      *
-     * @param isAddRemove  添加还是移除操作
-     * @param currentMedia 当前操作的对象
+     * @param isAddRemove
+    Add or remove actions
+     * @param currentMedia the object of the current operation
      */
-    fun sendSelectedChangeEvent(isAddRemove: Boolean, currentMedia: LocalMedia?)
+    fun sendSelectedChangeEvent(isAddRemove: Boolean, currentMedia: LocalMedia)
 
     /**
-     * 刷新指定数据
+     *
+    refresh the specified data
      */
-    fun sendFixedSelectedChangeEvent(currentMedia: LocalMedia?)
+    fun sendFixedSelectedChangeEvent(currentMedia: LocalMedia)
 
     /**
      * []
      *
      *
-     * isSelectNumberStyle模式下对选择结果编号进行排序
+     *
+    Sort selection result number in isSelectNumberStyle mode
      *
      */
     fun sendChangeSubSelectPositionEvent(adapterChange: Boolean)
 
     /**
-     * 原图选项发生变化
+     * Original image options changed
      */
     fun sendSelectedOriginalChangeEvent()
 
     /**
-     * 原图选项发生变化
+     *
+    Edit resources
      */
     fun onCheckOriginalChange()
 
     /**
-     * 编辑资源
+     * Edit resources
      */
-    fun onEditMedia(intent: Intent?)
+    fun onEditMedia(intent: Intent)
 
     /**
-     * 选择结果回调
+     *
+    select result callback
      *
      * @param result
      */
-    fun onResultEvent(result: ArrayList<LocalMedia?>?)
+    fun onResultEvent(result: ArrayList<LocalMedia>)
 
     /**
-     * 裁剪
+     *
+    compression
      * @param result
      */
-    fun onCrop(result: ArrayList<LocalMedia?>?)
+    fun onCrop(result: ArrayList<LocalMedia>)
 
     /**
-     * 裁剪
+     *
+    compression
      * @param result
      */
-    fun onOldCrop(result: ArrayList<LocalMedia?>?)
+    fun onOldCrop(result: ArrayList<LocalMedia>)
 
     /**
      * 压缩
      *
      * @param result
      */
-    fun onCompress(result: ArrayList<LocalMedia?>?)
+    fun onCompress(result: ArrayList<LocalMedia>)
 
     /**
-     * 压缩
+     *
+    compression
      *
      * @param result
      */
     @Deprecated("")
-    fun onOldCompress(result: ArrayList<LocalMedia?>?)
+    fun onOldCompress(result: ArrayList<LocalMedia>)
 
     /**
-     * 验证是否需要裁剪
+     *
+    Verify if clipping is required
      *
      * @return
      */
     fun checkCropValidity(): Boolean
 
     /**
-     * 验证是否需要裁剪
+     *
+    Verify if clipping is required
      *
      * @return
      */
@@ -231,14 +252,15 @@ interface IPictureSelectorCommonEvent {
     fun checkOldCropValidity(): Boolean
 
     /**
-     * 验证是否需要压缩
+     *
+    Verify if compression is required
      *
      * @return
      */
     fun checkCompressValidity(): Boolean
 
     /**
-     * 验证是否需要压缩
+     * Verify if compression is required
      *
      * @return
      */
@@ -246,14 +268,15 @@ interface IPictureSelectorCommonEvent {
     fun checkOldCompressValidity(): Boolean
 
     /**
-     * 验证是否需要做沙盒转换处理
+     *
+    Verify that sandbox conversion processing is required
      *
      * @return
      */
     fun checkTransformSandboxFile(): Boolean
 
     /**
-     * 验证是否需要做沙盒转换处理
+     * Verify that sandbox conversion processing is required
      *
      * @return
      */
@@ -261,46 +284,51 @@ interface IPictureSelectorCommonEvent {
     fun checkOldTransformSandboxFile(): Boolean
 
     /**
-     * 验证是否需要添加水印
+     * Verify if a watermark needs to be added
      *
      * @return
      */
     fun checkAddBitmapWatermark(): Boolean
 
     /**
-     * 验证是否需要处理视频缩略图
+     *
+    Whether permission verification needs to process video thumbnails
      */
     fun checkVideoThumbnail(): Boolean
 
     /**
-     * 权限申请
+     * Access Request
      *
      * @param permissionArray
      */
     fun onApplyPermissionsEvent(event: Int, permissionArray: Array<String>)
 
     /**
-     * 权限说明
      *
-     * @param isDisplayExplain  是否显示权限说明
-     * @param permissionArray   权限组
+    Permission description
+     *
+     * @param isDisplayExplain
+    Whether to show permission description
+     * @param permissionArray
+    Rights Groups
      */
-    fun onPermissionExplainEvent(isDisplayExplain: Boolean, permissionArray: Array<String?>?)
+    fun onPermissionExplainEvent(isDisplayExplain: Boolean, permissionArray: Array<String>)
 
     /**
-     * 拦截相机事件
+     * Intercept camera events
      *
      * @param cameraMode [SelectMimeType]
      */
     fun onInterceptCameraEvent(cameraMode: Int)
 
     /**
-     * 进入Fragment
+     * EnterFragment
      */
     fun onEnterFragment()
 
     /**
-     * 退出Fragment
+     *
+    Exit Fragment
      */
     fun onExitFragment()
 

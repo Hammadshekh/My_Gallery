@@ -13,8 +13,8 @@ import java.util.concurrent.atomic.AtomicLong
 
 object PictureThreadUtils {
     val mainHandler = Handler(Looper.getMainLooper())
-    private val TYPE_PRIORITY_POOLS: MutableMap<Int, MutableMap<Int, ExecutorService?>> = HashMap()
-    private val TASK_POOL_MAP: MutableMap<Task<*>, ExecutorService?> = ConcurrentHashMap()
+    private val TYPE_PRIORITY_POOLS: MutableMap<Int, MutableMap<Int, ExecutorService>> = HashMap()
+    private val TASK_POOL_MAP: MutableMap<Task<*>, ExecutorService> = ConcurrentHashMap()
     private val CPU_COUNT = Runtime.getRuntime().availableProcessors()
     private val TIMER = Timer()
     private const val TYPE_SINGLE: Byte = -1
@@ -121,41 +121,18 @@ object PictureThreadUtils {
      *
      * @return a IO thread pool
      */
-    val ioPool: ExecutorService?
+    val ioPool: ExecutorService
         get() = getPoolByTypeAndPriority(TYPE_IO.toInt())
 
     /**
-     * Return a thread pool that creates (2 * CPU_COUNT + 1) threads
-     * operating off a queue which size is 128.
-     *
-     * @param priority The priority of thread in the poll.
-     * @return a IO thread pool
-     */
-    fun getIoPool(@IntRange(from = 1, to = 10) priority: Int): ExecutorService? {
-        return getPoolByTypeAndPriority(TYPE_IO.toInt(), priority)
-    }
-
-    /**
      * Return a thread pool that creates (CPU_COUNT + 1) threads
      * operating off a queue which size is 128 and the maximum
      * number of threads equals (2 * CPU_COUNT + 1).
      *
      * @return a cpu thread pool for
      */
-    val cpuPool: ExecutorService?
+    val cpuPool: ExecutorService
         get() = getPoolByTypeAndPriority(TYPE_CPU.toInt())
-
-    /**
-     * Return a thread pool that creates (CPU_COUNT + 1) threads
-     * operating off a queue which size is 128 and the maximum
-     * number of threads equals (2 * CPU_COUNT + 1).
-     *
-     * @param priority The priority of thread in the poll.
-     * @return a cpu thread pool for
-     */
-    fun getCpuPool(@IntRange(from = 1, to = 10) priority: Int): ExecutorService? {
-        return getPoolByTypeAndPriority(TYPE_CPU.toInt(), priority)
-    }
 
     /**
      * Executes the given task in a fixed thread pool.
@@ -881,7 +858,7 @@ object PictureThreadUtils {
      * @param task The task to execute.
      * @param <T>  The type of the task's result.
     </T> */
-    fun <T> executeByCustom(pool: ExecutorService?, task: Task<T>) {
+    fun <T> executeByCustom(pool: ExecutorService, task: Task<T>) {
         execute(pool, task)
     }
 
@@ -895,7 +872,7 @@ object PictureThreadUtils {
      * @param <T>   The type of the task's result.
     </T> */
     fun <T> executeByCustomWithDelay(
-        pool: ExecutorService?,
+        pool: ExecutorService,
         task: Task<T>,
         delay: Long,
         unit: TimeUnit,
@@ -913,7 +890,7 @@ object PictureThreadUtils {
      * @param <T>    The type of the task's result.
     </T> */
     fun <T> executeByCustomAtFixRate(
-        pool: ExecutorService?,
+        pool: ExecutorService,
         task: Task<T>,
         period: Long,
         unit: TimeUnit,
@@ -932,7 +909,7 @@ object PictureThreadUtils {
      * @param <T>          The type of the task's result.
     </T> */
     fun <T> executeByCustomAtFixRate(
-        pool: ExecutorService?,
+        pool: ExecutorService,
         task: Task<T>,
         initialDelay: Long,
         period: Long,
@@ -1003,12 +980,12 @@ object PictureThreadUtils {
         sDeliver = deliver
     }
 
-    private fun <T> execute(pool: ExecutorService?, task: Task<T>) {
+    private fun <T> execute(pool: ExecutorService, task: Task<T>) {
         execute(pool, task, 0, 0, null)
     }
 
     private fun <T> executeWithDelay(
-        pool: ExecutorService?,
+        pool: ExecutorService,
         task: Task<T>,
         delay: Long,
         unit: TimeUnit,
@@ -1017,7 +994,7 @@ object PictureThreadUtils {
     }
 
     private fun <T> executeAtFixedRate(
-        pool: ExecutorService?,
+        pool: ExecutorService,
         task: Task<T>,
         delay: Long,
         period: Long,
@@ -1027,7 +1004,7 @@ object PictureThreadUtils {
     }
 
     private fun <T> execute(
-        pool: ExecutorService?, task: Task<T>,
+        pool: ExecutorService, task: Task<T>,
         delay: Long, period: Long, unit: TimeUnit?,
     ) {
         synchronized(TASK_POOL_MAP) {
@@ -1039,11 +1016,11 @@ object PictureThreadUtils {
         }
         if (period == 0L) {
             if (delay == 0L) {
-                pool!!.execute(task)
+                pool.execute(task)
             } else {
                 val timerTask: TimerTask = object : TimerTask() {
                     override fun run() {
-                        pool!!.execute(task)
+                        pool.execute(task)
                     }
                 }
                 TIMER.schedule(timerTask, unit!!.toMillis(delay))
@@ -1052,20 +1029,20 @@ object PictureThreadUtils {
             task.setSchedule(true)
             val timerTask: TimerTask = object : TimerTask() {
                 override fun run() {
-                    pool!!.execute(task)
+                    pool.execute(task)
                 }
             }
             TIMER.scheduleAtFixedRate(timerTask, unit!!.toMillis(delay), unit.toMillis(period))
         }
     }
 
-    private fun getPoolByTypeAndPriority(type: Int): ExecutorService? {
+    private fun getPoolByTypeAndPriority(type: Int): ExecutorService {
         return getPoolByTypeAndPriority(type, Thread.NORM_PRIORITY)
     }
 
-    private fun getPoolByTypeAndPriority(type: Int, priority: Int): ExecutorService? {
+    private fun getPoolByTypeAndPriority(type: Int, priority: Int): ExecutorService {
         synchronized(TYPE_PRIORITY_POOLS) {
-            var pool: ExecutorService
+            var pool: ExecutorService?
             var priorityPools =
                 TYPE_PRIORITY_POOLS[type]
             if (priorityPools == null) {
@@ -1093,7 +1070,7 @@ object PictureThreadUtils {
             return sDeliver
         }
 
-    internal class ThreadPoolExecutor4Util(
+    internal class ThreadPoolExecutor4Util private constructor(
         corePoolSize: Int, maximumPoolSize: Int,
         keepAliveTime: Long, unit: TimeUnit?,
         workQueue: LinkedBlockingQueue4Util,
@@ -1128,24 +1105,24 @@ object PictureThreadUtils {
         }
 
         companion object {
-            private fun createPool(type: Int, priority: Int): ExecutorService {
+            fun createPool(type: Int, priority: Int): ExecutorService {
                 return when (type) {
-                    TYPE_SINGLE -> ThreadPoolExecutor4Util(1, 1,
+                    TYPE_SINGLE.toInt() -> ThreadPoolExecutor4Util(1, 1,
                         0L, TimeUnit.MILLISECONDS,
                         LinkedBlockingQueue4Util(),
                         UtilsThreadFactory("single", priority)
                     )
-                    TYPE_CACHED -> ThreadPoolExecutor4Util(0, 128,
+                    TYPE_CACHED.toInt() -> ThreadPoolExecutor4Util(0, 128,
                         60L, TimeUnit.SECONDS,
                         LinkedBlockingQueue4Util(true),
                         UtilsThreadFactory("cached", priority)
                     )
-                    TYPE_IO -> ThreadPoolExecutor4Util(2 * CPU_COUNT + 1, 2 * CPU_COUNT + 1,
+                    TYPE_IO.toInt() -> ThreadPoolExecutor4Util(2 * CPU_COUNT + 1, 2 * CPU_COUNT + 1,
                         30, TimeUnit.SECONDS,
                         LinkedBlockingQueue4Util(),
                         UtilsThreadFactory("io", priority)
                     )
-                    TYPE_CPU -> ThreadPoolExecutor4Util(CPU_COUNT + 1, 2 * CPU_COUNT + 1,
+                    TYPE_CPU.toInt() -> ThreadPoolExecutor4Util(CPU_COUNT + 1, 2 * CPU_COUNT + 1,
                         30, TimeUnit.SECONDS,
                         LinkedBlockingQueue4Util(true),
                         UtilsThreadFactory("cpu", priority)
@@ -1166,8 +1143,9 @@ object PictureThreadUtils {
     }
 
     private class LinkedBlockingQueue4Util : LinkedBlockingQueue<Runnable?> {
+
         @Volatile
-        private val mPool: ThreadPoolExecutor4Util? = null
+        var mPool: ThreadPoolExecutor4Util? = null
         private var mCapacity = Int.MAX_VALUE
 
         internal constructor() : super() {}
@@ -1181,26 +1159,25 @@ object PictureThreadUtils {
             mCapacity = capacity
         }
 
-        override fun offer(runnable: Runnable): Boolean {
-            return if (mCapacity <= size && mPool != null && mPool.poolSize < mPool.maximumPoolSize
-            ) {
+        override fun offer(runnable: Runnable?): Boolean {
+            return if (mCapacity <= size && mPool != null && mPool?.poolSize ?: 0 < mPool?.maximumPoolSize ?: 0) {
                 // create a non-core thread
                 false
             } else super.offer(runnable)
         }
+
     }
 
     internal class UtilsThreadFactory @JvmOverloads constructor(
         prefix: String,
         priority: Int,
         isDaemon: Boolean = false,
-    ) :
-        AtomicLong(), ThreadFactory {
+    ) : ThreadFactory {
         private val namePrefix: String
         private val priority: Int
         private val isDaemon: Boolean
         override fun newThread(r: Runnable): Thread {
-            val t: Thread = object : Thread(r, namePrefix + andIncrement) {
+            val t: Thread = object : Thread(r, namePrefix + System.currentTimeMillis()) {
                 override fun run() {
                     try {
                         super.run()
@@ -1352,7 +1329,7 @@ object PictureThreadUtils {
             return this
         }
 
-        private fun setSchedule(isSchedule: Boolean) {
+        fun setSchedule(isSchedule: Boolean) {
             this.isSchedule = isSchedule
         }
 

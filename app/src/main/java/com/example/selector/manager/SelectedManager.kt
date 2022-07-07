@@ -1,5 +1,7 @@
 package com.example.selector.manager
 
+import com.example.selector.entity.LocalMediaFolder
+import com.luck.picture.lib.entity.LocalMedia
 import java.util.ArrayList
 
 object SelectedManager {
@@ -11,7 +13,7 @@ object SelectedManager {
     /**
      * selected result
      */
-    private val selectedResult: ArrayList<LocalMedia> = ArrayList<LocalMedia>()
+    val selectedResult: ArrayList<LocalMedia> = ArrayList<LocalMedia>()
     @Synchronized
     fun addSelectResult(media: LocalMedia) {
         selectedResult.add(media)
@@ -22,15 +24,10 @@ object SelectedManager {
         selectedResult.addAll(result!!)
     }
 
-    @Synchronized
-    fun getSelectedResult(): ArrayList<LocalMedia> {
-        return selectedResult
-    }
-
     val selectCount: Int
         get() = selectedResult.size
     val topResultMimeType: String
-        get() = if (selectedResult.size > 0) selectedResult[0].getMimeType() else ""
+        get() = if (selectedResult.size > 0) selectedResult[0].mimeType.toString() else ""
 
     @Synchronized
     fun clearSelectResult() {
@@ -61,10 +58,7 @@ object SelectedManager {
     /**
      * all data source
      */
-    private val dataSource: ArrayList<LocalMedia> = ArrayList<LocalMedia>()
-    fun getDataSource(): ArrayList<LocalMedia> {
-        return dataSource
-    }
+    val dataSource: ArrayList<LocalMedia> = ArrayList<LocalMedia>()
 
     fun addDataSource(list: ArrayList<LocalMedia>?) {
         if (list != null) {
@@ -82,10 +76,7 @@ object SelectedManager {
     /**
      * all album data source
      */
-    private val albumDataSource: ArrayList<LocalMediaFolder> = ArrayList<LocalMediaFolder>()
-    fun getAlbumDataSource(): ArrayList<LocalMediaFolder> {
-        return albumDataSource
-    }
+    val albumDataSource: ArrayList<LocalMediaFolder> = ArrayList<LocalMediaFolder>()
 
     fun addAlbumDataSource(list: List<LocalMediaFolder>?) {
         if (list != null) {

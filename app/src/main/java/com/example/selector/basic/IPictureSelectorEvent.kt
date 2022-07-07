@@ -2,7 +2,8 @@ package com.example.selector.basic
 
 interface IPictureSelectorEvent {
     /**
-     * 获取相册目录
+     *
+    Get album directory
      */
     fun loadAllAlbumData()
 

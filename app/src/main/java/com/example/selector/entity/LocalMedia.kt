@@ -209,7 +209,7 @@ class LocalMedia : Parcelable {
     private var isEditorImage = false
 
     constructor() {}
-    protected constructor(`in`: Parcel) {
+    private constructor(`in`: Parcel) {
         id = `in`.readLong()
         path = `in`.readString()
         realPath = `in`.readString()
@@ -304,11 +304,10 @@ class LocalMedia : Parcelable {
     override fun equals(o: Any?): Boolean {
         if (this === o) return true
         if (o !is LocalMedia) return false
-        val media = o
-        val isCompare = (TextUtils.equals(path, media.path)
-                || TextUtils.equals(realPath, media.realPath)
-                || id == media.id)
-        compareLocalMedia = if (isCompare) media else null
+        val isCompare = (TextUtils.equals(path, o.path)
+                || TextUtils.equals(realPath, o.realPath)
+                || id == o.id)
+        compareLocalMedia = if (isCompare) o else null
         return isCompare
     }
 
@@ -317,7 +316,7 @@ class LocalMedia : Parcelable {
      *
      * @return
      */
-    val availablePath: String?
+    val availablePath: String
         get() {
             var path = path
             if (isCut()) {
@@ -335,7 +334,7 @@ class LocalMedia : Parcelable {
             if (isWatermarkPath()) {
                 path = getWatermarkPath()
             }
-            return path
+            return path!!
         }
 
     fun isCut(): Boolean {
@@ -401,8 +400,8 @@ class LocalMedia : Parcelable {
     }
 
     companion object {
-        val CREATOR: Creator<LocalMedia?> = object : Creator<LocalMedia?> {
-            override fun createFromParcel(`in`: Parcel): LocalMedia? {
+        val CREATOR: Creator<LocalMedia> = object : Creator<LocalMedia> {
+            override fun createFromParcel(`in`: Parcel): LocalMedia {
                 return LocalMedia(`in`)
             }
 

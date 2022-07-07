@@ -2,6 +2,7 @@ package com.example.selector.engine
 
 import android.content.Context
 import android.net.Uri
+import com.example.selector.interfaces.OnKeyValueResultCallbackListener
 import java.util.ArrayList
 
 interface CompressFileEngine {
@@ -18,7 +19,7 @@ interface CompressFileEngine {
      */
     fun onStartCompress(
         context: Context?,
-        source: ArrayList<Uri?>?,
+        source: ArrayList<Uri>,
         call: OnKeyValueResultCallbackListener?,
     )
 }

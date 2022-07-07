@@ -4,18 +4,20 @@ import android.os.Parcel
 import android.os.Parcelable
 import android.os.Parcelable.Creator
 import android.text.TextUtils
+import com.example.selector.config.PictureConfig
+import com.luck.picture.lib.entity.LocalMedia
 import java.util.ArrayList
 
-class LocalMediaFolder : Parcelable {
+open class LocalMediaFolder : Parcelable {
     /**
      * folder bucketId
      */
-    var bucketId: Long = PictureConfig.ALL
+    var bucketId: Long = PictureConfig.ALL.toLong()
 
     /**
      * folder name
      */
-    private var folderName: String? = null
+    var folderName: String? = null
 
     /**
      * folder first path
@@ -44,7 +46,7 @@ class LocalMediaFolder : Parcelable {
      * In isPageStrategy mode, there is no data for the first time
      *
      */
-    private var data: ArrayList<LocalMedia>? = ArrayList()
+    var data: ArrayList<LocalMedia>? = ArrayList()
 
     /**
      * # Internal use
@@ -59,7 +61,7 @@ class LocalMediaFolder : Parcelable {
     var isHasMore = false
 
     constructor() {}
-    protected constructor(`in`: Parcel) {
+    private constructor(`in`: Parcel) {
         bucketId = `in`.readLong()
         folderName = `in`.readString()
         firstImagePath = `in`.readString()
@@ -104,7 +106,7 @@ class LocalMediaFolder : Parcelable {
     }
 
     companion object {
-        val CREATOR: Creator<LocalMediaFolder> = object : Creator<LocalMediaFolder?> {
+        val CREATOR: Creator<LocalMediaFolder?> = object : Creator<LocalMediaFolder?> {
             override fun createFromParcel(`in`: Parcel): LocalMediaFolder? {
                 return LocalMediaFolder(`in`)
             }
@@ -112,6 +114,16 @@ class LocalMediaFolder : Parcelable {
             override fun newArray(size: Int): Array<LocalMediaFolder?> {
                 return arrayOfNulls(size)
             }
+        }
+    }
+
+    object CREATOR : Creator<LocalMediaFolder> {
+        override fun createFromParcel(parcel: Parcel): LocalMediaFolder {
+            return LocalMediaFolder(parcel)
+        }
+
+        override fun newArray(size: Int): Array<LocalMediaFolder?> {
+            return arrayOfNulls(size)
         }
     }
 }

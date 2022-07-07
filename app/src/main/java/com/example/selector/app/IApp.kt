@@ -1,6 +1,7 @@
 package com.example.selector.app
 
 import android.content.Context
+import com.example.selector.engine.PictureSelectorEngine
 
 interface IApp {
     /**

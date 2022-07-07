@@ -1,6 +1,11 @@
 package com.example.selector.engine
 
 import android.content.Context
+import com.example.selector.entity.LocalMediaFolder
+import com.example.selector.interfaces.OnQueryAlbumListener
+import com.example.selector.interfaces.OnQueryAllAlbumListener
+import com.example.selector.interfaces.OnQueryDataResultListener
+import com.luck.picture.lib.entity.LocalMedia
 
 interface ExtendLoaderEngine {
     /**
@@ -19,7 +24,7 @@ interface ExtendLoaderEngine {
      * @param context
      * @param query
      */
-    fun loadAllAlbumData(context: Context?, query: OnQueryAllAlbumListener<LocalMediaFolder?>?)
+    fun loadAllAlbumData(context: Context?, query: OnQueryAllAlbumListener<LocalMediaFolder>)
 
     /**
      * load resources in the specified directory
@@ -39,7 +44,7 @@ interface ExtendLoaderEngine {
      */
     fun loadOnlyInAppDirAllMediaData(
         context: Context?,
-        query: OnQueryAlbumListener<LocalMediaFolder?>?,
+        query: OnQueryAlbumListener<LocalMediaFolder>,
     )
 
     /**
@@ -68,7 +73,7 @@ interface ExtendLoaderEngine {
      */
     fun loadFirstPageMediaData(
         context: Context?, bucketId: Long, page: Int, pageSize: Int,
-        query: OnQueryDataResultListener<LocalMedia?>?,
+        query: OnQueryDataResultListener<LocalMedia>,
     )
 
     /**
@@ -99,6 +104,6 @@ interface ExtendLoaderEngine {
     </LocalMedia> */
     fun loadMoreMediaData(
         context: Context?, bucketId: Long, page: Int, limit: Int, pageSize: Int,
-        query: OnQueryDataResultListener<LocalMedia?>?,
+        query: OnQueryDataResultListener<LocalMedia>,
     )
 }

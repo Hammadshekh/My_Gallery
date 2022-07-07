@@ -12,7 +12,9 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mygallery.R
 import com.example.selector.adapter.PictureImageGridAdapter
-import com.example.selector.config.PictureMimeType
+import com.example.selector.config.PictureMimeType.isHasAudio
+import com.example.selector.config.PictureMimeType.isHasImage
+import com.example.selector.config.PictureMimeType.isHasVideo
 import com.example.selector.config.PictureSelectionConfig
 import com.example.selector.config.SelectModeConfig
 import com.example.selector.manager.SelectedManager
@@ -20,24 +22,21 @@ import com.example.selector.style.SelectMainStyle
 import com.example.selector.utils.AnimUtils
 import com.example.selector.utils.StyleUtils
 import com.example.selector.utils.ValueOf
-import com.example.ucrop.utils.FileUtils.isHasAudio
-import com.example.ucrop.utils.FileUtils.isHasImage
-import com.example.ucrop.utils.FileUtils.isHasVideo
 import com.luck.picture.lib.entity.LocalMedia
 
 open class BaseRecyclerMediaHolder : RecyclerView.ViewHolder {
     var ivPicture: ImageView? = null
-    var tvCheck: TextView? = null
-    var btnCheck: View? = null
+    private var tvCheck: TextView? = null
+    private var btnCheck: View? = null
     var mContext: Context? = null
     var config: PictureSelectionConfig? = null
-    var isSelectNumberStyle = false
-    var isHandleMask = false
+    private var isSelectNumberStyle = false
+    private var isHandleMask = false
     private var defaultColorFilter: ColorFilter? = null
     private var selectColorFilter: ColorFilter? = null
     private var maskWhiteColorFilter: ColorFilter? = null
 
-    constructor(itemView: View) : super(itemView) {}
+    constructor(itemView: View) : super(itemView)
     constructor(itemView: View, config: PictureSelectionConfig) : super(itemView) {
         this.config = config
         mContext = itemView.context
@@ -45,7 +44,7 @@ open class BaseRecyclerMediaHolder : RecyclerView.ViewHolder {
         selectColorFilter = StyleUtils.getColorFilter(mContext, R.color.ps_color_80)
         maskWhiteColorFilter = StyleUtils.getColorFilter(mContext, R.color.ps_color_half_white)
         val selectMainStyle: SelectMainStyle =
-            PictureSelectionConfig.selectorStyle.getSelectMainStyle()
+            PictureSelectionConfig.selectorStyle?.selectMainStyle!!
         isSelectNumberStyle = selectMainStyle.isSelectNumberStyle
         ivPicture = itemView.findViewById(R.id.ivPicture)
         tvCheck = itemView.findViewById(R.id.tvCheck)
@@ -157,16 +156,16 @@ open class BaseRecyclerMediaHolder : RecyclerView.ViewHolder {
     }
 
     /**
-     * 加载资源封面
-     */
+     *Load resource cover
+     * */
     protected open fun loadCover(path: String?) {
         if (PictureSelectionConfig.imageEngine != null) {
-            PictureSelectionConfig.imageEngine.loadGridImage(ivPicture!!.context, path, ivPicture)
+            PictureSelectionConfig.imageEngine!!.loadGridImage(ivPicture!!.context, path, ivPicture)
         }
     }
 
     /**
-     * 处理到达选择条件后的蒙层效果
+     * Process the masking effect after reaching the selection condition
      */
     private fun dispatchHandleMask(media: LocalMedia) {
         var isEnabledMask = false
@@ -208,7 +207,7 @@ open class BaseRecyclerMediaHolder : RecyclerView.ViewHolder {
     }
 
     /**
-     * 设置选中缩放动画
+     * Set selected zoom animation
      *
      * @param isChecked
      */
@@ -224,7 +223,8 @@ open class BaseRecyclerMediaHolder : RecyclerView.ViewHolder {
     }
 
     /**
-     * 检查LocalMedia是否被选中
+     *
+    Check if LocalMedia is selected
      *
      * @param currentMedia
      * @return
@@ -234,7 +234,7 @@ open class BaseRecyclerMediaHolder : RecyclerView.ViewHolder {
         val isSelected = selectedResult.contains(currentMedia)
         if (isSelected) {
             val compare: LocalMedia = currentMedia.compareLocalMedia!!
-            if (compare != null && compare.isEditorImage()) {
+            if (compare.isEditorImage()) {
                 currentMedia.cutPath = (compare.cutPath)
                 currentMedia.setCut(!TextUtils.isEmpty(compare.cutPath))
                 currentMedia.setEditorImage(compare.isEditorImage())
@@ -244,12 +244,12 @@ open class BaseRecyclerMediaHolder : RecyclerView.ViewHolder {
     }
 
     /**
-     * 对选择数量进行编号排序
+     * Sort selections by number
      */
     private fun notifySelectNumberStyle(currentMedia: LocalMedia) {
         tvCheck!!.text = ""
         for (i in 0 until SelectedManager.selectCount) {
-            val media: LocalMedia = SelectedManager.getSelectedResult().get(i)
+            val media: LocalMedia = SelectedManager.getSelectedResult()[i]
             if (TextUtils.equals(media.getPath(), currentMedia.getPath())
                 || media.id == currentMedia.id
             ) {

@@ -47,7 +47,7 @@ class PictureOnlyCameraFragment : PictureCommonFragment() {
         }
     }
 
-    fun handlePermissionSettingResult(permissions: Array<String?>?) {
+    fun handlePermissionSettingResult(permissions: Array<String>) {
         onPermissionExplainEvent(false, null)
         var isHasPermissions: Boolean
         if (PictureSelectionConfig.onPermissionsEventListener != null) {

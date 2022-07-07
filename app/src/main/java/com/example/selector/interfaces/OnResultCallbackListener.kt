@@ -1,8 +1,10 @@
 package com.example.selector.interfaces
 
+import com.luck.picture.lib.entity.LocalMedia
 import java.util.*
 
-interface OnResultCallbackListener<T> {
+interface OnResultCallbackListener<T> : OnResultCallbackListener<LocalMedia>,
+    OnResultCallbackListener<LocalMedia> {
     /**
      * return LocalMedia result
      *

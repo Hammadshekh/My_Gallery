@@ -33,10 +33,10 @@ interface CropFileEngine {
      * @param requestCode    Activity result code or fragment result code
      */
     fun onStartCrop(
-        fragment: Fragment?,
+        fragment: Fragment,
         srcUri: Uri?,
         destinationUri: Uri?,
-        dataSource: ArrayList<String?>?,
+        dataSource: ArrayList<String>,
         requestCode: Int,
     )
 }

@@ -1,6 +1,8 @@
 package com.example.selector.config
 
 object SelectMimeType {
+ /*   lateinit var SYSTEM_IMAGE: String
+    lateinit var SYSTEM_VIDEO : String*/
     /**
      * GET image or video only
      *
@@ -44,22 +46,20 @@ object SelectMimeType {
     const val TYPE_IMAGE = 1
     const val TYPE_VIDEO = 2
     const val TYPE_AUDIO = 3
-
-    /**
-     * System all image or video album
-     */
-    const val SYSTEM_ALL = SYSTEM_IMAGE + "," + SYSTEM_VIDEO
-
     /**
      * System image album
      */
     const val SYSTEM_IMAGE = "image/*"
-
     /**
      * System video album
      */
     const val SYSTEM_VIDEO = "video/*"
 
+    /**
+     * System all image or video album
+     */
+    const val SYSTEM_ALL = SYSTEM_IMAGE +
+            ",$SYSTEM_VIDEO"
     /**
      * System audio album
      */

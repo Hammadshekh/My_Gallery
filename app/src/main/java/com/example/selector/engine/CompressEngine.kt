@@ -1,6 +1,8 @@
 package com.example.selector.engine
 
 import android.content.Context
+import com.example.selector.interfaces.OnCallbackListener
+import com.luck.picture.lib.entity.LocalMedia
 import java.util.ArrayList
 
 interface CompressEngine {
@@ -30,7 +32,7 @@ interface CompressEngine {
      */
     fun onStartCompress(
         context: Context?,
-        list: ArrayList<LocalMedia?>?,
-        listener: OnCallbackListener<ArrayList<LocalMedia?>?>?,
+        list: ArrayList<LocalMedia>,
+        listener: OnCallbackListener<ArrayList<LocalMedia>>,
     )
 }

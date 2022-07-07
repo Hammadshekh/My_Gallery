@@ -270,13 +270,13 @@ class UCropFragment() : Fragment() {
                 mWrapperStateAspectRatio!!.visibility = View.GONE
             }
             val targetAspectRatio = aspectRatioX / aspectRatioY
-            mGestureCropImageView?.setTargetAspectRatio(if (java.lang.Float.isNaN(targetAspectRatio)) CropImageView.SOURCE_IMAGE_ASPECT_RATIO else targetAspectRatio)
+            mGestureCropImageView?.targetAspectRatio = (if (java.lang.Float.isNaN(targetAspectRatio)) CropImageView.SOURCE_IMAGE_ASPECT_RATIO else targetAspectRatio)
         } else if (aspectRatioList != null && aspectRationSelectedByDefault < aspectRatioList.size) {
             val targetAspectRatio: Float =
                 aspectRatioList[aspectRationSelectedByDefault].getAspectRatioX() / aspectRatioList[aspectRationSelectedByDefault].getAspectRatioY()
-            mGestureCropImageView?.setTargetAspectRatio(if (java.lang.Float.isNaN(targetAspectRatio)) CropImageView.SOURCE_IMAGE_ASPECT_RATIO else targetAspectRatio)
+            mGestureCropImageView?.targetAspectRatio = (if (java.lang.Float.isNaN(targetAspectRatio)) CropImageView.SOURCE_IMAGE_ASPECT_RATIO else targetAspectRatio)
         } else {
-            mGestureCropImageView?.setTargetAspectRatio(CropImageView.SOURCE_IMAGE_ASPECT_RATIO)
+            mGestureCropImageView?.targetAspectRatio = (CropImageView.SOURCE_IMAGE_ASPECT_RATIO)
         }
 
         // Result bitmap max size options
@@ -373,14 +373,14 @@ class UCropFragment() : Fragment() {
             wrapperAspectRatio.layoutParams = lp
             aspectRatioTextView = (wrapperAspectRatio.getChildAt(0) as AspectRatioTextView)
             aspectRatioTextView.setActiveColor(mActiveControlsWidgetColor)
-            aspectRatioTextView.setAspectRatio(aspectRatio)
+            aspectRatio?.let { aspectRatioTextView.setAspectRatio(it) }
             wrapperAspectRatioList.addView(wrapperAspectRatio)
             mCropAspectRatioViews.add(wrapperAspectRatio)
         }
         mCropAspectRatioViews.get(aspectRationSelectedByDefault).isSelected = true
         for (cropAspectRatioView: ViewGroup in mCropAspectRatioViews) {
             cropAspectRatioView.setOnClickListener { v ->
-                mGestureCropImageView?.setTargetAspectRatio(
+                mGestureCropImageView?.targetAspectRatio = (
                     ((v as ViewGroup).getChildAt(0) as AspectRatioTextView).getAspectRatio(v.isSelected()))
                 mGestureCropImageView?.setImageToWrapCropBounds()
                 if (!v.isSelected) {

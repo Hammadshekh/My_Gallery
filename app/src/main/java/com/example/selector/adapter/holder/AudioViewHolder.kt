@@ -15,7 +15,7 @@ class AudioViewHolder(itemView: View, config: PictureSelectionConfig?) :
     private val tvDuration: TextView = itemView.findViewById(R.id.tv_duration)
     override fun bindData(media: LocalMedia, position: Int) {
         super.bindData(media, position)
-        tvDuration.setText(DateUtils.formatDurationTime(media.duration))
+        tvDuration.text = DateUtils.formatDurationTime(media.duration)
     }
 
      override fun loadCover(path: String?) {
@@ -24,7 +24,7 @@ class AudioViewHolder(itemView: View, config: PictureSelectionConfig?) :
 
     init {
         val adapterStyle: SelectMainStyle =
-            PictureSelectionConfig.selectorStyle.getSelectMainStyle()
+            PictureSelectionConfig.selectorStyle?.selectMainStyle!!
         val drawableLeft: Int = adapterStyle.adapterDurationDrawableLeft
         if (StyleUtils.checkStyleValidity(drawableLeft)) {
             tvDuration.setCompoundDrawablesRelativeWithIntrinsicBounds(drawableLeft, 0, 0, 0)

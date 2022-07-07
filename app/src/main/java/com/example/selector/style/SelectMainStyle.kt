@@ -166,7 +166,7 @@ class SelectMainStyle : Parcelable {
      * 勾选样式位置
      * []
      */
-    var adapterSelectStyleGravity: IntArray?
+    var adapterSelectStyleGravity: IntArray? = null
 
     /**
      * 资源类型标识
@@ -187,7 +187,7 @@ class SelectMainStyle : Parcelable {
      * 时长文字位置
      * []
      */
-    var adapterDurationGravity: IntArray?
+    var adapterDurationGravity: IntArray? = null
 
     /**
      * 时长文字阴影背景
@@ -238,7 +238,7 @@ class SelectMainStyle : Parcelable {
      * 资源标识的位置
      * []
      */
-    var adapterTagGravity: IntArray?
+    var adapterTagGravity: IntArray? = null
 
     /**
      * 图片被编辑标识
@@ -249,7 +249,7 @@ class SelectMainStyle : Parcelable {
      * 图片被编辑标识位置
      * []
      */
-    var adapterImageEditorGravity: IntArray?
+    var adapterImageEditorGravity: IntArray? = null
 
     /**
      * 预览页画廊边框样式
@@ -380,7 +380,8 @@ class SelectMainStyle : Parcelable {
     }
 
     companion object {
-        val CREATOR: Creator<SelectMainStyle> = object : Creator<SelectMainStyle?> {
+        @JvmField
+        val CREATOR: Creator<SelectMainStyle?> = object : Creator<SelectMainStyle?> {
             override fun createFromParcel(`in`: Parcel): SelectMainStyle? {
                 return SelectMainStyle(`in`)
             }

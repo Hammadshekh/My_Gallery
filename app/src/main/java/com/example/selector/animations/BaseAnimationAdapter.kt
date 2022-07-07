@@ -8,7 +8,7 @@ import android.view.animation.LinearInterpolator
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.AdapterDataObserver
 
-abstract class BaseAnimationAdapter(val wrappedAdapter: RecyclerView.Adapter<RecyclerView.ViewHolder>) :
+abstract class BaseAnimationAdapter(private val wrappedAdapter: RecyclerView.Adapter<*>?) :
     RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private var mDuration = 250
     private var mInterpolator: Interpolator = LinearInterpolator()
@@ -83,7 +83,7 @@ abstract class BaseAnimationAdapter(val wrappedAdapter: RecyclerView.Adapter<Rec
         mLastPosition = start
     }
 
-    protected abstract fun getAnimators(view: View?): Array<Animator>
+    abstract fun getAnimators(view: View?): Array<Animator>
     fun setFirstOnly(firstOnly: Boolean) {
         isFirstOnly = firstOnly
     }
@@ -96,3 +96,4 @@ abstract class BaseAnimationAdapter(val wrappedAdapter: RecyclerView.Adapter<Rec
         return wrappedAdapter.getItemId(position)
     }
 }
+

@@ -4,9 +4,18 @@ import android.content.pm.ActivityInfo
 import android.os.Parcel
 import android.os.Parcelable
 import android.os.Parcelable.Creator
+import com.example.selector.basic.*
+import com.example.selector.engine.*
+import com.example.selector.interfaces.*
+import com.example.selector.magical.BuildRecycleItemViewParams
+import com.example.selector.manager.SelectedManager
+import com.example.selector.style.PictureSelectorStyle
+import com.example.selector.threads.PictureThreadUtils
+import com.example.selector.utils.SdkVersionUtils
+import com.luck.picture.lib.entity.LocalMedia
 import java.util.ArrayList
 
-class PictureSelectionConfig : Parcelable {
+class PictureSelectionConfig() : Parcelable {
     var chooseMode = 0
     var isOnlyCamera = false
     var isDirectReturnSingle = false
@@ -57,7 +66,7 @@ class PictureSelectionConfig : Parcelable {
     var outPutCameraDir: String? = null
     var outPutAudioDir: String? = null
     var sandboxDir: String? = null
-    var originalPath: String? = null
+    private var originalPath: String? = null
     var cameraPath: String? = null
     var sortOrder: String? = null
     var defaultAlbumName: String? = null
@@ -69,7 +78,7 @@ class PictureSelectionConfig : Parcelable {
     var isAutomaticTitleRecyclerTop = false
     var isQuickCapture = false
     var isCameraRotateImage = false
-    var isAutoRotating = false
+    private var isAutoRotating = false
     var isSyncCover = false
     var ofAllCameraType = 0
     var isOnlySandboxDir = false
@@ -90,8 +99,10 @@ class PictureSelectionConfig : Parcelable {
     var isFilterSizeDuration = false
     var isAllFilesAccess = false
     var isPageSyncAsCount = false
+    private var isPauseResumePlay = false
+    private var isEnableVideoSize = false
 
-    protected constructor(`in`: Parcel) {
+    constructor(`in`: Parcel) : this() {
         chooseMode = `in`.readInt()
         isOnlyCamera = `in`.readByte().toInt() != 0
         isDirectReturnSingle = `in`.readByte().toInt() != 0
@@ -175,6 +186,8 @@ class PictureSelectionConfig : Parcelable {
         isFilterSizeDuration = `in`.readByte().toInt() != 0
         isAllFilesAccess = `in`.readByte().toInt() != 0
         isPageSyncAsCount = `in`.readByte().toInt() != 0
+        isPauseResumePlay = `in`.readByte().toInt() != 0
+        isEnableVideoSize = `in`.readByte().toInt() != 0
     }
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
@@ -261,6 +274,8 @@ class PictureSelectionConfig : Parcelable {
         dest.writeByte((if (isFilterSizeDuration) 1 else 0).toByte())
         dest.writeByte((if (isAllFilesAccess) 1 else 0).toByte())
         dest.writeByte((if (isPageSyncAsCount) 1 else 0).toByte())
+        dest.writeByte((if (isPauseResumePlay) 1 else 0).toByte())
+        dest.writeByte((if (isEnableVideoSize) 1 else 0).toByte())
     }
 
     override fun describeContents(): Int {
@@ -326,7 +341,7 @@ class PictureSelectionConfig : Parcelable {
         isQuickCapture = true
         isCameraRotateImage = true
         isAutoRotating = true
-        isSyncCover = !SdkVersionUtils.isQ()
+        isSyncCover = !SdkVersionUtils.isQ
         ofAllCameraType = SelectMimeType.ofAll()
         isOnlySandboxDir = false
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
@@ -352,9 +367,10 @@ class PictureSelectionConfig : Parcelable {
         isFilterSizeDuration = true
         isAllFilesAccess = false
         isPageSyncAsCount = false
+        isPauseResumePlay = false
+        isEnableVideoSize = true
     }
 
-    constructor() {}
 
     companion object {
         var imageEngine: ImageEngine? = null
@@ -365,11 +381,13 @@ class PictureSelectionConfig : Parcelable {
         var sandboxFileEngine: SandboxFileEngine? = null
         var uriToFileTransformEngine: UriToFileTransformEngine? = null
         var loaderDataEngine: ExtendLoaderEngine? = null
+        var videoPlayerEngine: VideoPlayerEngine<*> ?= null
         var selectorStyle: PictureSelectorStyle? = null
         var onCameraInterceptListener: OnCameraInterceptListener? = null
         var onSelectLimitTipsListener: OnSelectLimitTipsListener? = null
         var onResultCallListener: OnResultCallbackListener<LocalMedia>? = null
-        var onExternalPreviewEventListener: OnExternalPreviewEventListener? = null
+        private var onExternalPreviewEventListener: OnExternalPreviewEventListener? = null
+        private var onInjectActivityPreviewListener: OnInjectActivityPreviewListener? = null
         var onEditMediaEventListener: OnMediaEditInterceptListener? = null
         var onPermissionsEventListener: OnPermissionsInterceptListener? = null
         var onLayoutResourceListener: OnInjectLayoutResourceListener? = null
@@ -384,8 +402,11 @@ class PictureSelectionConfig : Parcelable {
         var viewLifecycle: IBridgeViewLifecycle? = null
         var loaderFactory: IBridgeLoaderFactory? = null
         var interpolatorFactory: InterpolatorFactory? = null
-        val CREATOR: Creator<PictureSelectionConfig> = object : Creator<PictureSelectionConfig?> {
-            override fun createFromParcel(`in`: Parcel): PictureSelectionConfig? {
+        private var onItemSelectAnimListener: OnGridItemSelectAnimListener? = null
+        var onSelectAnimListener: OnSelectAnimListener? = null
+        @JvmField
+        val CREATOR: Creator<PictureSelectionConfig?> = object : Creator<PictureSelectionConfig?> {
+            override fun createFromParcel(`in`: Parcel): PictureSelectionConfig {
                 return PictureSelectionConfig(`in`)
             }
 
@@ -393,7 +414,7 @@ class PictureSelectionConfig : Parcelable {
                 return arrayOfNulls(size)
             }
         }
-        val cleanInstance: PictureSelectionConfig?
+        val cleanInstance: PictureSelectionConfig
             get() {
                 val selectionSpec = instance
                 selectionSpec!!.initDefaultValue()
@@ -430,6 +451,7 @@ class PictureSelectionConfig : Parcelable {
             onResultCallListener = null
             onCameraInterceptListener = null
             onExternalPreviewEventListener = null
+            onInjectActivityPreviewListener = null
             onEditMediaEventListener = null
             onPermissionsEventListener = null
             onLayoutResourceListener = null
@@ -445,11 +467,16 @@ class PictureSelectionConfig : Parcelable {
             viewLifecycle = null
             loaderFactory = null
             interpolatorFactory = null
-            PictureThreadUtils.cancel(PictureThreadUtils.getIoPool())
+            onItemSelectAnimListener = null
+            onSelectAnimListener = null
+            videoPlayerEngine = null
+            PictureThreadUtils.cancel(PictureThreadUtils.ioPool)
             SelectedManager.clearSelectResult()
             BuildRecycleItemViewParams.clear()
             LocalMedia.destroyPool()
-            SelectedManager.setCurrentLocalMediaFolder(null)
+            SelectedManager.currentLocalMediaFolder = (null)
         }
     }
 }
+
+
