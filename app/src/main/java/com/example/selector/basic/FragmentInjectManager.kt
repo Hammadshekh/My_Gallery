@@ -4,7 +4,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
 import com.example.mygallery.R
-import com.example.selector.PictureSelectorPreviewFragment
+import com.example.selector.config.PictureSelectionConfig
 import com.example.selector.utils.ActivityCompatHelper
 
 object FragmentInjectManager {
@@ -18,7 +18,7 @@ object FragmentInjectManager {
     fun injectFragment(
         activity: FragmentActivity,
         targetFragmentTag: String?,
-        targetFragment: PictureSelectorPreviewFragment,
+        targetFragment: PictureSelectionConfig?,
     ) {
         if (ActivityCompatHelper.checkFragmentNonExits(activity, targetFragmentTag)) {
             activity.supportFragmentManager.beginTransaction()

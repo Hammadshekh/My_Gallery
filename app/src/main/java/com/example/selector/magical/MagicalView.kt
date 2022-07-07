@@ -3,7 +3,6 @@ package com.example.selector.magical
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ValueAnimator
-import android.animation.ValueAnimator.AnimatorUpdateListener
 import android.content.Context
 import android.os.Build
 import android.transition.*
@@ -15,6 +14,8 @@ import android.view.animation.Interpolator
 import android.widget.FrameLayout
 import androidx.annotation.RequiresApi
 import androidx.viewpager2.widget.ViewPager2
+import com.example.selector.config.PictureSelectionConfig
+import com.example.selector.utils.DensityUtil
 
 class MagicalView @JvmOverloads constructor(
     context: Context?,
@@ -119,7 +120,7 @@ class MagicalView @JvmOverloads constructor(
         if (displayHeight > screenHeight) {
             screenHeight = appInScreenHeight
             if (showImmediately) {
-                magicalWrapper.setWidth(screenWidth)
+                magicalWrapper.setWidth(screenWidth.toFloat())
                 magicalWrapper.setHeight(screenHeight)
             }
         }
@@ -150,7 +151,7 @@ class MagicalView @JvmOverloads constructor(
         val locationImage = IntArray(2)
         contentLayout.getLocationOnScreen(locationImage)
         targetEndLeft = 0
-        if (screenWidth / screenHeight as Float<realWidth / realHeight.toFloat()) {
+        if (screenWidth / screenHeight as Float <  / realHeight!!.toFloat()) {
             targetImageWidth = screenWidth
             targetImageHeight = (targetImageWidth * (realHeight / realWidth.toFloat())).toInt()
             targetImageTop = (screenHeight - targetImageHeight) / 2

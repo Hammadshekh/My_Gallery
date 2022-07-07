@@ -1,6 +1,6 @@
 package com.example.selector.interfaces
 
-import com.example.selector.entity.LocalMedia
+import com.luck.picture.lib.entity.LocalMedia
 
 interface OnQueryFilterListener {
     /**
@@ -8,5 +8,5 @@ interface OnQueryFilterListener {
      *
      * @return the boolean result
      */
-    fun onFilter(media: LocalMedia?): Boolean
+    fun onFilter(media: LocalMedia): Boolean
 }

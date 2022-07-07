@@ -7,8 +7,24 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.RecyclerView
-import java.lang.NullPointerException
-import java.util.ArrayList
+import com.example.mygallery.R
+import com.example.selector.PictureSelectorPreviewFragment
+import com.example.selector.config.PictureConfig
+import com.example.selector.config.PictureSelectionConfig
+import com.example.selector.config.SelectMimeType
+import com.example.selector.engine.ImageEngine
+import com.example.selector.interfaces.OnExternalPreviewEventListener
+import com.example.selector.interfaces.OnInjectLayoutResourceListener
+import com.example.selector.magical.BuildRecycleItemViewParams
+import com.example.selector.manager.SelectedManager
+import com.example.selector.style.PictureSelectorStyle
+import com.example.selector.style.PictureWindowAnimationStyle
+import com.example.selector.utils.ActivityCompatHelper
+import com.example.selector.utils.DensityUtil
+import com.example.selector.utils.DoubleUtils
+import com.example.selector.utils.PictureFileUtils.TAG
+import com.luck.picture.lib.entity.LocalMedia
+import java.util.*
 
 class PictureSelectionPreviewModel(selector: PictureSelector) {
     private val selectionConfig: PictureSelectionConfig
@@ -131,10 +147,16 @@ class PictureSelectionPreviewModel(selector: PictureSelector) {
             }
             if (isPreviewZoomEffect) {
                 if (isFullScreenModel) {
-                    BuildRecycleItemViewParams.generateViewParams(rv, 0)
+                    if (rv != null) {
+                        BuildRecycleItemViewParams.generateViewParams(rv, 0)
+                    }
                 } else {
-                    BuildRecycleItemViewParams.generateViewParams(rv,
-                        DensityUtil.getStatusBarHeight(selector.getActivity()))
+                    selector.activity?.let { DensityUtil.getStatusBarHeight(it) }?.let {
+                        if (rv != null) {
+                            BuildRecycleItemViewParams.generateViewParams(rv,
+                                it)
+                        }
+                    }
                 }
             }
             selectionConfig.isPreviewZoomEffect = isPreviewZoomEffect
@@ -196,10 +218,10 @@ class PictureSelectionPreviewModel(selector: PictureSelector) {
         isDisplayDelete: Boolean,
         list: ArrayList<LocalMedia?>?,
     ) {
-        if (!DoubleUtils.isFastDoubleClick()) {
-            val activity: Activity = selector.getActivity()
+        if (!DoubleUtils.isFastDoubleClick) {
+            val activity: Activity = selector.activity
                 ?: throw NullPointerException("Activity cannot be null")
-            if (PictureSelectionConfig.imageEngine == null && selectionConfig.chooseMode !== SelectMimeType.ofAudio()) {
+            if (PictureSelectionConfig.imageEngine == null && selectionConfig.chooseMode != SelectMimeType.ofAudio()) {
                 throw NullPointerException("imageEngine is null,Please implement ImageEngine")
             }
             if (list == null || list.size == 0) {
@@ -214,18 +236,16 @@ class PictureSelectionPreviewModel(selector: PictureSelector) {
             if (fragmentManager == null) {
                 throw NullPointerException("FragmentManager cannot be null")
             }
-            if (ActivityCompatHelper.checkFragmentNonExits(activity as FragmentActivity,
-                    PictureSelectorPreviewFragment.TAG)
+            if (ActivityCompatHelper.checkFragmentNonExits(activity as FragmentActivity, TAG)
             ) {
                 val fragment: PictureSelectorPreviewFragment =
                     PictureSelectorPreviewFragment.newInstance()
-                val previewData: ArrayList<LocalMedia> = ArrayList<Any?>(list)
+                val previewData: ArrayList<LocalMedia> = ArrayList(list)
                 fragment.setExternalPreviewData(currentPosition,
                     previewData.size,
                     previewData,
                     isDisplayDelete)
-                FragmentInjectManager.injectSystemRoomFragment(fragmentManager,
-                    PictureSelectorPreviewFragment.TAG,
+                FragmentInjectManager.injectSystemRoomFragment(fragmentManager, TAG,
                     fragment)
             }
         }
@@ -241,15 +261,15 @@ class PictureSelectionPreviewModel(selector: PictureSelector) {
     fun startActivityPreview(
         currentPosition: Int,
         isDisplayDelete: Boolean,
-        list: ArrayList<LocalMedia?>?,
+        list: ArrayList<LocalMedia>,
     ) {
-        if (!DoubleUtils.isFastDoubleClick()) {
-            val activity: Activity = selector.getActivity()
+        if (!DoubleUtils.isFastDoubleClick) {
+            val activity: Activity = selector.activity
                 ?: throw NullPointerException("Activity cannot be null")
-            if (PictureSelectionConfig.imageEngine == null && selectionConfig.chooseMode !== SelectMimeType.ofAudio()) {
+            if (PictureSelectionConfig.imageEngine == null && selectionConfig.chooseMode != SelectMimeType.ofAudio()) {
                 throw NullPointerException("imageEngine is null,Please implement ImageEngine")
             }
-            if (list == null || list.size == 0) {
+            if (list.size == 0) {
                 throw NullPointerException("preview data is null")
             }
             val intent = Intent(activity, PictureSelectorTransparentActivity::class.java)
@@ -259,17 +279,13 @@ class PictureSelectionPreviewModel(selector: PictureSelector) {
                 PictureConfig.MODE_TYPE_EXTERNAL_PREVIEW_SOURCE)
             intent.putExtra(PictureConfig.EXTRA_PREVIEW_CURRENT_POSITION, currentPosition)
             intent.putExtra(PictureConfig.EXTRA_EXTERNAL_PREVIEW_DISPLAY_DELETE, isDisplayDelete)
-            val fragment: Fragment = selector.getFragment()
-            if (fragment != null) {
-                fragment.startActivity(intent)
-            } else {
-                activity.startActivity(intent)
-            }
+            val fragment: Fragment = selector.fragment!!
+            fragment.startActivity(intent)
             if (selectionConfig.isPreviewZoomEffect) {
                 activity.overridePendingTransition(R.anim.ps_anim_fade_in, R.anim.ps_anim_fade_in)
             } else {
                 val windowAnimationStyle: PictureWindowAnimationStyle =
-                    PictureSelectionConfig.selectorStyle.getWindowAnimationStyle()
+                    PictureSelectionConfig.selectorStyle?.windowAnimationStyle!!
                 activity.overridePendingTransition(windowAnimationStyle.activityEnterAnimation,
                     R.anim.ps_anim_fade_in)
             }
@@ -278,6 +294,6 @@ class PictureSelectionPreviewModel(selector: PictureSelector) {
 
     init {
         this.selector = selector
-        selectionConfig = PictureSelectionConfig.getCleanInstance()
+        selectionConfig = PictureSelectionConfig.cleanInstance
     }
 }

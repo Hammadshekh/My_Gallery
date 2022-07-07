@@ -12,6 +12,7 @@
 
 
     <style name="Base.Theme.NoActionBar" parent="Theme.AppCompat.Light.NoActionBar" />
+    <style name="Picture.Theme.Dialog" parent="@android:style/Theme.Dialog"/>
 
     <style name="Picture.Theme.Translucent" parent="Base.Theme.NoActionBar">
         <item name="android:windowBackground">@color/ps_color_transparent</item>

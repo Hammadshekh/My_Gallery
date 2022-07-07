@@ -4,8 +4,16 @@ import android.content.Context
 import android.database.Cursor
 import android.provider.MediaStore
 import android.text.TextUtils
-import java.lang.StringBuilder
+import com.example.selector.config.PictureMimeType
+import com.example.selector.config.PictureSelectionConfig
+import com.example.selector.config.SelectMimeType
+import com.example.selector.entity.LocalMediaFolder
+import com.example.selector.interfaces.OnQueryAlbumListener
+import com.example.selector.interfaces.OnQueryAllAlbumListener
+import com.example.selector.interfaces.OnQueryDataResultListener
+import com.luck.picture.lib.entity.LocalMedia
 import java.util.*
+import kotlin.math.max
 
 abstract class IBridgeMediaLoader {
     protected var context: Context? = null
@@ -23,8 +31,8 @@ abstract class IBridgeMediaLoader {
         mConfig = config
     }
 
-    protected val config: PictureSelectionConfig?
-        protected get() = mConfig
+     val config: PictureSelectionConfig?
+         get() = mConfig
 
     /**
      * query album cover
@@ -36,7 +44,7 @@ abstract class IBridgeMediaLoader {
     /**
      * query album list
      */
-    abstract fun loadAllAlbum(query: OnQueryAllAlbumListener<LocalMediaFolder?>?)
+    abstract fun loadAllAlbum(query: OnQueryAllAlbumListener<LocalMediaFolder>)
 
     /**
      * page query specified contents
@@ -49,7 +57,7 @@ abstract class IBridgeMediaLoader {
         bucketId: Long,
         page: Int,
         pageSize: Int,
-        query: OnQueryDataResultListener<LocalMedia?>?,
+        query: OnQueryDataResultListener<LocalMedia>,
     )
 
     /**
@@ -68,7 +76,7 @@ abstract class IBridgeMediaLoader {
      * You may include ?s in selection, which will be replaced by the values from selectionArgs,
      * in the order that they appear in the selection. The values will be bound as Strings.
      */
-    protected abstract val selectionArgs: Array<String?>?
+    protected abstract val selectionArgs: Array<String>?
 
     /**
      * How to order the rows, formatted as an SQL ORDER BY clause (excluding the ORDER BY itself).
@@ -90,12 +98,12 @@ abstract class IBridgeMediaLoader {
      * @return
      */
     protected val durationCondition: String
-        protected get() {
+         get() {
             val maxS =
-                if (config.filterVideoMaxSecond === 0) Long.MAX_VALUE else config.filterVideoMaxSecond
+                if (config!!.filterVideoMaxSecond == 0) Long.MAX_VALUE else config!!.filterVideoMaxSecond
             return java.lang.String.format(Locale.CHINA,
                 "%d <%s " + COLUMN_DURATION + " and " + COLUMN_DURATION + " <= %d",
-                Math.max(0.toLong(), config.filterVideoMinSecond),
+                config?.filterVideoMinSecond?.let { max(0 , it) },
                 "=",
                 maxS)
         }
@@ -106,12 +114,12 @@ abstract class IBridgeMediaLoader {
      * @return
      */
     protected val fileSizeCondition: String
-        protected get() {
+         get() {
             val maxS =
-                if (config.filterMaxFileSize === 0) Long.MAX_VALUE else config.filterMaxFileSize
+                if (config?.filterMaxFileSize!!.equals(0)) Long.MAX_VALUE else config!!.filterMaxFileSize
             return java.lang.String.format(Locale.CHINA,
                 "%d <%s " + MediaStore.MediaColumns.SIZE + " and " + MediaStore.MediaColumns.SIZE + " <= %d",
-                Math.max(0, config.filterMinFileSize),
+                Math.max(0, config!!.filterMinFileSize),
                 "=",
                 maxS)
         }
@@ -122,8 +130,8 @@ abstract class IBridgeMediaLoader {
      * @return
      */
     protected val queryMimeCondition: String
-        protected get() {
-            val filters: List<String> = config.queryOnlyList
+         get() {
+            val filters: List<String> = config?.queryOnlyList!!
             val filterSet = HashSet(filters)
             val iterator: Iterator<String> = filterSet.iterator()
             val stringBuilder = StringBuilder()
@@ -133,19 +141,19 @@ abstract class IBridgeMediaLoader {
                 if (TextUtils.isEmpty(value)) {
                     continue
                 }
-                if (config.chooseMode === SelectMimeType.ofVideo()) {
+                if (config?.chooseMode == SelectMimeType.ofVideo()) {
                     if (value.startsWith(PictureMimeType.MIME_TYPE_PREFIX_IMAGE) || value.startsWith(
                             PictureMimeType.MIME_TYPE_PREFIX_AUDIO)
                     ) {
                         continue
                     }
-                } else if (config.chooseMode === SelectMimeType.ofImage()) {
+                } else if (config?.chooseMode == SelectMimeType.ofImage()) {
                     if (value.startsWith(PictureMimeType.MIME_TYPE_PREFIX_AUDIO) || value.startsWith(
                             PictureMimeType.MIME_TYPE_PREFIX_VIDEO)
                     ) {
                         continue
                     }
-                } else if (config.chooseMode === SelectMimeType.ofAudio()) {
+                } else if (config?.chooseMode == SelectMimeType.ofAudio()) {
                     if (value.startsWith(PictureMimeType.MIME_TYPE_PREFIX_VIDEO) || value.startsWith(
                             PictureMimeType.MIME_TYPE_PREFIX_IMAGE)
                     ) {
@@ -157,8 +165,8 @@ abstract class IBridgeMediaLoader {
                     .append(MediaStore.MediaColumns.MIME_TYPE).append("='").append(value)
                     .append("'")
             }
-            if (config.chooseMode !== SelectMimeType.ofVideo()) {
-                if (!config.isGif && !filterSet.contains(PictureMimeType.ofGIF())) {
+            if (config?.chooseMode != SelectMimeType.ofVideo()) {
+                if (config?.isGif == true && !filterSet.contains(PictureMimeType.ofGIF())) {
                     stringBuilder.append(NOT_GIF)
                 }
             }
@@ -166,23 +174,23 @@ abstract class IBridgeMediaLoader {
         }
 
     companion object {
-        protected val TAG = IBridgeMediaLoader::class.java.simpleName
-        protected val QUERY_URI = MediaStore.Files.getContentUri("external")
-        protected const val ORDER_BY = MediaStore.MediaColumns.DATE_MODIFIED + " DESC"
-        protected const val NOT_GIF =
+         val TAG = IBridgeMediaLoader::class.java.simpleName
+         val QUERY_URI = MediaStore.Files.getContentUri("external")
+        const val ORDER_BY = MediaStore.MediaColumns.DATE_MODIFIED + " DESC"
+         const val NOT_GIF =
             " AND (" + MediaStore.MediaColumns.MIME_TYPE + "!='image/gif')"
-        protected const val GROUP_BY_BUCKET_Id = " GROUP BY (bucket_id"
-        protected const val COLUMN_COUNT = "count"
-        protected const val COLUMN_BUCKET_ID = "bucket_id"
-        protected const val COLUMN_DURATION = "duration"
-        protected const val COLUMN_BUCKET_DISPLAY_NAME = "bucket_display_name"
-        protected const val COLUMN_ORIENTATION = "orientation"
-        protected const val MAX_SORT_SIZE = 60
+         const val GROUP_BY_BUCKET_Id = " GROUP BY (bucket_id"
+         const val COLUMN_COUNT = "count"
+         const val COLUMN_BUCKET_ID = "bucket_id"
+         const val COLUMN_DURATION = "duration"
+         const val COLUMN_BUCKET_DISPLAY_NAME = "bucket_display_name"
+         const val COLUMN_ORIENTATION = "orientation"
+         const val MAX_SORT_SIZE = 60
 
         /**
          * A list of which columns to return. Passing null will return all columns, which is inefficient.
          */
-        protected val PROJECTION = arrayOf(
+         val PROJECTION = arrayOf(
             MediaStore.Files.FileColumns._ID,
             MediaStore.MediaColumns.DATA,
             MediaStore.MediaColumns.MIME_TYPE,
@@ -199,7 +207,7 @@ abstract class IBridgeMediaLoader {
         /**
          * A list of which columns to return. Passing null will return all columns, which is inefficient.
          */
-        protected val ALL_PROJECTION = arrayOf(
+        val ALL_PROJECTION = arrayOf(
             MediaStore.Files.FileColumns._ID,
             MediaStore.MediaColumns.DATA,
             MediaStore.MediaColumns.MIME_TYPE,

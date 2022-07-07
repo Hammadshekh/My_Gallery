@@ -1,13 +1,24 @@
 package com.example.selector.basic
 
 import android.annotation.SuppressLint
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.Gravity
-import android.view.WindowManager
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import java.util.ArrayList
+import com.example.mygallery.R
+import com.example.selector.PictureOnlyCameraFragment
+import com.example.selector.PictureSelectorPreviewFragment
+import com.example.selector.PictureSelectorSystemFragment
+import com.example.selector.config.PictureConfig
+import com.example.selector.config.PictureSelectionConfig
+import com.example.selector.immersive.ImmersiveManager
+import com.example.selector.manager.SelectedManager
+import com.example.selector.style.SelectMainStyle
+import com.example.selector.utils.PictureFileUtils.TAG
+import com.example.selector.utils.StyleUtils
+import com.luck.picture.lib.entity.LocalMedia
+import java.util.*
 
 class PictureSelectorTransparentActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,19 +34,19 @@ class PictureSelectorTransparentActivity : AppCompatActivity() {
     }
 
     private val isExternalPreview: Boolean
-        private get() {
+        get() {
             val modeTypeSource = intent.getIntExtra(PictureConfig.EXTRA_MODE_TYPE_SOURCE, 0)
             return modeTypeSource == PictureConfig.MODE_TYPE_EXTERNAL_PREVIEW_SOURCE
         }
 
     private fun immersive() {
         if (PictureSelectionConfig.selectorStyle == null) {
-            PictureSelectionConfig.getInstance()
+            PictureSelectionConfig.instance
         }
-        val mainStyle: SelectMainStyle = PictureSelectionConfig.selectorStyle.getSelectMainStyle()
-        var statusBarColor: Int = mainStyle.getStatusBarColor()
-        var navigationBarColor: Int = mainStyle.getNavigationBarColor()
-        val isDarkStatusBarBlack: Boolean = mainStyle.isDarkStatusBarBlack()
+        val mainStyle: SelectMainStyle = PictureSelectionConfig.selectorStyle?.selectMainStyle!!
+        var statusBarColor: Int = mainStyle.statusBarColor
+        var navigationBarColor: Int = mainStyle.navigationBarColor
+        val isDarkStatusBarBlack: Boolean = mainStyle.isDarkStatusBarBlack
         if (!StyleUtils.checkStyleValidity(statusBarColor)) {
             statusBarColor = ContextCompat.getColor(this, R.color.ps_color_grey)
         }
@@ -51,25 +62,28 @@ class PictureSelectorTransparentActivity : AppCompatActivity() {
     private fun setupFragment() {
         val fragmentTag: String
         val targetFragment: Fragment
-        val modeTypeSource = intent.getIntExtra(PictureConfig.EXTRA_MODE_TYPE_SOURCE, 0)
-        if (modeTypeSource == PictureConfig.MODE_TYPE_SYSTEM_SOURCE) {
-            fragmentTag = PictureSelectorSystemFragment.TAG
-            targetFragment = PictureSelectorSystemFragment.newInstance()
-        } else if (modeTypeSource == PictureConfig.MODE_TYPE_EXTERNAL_PREVIEW_SOURCE) {
-            fragmentTag = PictureSelectorPreviewFragment.TAG
-            targetFragment = PictureSelectorPreviewFragment.newInstance()
-            val position = intent.getIntExtra(PictureConfig.EXTRA_PREVIEW_CURRENT_POSITION, 0)
-            val previewResult: ArrayList<LocalMedia> = SelectedManager.getSelectedPreviewResult()
-            val previewData: ArrayList<LocalMedia> = ArrayList<Any?>(previewResult)
-            val isDisplayDelete = intent
-                .getBooleanExtra(PictureConfig.EXTRA_EXTERNAL_PREVIEW_DISPLAY_DELETE, false)
-            (targetFragment as PictureSelectorPreviewFragment).setExternalPreviewData(position,
-                previewData.size,
-                previewData,
-                isDisplayDelete)
-        } else {
-            fragmentTag = PictureOnlyCameraFragment.TAG
-            targetFragment = PictureOnlyCameraFragment.newInstance()
+        when (intent.getIntExtra(PictureConfig.EXTRA_MODE_TYPE_SOURCE, 0)) {
+            PictureConfig.MODE_TYPE_SYSTEM_SOURCE -> {
+                fragmentTag = TAG
+                targetFragment = PictureSelectorSystemFragment.newInstance()
+            }
+            PictureConfig.MODE_TYPE_EXTERNAL_PREVIEW_SOURCE -> {
+                fragmentTag = TAG
+                targetFragment = PictureSelectorPreviewFragment.newInstance()
+                val position = intent.getIntExtra(PictureConfig.EXTRA_PREVIEW_CURRENT_POSITION, 0)
+                val previewResult: ArrayList<LocalMedia> = SelectedManager.getSelectedPreviewResult()
+                val previewData: ArrayList<LocalMedia> = ArrayList(previewResult)
+                val isDisplayDelete = intent
+                    .getBooleanExtra(PictureConfig.EXTRA_EXTERNAL_PREVIEW_DISPLAY_DELETE, false)
+                (targetFragment ).setExternalPreviewData(position,
+                    previewData.size,
+                    previewData,
+                    isDisplayDelete)
+            }
+            else -> {
+                fragmentTag = TAG
+                targetFragment = PictureOnlyCameraFragment.newInstance()
+            }
         }
         val supportFragmentManager = supportFragmentManager
         val fragment = supportFragmentManager.findFragmentByTag(fragmentTag)

@@ -3,10 +3,9 @@ package com.example.selector.entity
 import android.os.Parcel
 import android.os.Parcelable
 import android.os.Parcelable.Creator
-import android.text.TextUtils
 import com.example.selector.config.PictureConfig
 import com.luck.picture.lib.entity.LocalMedia
-import java.util.ArrayList
+import java.util.*
 
 open class LocalMediaFolder : Parcelable {
     /**
@@ -63,7 +62,6 @@ open class LocalMediaFolder : Parcelable {
     constructor() {}
     private constructor(`in`: Parcel) {
         bucketId = `in`.readLong()
-        folderName = `in`.readString()
         firstImagePath = `in`.readString()
         firstMimeType = `in`.readString()
         folderTotalNum = `in`.readInt()
@@ -89,7 +87,7 @@ open class LocalMediaFolder : Parcelable {
         return 0
     }
 
-    fun getFolderName(): String {
+/*    fun getFolderName(): String {
         return if (TextUtils.isEmpty(folderName)) "unknown" else folderName!!
     }
 
@@ -103,7 +101,7 @@ open class LocalMediaFolder : Parcelable {
 
     fun setData(data: ArrayList<LocalMedia>?) {
         this.data = data
-    }
+    }*/
 
     companion object {
         val CREATOR: Creator<LocalMediaFolder?> = object : Creator<LocalMediaFolder?> {

@@ -7,8 +7,18 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
-import com.example.selector.engine.CropEngine
-import java.lang.NullPointerException
+import com.example.mygallery.R
+import com.example.selector.PictureSelectorSystemFragment
+import com.example.selector.config.FileSizeUnit
+import com.example.selector.config.PictureConfig
+import com.example.selector.config.PictureSelectionConfig
+import com.example.selector.config.SelectMimeType
+import com.example.selector.engine.*
+import com.example.selector.interfaces.*
+import com.example.selector.utils.DoubleUtils
+import com.example.selector.utils.PictureFileUtils.TAG
+import com.example.selector.utils.SdkVersionUtils
+import com.luck.picture.lib.entity.LocalMedia
 import java.util.*
 
 class PictureSelectionSystemModel(selector: PictureSelector, chooseMode: Int) {
@@ -64,9 +74,9 @@ class PictureSelectionSystemModel(selector: PictureSelector, chooseMode: Int) {
      * @param mimeTypes Use example [{]
      * @return
      */
-    fun setSkipCropMimeType(vararg mimeTypes: String?): PictureSelectionSystemModel {
-        if (mimeTypes != null && mimeTypes.size > 0) {
-            selectionConfig.skipCropList.addAll(Arrays.asList(*mimeTypes))
+    fun setSkipCropMimeType(vararg mimeTypes: String): PictureSelectionSystemModel {
+        if (mimeTypes.isNotEmpty()) {
+            selectionConfig.skipCropList?.addAll(mutableListOf(*mimeTypes))
         }
         return this
     }
@@ -130,7 +140,7 @@ class PictureSelectionSystemModel(selector: PictureSelector, chooseMode: Int) {
      */
     @Deprecated("")
     fun setSandboxFileEngine(engine: SandboxFileEngine): PictureSelectionSystemModel {
-        if (SdkVersionUtils.isQ()) {
+        if (SdkVersionUtils.isQ) {
             PictureSelectionConfig.sandboxFileEngine = engine
             selectionConfig.isSandboxFileEngine = true
         } else {
@@ -146,7 +156,7 @@ class PictureSelectionSystemModel(selector: PictureSelector, chooseMode: Int) {
      * @return
      */
     fun setSandboxFileEngine(engine: UriToFileTransformEngine): PictureSelectionSystemModel {
-        if (SdkVersionUtils.isQ()) {
+        if (SdkVersionUtils.isQ) {
             PictureSelectionConfig.uriToFileTransformEngine = engine
             selectionConfig.isSandboxFileEngine = true
         } else {
@@ -269,7 +279,7 @@ class PictureSelectionSystemModel(selector: PictureSelector, chooseMode: Int) {
      * @return
      */
     fun setAddBitmapWatermarkListener(listener: OnBitmapWatermarkEventListener): PictureSelectionSystemModel {
-        if (selectionConfig.chooseMode !== SelectMimeType.ofAudio()) {
+        if (selectionConfig.chooseMode != SelectMimeType.ofAudio()) {
             PictureSelectionConfig.onBitmapWatermarkListener = listener
         }
         return this
@@ -282,7 +292,7 @@ class PictureSelectionSystemModel(selector: PictureSelector, chooseMode: Int) {
      * @return
      */
     fun setVideoThumbnailListener(listener: OnVideoThumbnailEventListener): PictureSelectionSystemModel {
-        if (selectionConfig.chooseMode !== SelectMimeType.ofAudio()) {
+        if (selectionConfig.chooseMode != SelectMimeType.ofAudio()) {
             PictureSelectionConfig.onVideoThumbnailEventListener = listener
         }
         return this
@@ -297,13 +307,10 @@ class PictureSelectionSystemModel(selector: PictureSelector, chooseMode: Int) {
      *
      * @param call
      */
-    fun forSystemResult(call: OnResultCallbackListener<LocalMedia?>) {
-        if (!DoubleUtils.isFastDoubleClick()) {
-            val activity: Activity = selector.getActivity()
+    fun forSystemResult(call: OnResultCallbackListener<LocalMedia>) {
+        if (!DoubleUtils.isFastDoubleClick) {
+            val activity: Activity = selector.activity
                 ?: throw NullPointerException("Activity cannot be null")
-            if (call == null) {
-                throw NullPointerException("OnResultCallbackListener cannot be null")
-            }
             PictureSelectionConfig.onResultCallListener = call
             selectionConfig.isResultListenerBack = true
             selectionConfig.isActivityResultBack = false
@@ -316,12 +323,12 @@ class PictureSelectionSystemModel(selector: PictureSelector, chooseMode: Int) {
             if (fragmentManager == null) {
                 throw NullPointerException("FragmentManager cannot be null")
             }
-            val fragment = fragmentManager.findFragmentByTag(PictureSelectorSystemFragment.TAG)
+            val fragment = fragmentManager.findFragmentByTag(TAG)
             if (fragment != null) {
                 fragmentManager.beginTransaction().remove(fragment).commitAllowingStateLoss()
             }
             FragmentInjectManager.injectSystemRoomFragment(fragmentManager,
-                PictureSelectorSystemFragment.TAG, PictureSelectorSystemFragment.newInstance())
+                TAG, PictureSelectorSystemFragment.newInstance())
         }
     }
 
@@ -338,8 +345,8 @@ class PictureSelectionSystemModel(selector: PictureSelector, chooseMode: Int) {
      *
      */
     fun forSystemResult() {
-        if (!DoubleUtils.isFastDoubleClick()) {
-            val activity: Activity = selector.getActivity()
+        if (!DoubleUtils.isFastDoubleClick) {
+            val activity: Activity = selector.activity
                 ?: throw NullPointerException("Activity cannot be null")
             if (activity !is IBridgePictureBehavior) {
                 throw NullPointerException("Use only forSystemResult();," +
@@ -357,12 +364,12 @@ class PictureSelectionSystemModel(selector: PictureSelector, chooseMode: Int) {
             if (fragmentManager == null) {
                 throw NullPointerException("FragmentManager cannot be null")
             }
-            val fragment = fragmentManager.findFragmentByTag(PictureSelectorSystemFragment.TAG)
+            val fragment = fragmentManager.findFragmentByTag(TAG)
             if (fragment != null) {
                 fragmentManager.beginTransaction().remove(fragment).commitAllowingStateLoss()
             }
             FragmentInjectManager.injectSystemRoomFragment(fragmentManager,
-                PictureSelectorSystemFragment.TAG, PictureSelectorSystemFragment.newInstance())
+                TAG, PictureSelectorSystemFragment.newInstance())
         }
     }
 
@@ -372,20 +379,16 @@ class PictureSelectionSystemModel(selector: PictureSelector, chooseMode: Int) {
      * @param requestCode
      */
     fun forSystemResultActivity(requestCode: Int) {
-        if (!DoubleUtils.isFastDoubleClick()) {
-            val activity: Activity = selector.getActivity()
+        if (!DoubleUtils.isFastDoubleClick) {
+            val activity: Activity = selector.activity
                 ?: throw NullPointerException("Activity cannot be null")
             selectionConfig.isResultListenerBack = false
             selectionConfig.isActivityResultBack = true
             val intent = Intent(activity, PictureSelectorTransparentActivity::class.java)
             intent.putExtra(PictureConfig.EXTRA_MODE_TYPE_SOURCE,
                 PictureConfig.MODE_TYPE_SYSTEM_SOURCE)
-            val fragment: Fragment = selector.getFragment()
-            if (fragment != null) {
-                fragment.startActivityForResult(intent, requestCode)
-            } else {
-                activity.startActivityForResult(intent, requestCode)
-            }
+            val fragment: Fragment = selector.fragment!!
+            fragment.startActivityForResult(intent, requestCode)
             activity.overridePendingTransition(R.anim.ps_anim_fade_in, 0)
         }
     }
@@ -396,8 +399,8 @@ class PictureSelectionSystemModel(selector: PictureSelector, chooseMode: Int) {
      * @param launcher use []
      */
     fun forSystemResultActivity(launcher: ActivityResultLauncher<Intent?>?) {
-        if (!DoubleUtils.isFastDoubleClick()) {
-            val activity: Activity = selector.getActivity()
+        if (!DoubleUtils.isFastDoubleClick) {
+            val activity: Activity = selector.activity
                 ?: throw NullPointerException("Activity cannot be null")
             if (launcher == null) {
                 throw NullPointerException("ActivityResultLauncher cannot be null")
@@ -417,13 +420,10 @@ class PictureSelectionSystemModel(selector: PictureSelector, chooseMode: Int) {
      *
      * @param call
      */
-    fun forSystemResultActivity(call: OnResultCallbackListener<LocalMedia?>?) {
-        if (!DoubleUtils.isFastDoubleClick()) {
-            val activity: Activity = selector.getActivity()
+    fun forSystemResultActivity(call: OnResultCallbackListener<LocalMedia>) {
+        if (!DoubleUtils.isFastDoubleClick) {
+            val activity: Activity = selector.activity
                 ?: throw NullPointerException("Activity cannot be null")
-            if (call == null) {
-                throw NullPointerException("OnResultCallbackListener cannot be null")
-            }
             // 绑定回调监听
             selectionConfig.isResultListenerBack = true
             selectionConfig.isActivityResultBack = false
@@ -438,7 +438,7 @@ class PictureSelectionSystemModel(selector: PictureSelector, chooseMode: Int) {
 
     init {
         this.selector = selector
-        selectionConfig = PictureSelectionConfig.getCleanInstance()
+        selectionConfig = PictureSelectionConfig.cleanInstance
         selectionConfig.chooseMode = chooseMode
         selectionConfig.isPreviewFullScreenMode = false
         selectionConfig.isPreviewZoomEffect = false

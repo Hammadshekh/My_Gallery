@@ -77,7 +77,7 @@ object InjectResourceSource {
      */
     fun getLayoutResource(context: Context?, resourceSource: Int): Int {
         return if (PictureSelectionConfig.onLayoutResourceListener != null) {
-            PictureSelectionConfig.onLayoutResourceListener
+            PictureSelectionConfig.onLayoutResourceListener!!
                 .getLayoutResourceId(context, resourceSource)
         } else DEFAULT_LAYOUT_RESOURCE
     }

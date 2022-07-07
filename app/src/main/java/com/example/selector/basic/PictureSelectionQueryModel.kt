@@ -2,8 +2,18 @@ package com.example.selector.basic
 
 import android.app.Activity
 import android.text.TextUtils
-import java.lang.NullPointerException
-import java.util.ArrayList
+import com.example.selector.config.FileSizeUnit
+import com.example.selector.config.PictureConfig
+import com.example.selector.config.PictureSelectionConfig
+import com.example.selector.entity.LocalMediaFolder
+import com.example.selector.interfaces.OnQueryAllAlbumListener
+import com.example.selector.interfaces.OnQueryDataResultListener
+import com.example.selector.interfaces.OnQueryDataSourceListener
+import com.example.selector.loader.IBridgeMediaLoader
+import com.example.selector.loader.LocalMediaLoader
+import com.example.selector.loader.LocalMediaPageLoader
+import com.luck.picture.lib.entity.LocalMedia
+import java.util.*
 
 class PictureSelectionQueryModel(selector: PictureSelector, selectMimeType: Int) {
     private val selectionConfig: PictureSelectionConfig
@@ -156,7 +166,7 @@ class PictureSelectionQueryModel(selector: PictureSelector, selectMimeType: Int)
      * build local media Loader
      */
     fun buildMediaLoader(): IBridgeMediaLoader {
-        val activity: Activity = selector.getActivity()
+        val activity: Activity = selector.activity
             ?: throw NullPointerException("Activity cannot be null")
         val loader: IBridgeMediaLoader =
             if (selectionConfig.isPageStrategy) LocalMediaPageLoader() else LocalMediaLoader()
@@ -169,17 +179,14 @@ class PictureSelectionQueryModel(selector: PictureSelector, selectMimeType: Int)
      *
      * @param call
      */
-    fun obtainAlbumData(call: OnQueryDataSourceListener<LocalMediaFolder?>?) {
-        val activity: Activity = selector.getActivity()
+    fun obtainAlbumData(call: OnQueryDataSourceListener<LocalMediaFolder>) {
+        val activity: Activity = selector.activity
             ?: throw NullPointerException("Activity cannot be null")
-        if (call == null) {
-            throw NullPointerException("OnQueryDataSourceListener cannot be null")
-        }
         val loader: IBridgeMediaLoader =
             if (selectionConfig.isPageStrategy) LocalMediaPageLoader() else LocalMediaLoader()
         loader.initConfig(activity, selectionConfig)
-        loader.loadAllAlbum(object : OnQueryAllAlbumListener<LocalMediaFolder?>() {
-            fun onComplete(result: List<LocalMediaFolder?>?) {
+        loader.loadAllAlbum(object : OnQueryAllAlbumListener<LocalMediaFolder> {
+            override fun onComplete(result: List<LocalMediaFolder>) {
                 call.onComplete(result)
             }
         })
@@ -191,7 +198,7 @@ class PictureSelectionQueryModel(selector: PictureSelector, selectMimeType: Int)
      * @param call
      */
     fun obtainMediaData(call: OnQueryDataSourceListener<LocalMedia?>?) {
-        val activity: Activity = selector.getActivity()
+        val activity: Activity = selector.activity
             ?: throw NullPointerException("Activity cannot be null")
         if (call == null) {
             throw NullPointerException("OnQueryDataSourceListener cannot be null")
@@ -199,15 +206,15 @@ class PictureSelectionQueryModel(selector: PictureSelector, selectMimeType: Int)
         val loader: IBridgeMediaLoader =
             if (selectionConfig.isPageStrategy) LocalMediaPageLoader() else LocalMediaLoader()
         loader.initConfig(activity, selectionConfig)
-        loader.loadAllAlbum(object : OnQueryAllAlbumListener<LocalMediaFolder?>() {
-            fun onComplete(result: List<LocalMediaFolder>?) {
-                if (result != null && result.size > 0) {
+        loader.loadAllAlbum(object : OnQueryAllAlbumListener<LocalMediaFolder> {
+            override fun onComplete(result: List<LocalMediaFolder>) {
+                if (result.size > 0) {
                     val all: LocalMediaFolder = result[0]
                     if (selectionConfig.isPageStrategy) {
-                        loader.loadPageMediaData(all.getBucketId(), 1, selectionConfig.pageSize,
-                            object : OnQueryDataResultListener<LocalMedia?>() {
-                                fun onComplete(
-                                    result: ArrayList<LocalMedia?>?,
+                        loader.loadPageMediaData(all.bucketId, 1, selectionConfig.pageSize,
+                            object : OnQueryDataResultListener<LocalMedia>() {
+                                override fun onComplete(
+                                    result: ArrayList<LocalMedia>,
                                     isHasMore: Boolean,
                                 ) {
                                     call.onComplete(result)
@@ -224,7 +231,7 @@ class PictureSelectionQueryModel(selector: PictureSelector, selectMimeType: Int)
 
     init {
         this.selector = selector
-        selectionConfig = PictureSelectionConfig.getCleanInstance()
+        selectionConfig = PictureSelectionConfig.cleanInstance
         selectionConfig.chooseMode = selectMimeType
     }
 }

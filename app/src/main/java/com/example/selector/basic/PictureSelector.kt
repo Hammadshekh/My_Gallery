@@ -4,11 +4,13 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import androidx.fragment.app.Fragment
+import com.example.selector.config.PictureConfig
+import com.luck.picture.lib.entity.LocalMedia
 import java.lang.ref.WeakReference
-import java.util.ArrayList
+import java.util.*
 
 class PictureSelector private constructor(activity: Activity?, fragment: Fragment? = null) {
-    private val mActivity: WeakReference<Activity?>
+    private val mActivity: WeakReference<Activity?> = WeakReference(activity)
     private val mFragment: WeakReference<Fragment?>?
 
     private constructor(fragment: Fragment) : this(fragment.activity, fragment) {}
@@ -127,14 +129,11 @@ class PictureSelector private constructor(activity: Activity?, fragment: Fragmen
             if (intent == null) {
                 return ArrayList<LocalMedia>()
             }
-            val result: ArrayList<LocalMedia> =
-                intent.getParcelableArrayListExtra<LocalMedia>(PictureConfig.EXTRA_RESULT_SELECTION)
-            return result ?: ArrayList<LocalMedia>()
+            return intent.getParcelableArrayListExtra<LocalMedia>(PictureConfig.EXTRA_RESULT_SELECTION) as ArrayList<LocalMedia>
         }
     }
 
     init {
-        mActivity = WeakReference(activity)
         mFragment = WeakReference(fragment)
     }
 }

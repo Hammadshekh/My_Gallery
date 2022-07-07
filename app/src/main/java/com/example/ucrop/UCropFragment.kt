@@ -169,8 +169,8 @@ class UCropFragment() : Fragment() {
             mLayoutRotate = view.findViewById(R.id.layout_rotate_wheel)
             mLayoutScale = view.findViewById(R.id.layout_scale_wheel)
             setupAspectRatioWidget((args), view)
-            setupRotateWidget(view)
-            setupScaleWidget(view)
+      /*      setupRotateWidget(view)
+            setupScaleWidget(view)*/
             setupStatesWrapper(view)
         } else {
             val params =
@@ -392,7 +392,7 @@ class UCropFragment() : Fragment() {
         }
     }
 
-    private fun setupRotateWidget(view: View) {
+   /* private fun setupRotateWidget(view: View) {
         mTextViewRotateAngle = view.findViewById(R.id.text_view_rotate)
         (view.findViewById<View>(R.id.rotate_scroll_wheel) as HorizontalProgressWheelView)
             .setScrollingListener(object : HorizontalProgressWheelView.ScrollingListener {
@@ -407,19 +407,19 @@ class UCropFragment() : Fragment() {
                 override fun onScrollStart() {
                     mGestureCropImageView?.cancelAllAnimations()
                 }
-            })
-        (view.findViewById<View>(R.id.rotate_scroll_wheel) as HorizontalProgressWheelView).setMiddleLineColor(
-            mActiveControlsWidgetColor)
-        view.findViewById<View>(R.id.wrapper_reset_rotate).setOnClickListener { resetRotation() }
+            })*/
+       /* (view.findViewById<View>(R.id.rotate_scroll_wheel) as HorizontalProgressWheelView).setMiddleLineColor(
+            mActiveControlsWidgetColor)*/
+   /*     view.findViewById<View>(R.id.wrapper_reset_rotate).setOnClickListener { resetRotation() }
         view.findViewById<View>(R.id.wrapper_rotate_by_angle).setOnClickListener {
             rotateByAngle(90)
         }
         setAngleTextColor(mActiveControlsWidgetColor)
-    }
+    }*/
 
-    private fun setupScaleWidget(view: View) {
-        mTextViewScalePercent = view.findViewById(R.id.text_view_scale)
-        (view.findViewById<View>(R.id.scale_scroll_wheel) as HorizontalProgressWheelView)
+/*    private fun setupScaleWidget(view: View) {
+      *//*  mTextViewScalePercent = view.findViewById(R.id.text_view_scale)*//*
+        *//*(view.findViewById<View>(R.id.scale_scroll_wheel) as HorizontalProgressWheelView)*//*
             .setScrollingListener(object : HorizontalProgressWheelView.ScrollingListener {
                 override fun onScroll(delta: Float, totalDistance: Float) {
                     if (delta > 0) {
@@ -441,10 +441,10 @@ class UCropFragment() : Fragment() {
                     mGestureCropImageView?.cancelAllAnimations()
                 }
             })
-        (view.findViewById<View>(R.id.scale_scroll_wheel) as HorizontalProgressWheelView).setMiddleLineColor(
+       *//* (view.findViewById<View>(R.id.scale_scroll_wheel) as HorizontalProgressWheelView).setMiddleLineColor(
             mActiveControlsWidgetColor)
-        setScaleTextColor(mActiveControlsWidgetColor)
-    }
+        setScaleTextColor(mActiveControlsWidgetColor)*//*
+    }*/
 
     private fun setAngleText(angle: Float) {
         if (mTextViewRotateAngle != null) {

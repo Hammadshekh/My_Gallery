@@ -2,7 +2,7 @@ package com.example.selector.manager
 
 import com.example.selector.entity.LocalMediaFolder
 import com.luck.picture.lib.entity.LocalMedia
-import java.util.ArrayList
+import java.util.*
 
 object SelectedManager {
     const val INVALID = -1
@@ -20,8 +20,8 @@ object SelectedManager {
     }
 
     @Synchronized
-    fun addAllSelectResult(result: ArrayList<LocalMedia>?) {
-        selectedResult.addAll(result!!)
+    fun addAllSelectResult(result: ArrayList<LocalMedia>) {
+        selectedResult.addAll(result)
     }
 
     val selectCount: Int

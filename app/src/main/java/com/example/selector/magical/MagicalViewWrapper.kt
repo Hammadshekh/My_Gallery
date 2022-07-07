@@ -17,7 +17,7 @@ class MagicalViewWrapper(private val viewWrapper: View) {
         viewWrapper.layoutParams = params
     }
 
-    fun setHeight(height: Float) {
+    fun setHeight(height: Int) {
         params.height = Math.round(height)
         viewWrapper.layoutParams = params
     }

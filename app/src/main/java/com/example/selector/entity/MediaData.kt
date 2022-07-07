@@ -1,6 +1,7 @@
 package com.example.selector.entity
 
-import java.util.ArrayList
+import com.luck.picture.lib.entity.LocalMedia
+import java.util.*
 
 class MediaData {
     /**
@@ -14,7 +15,7 @@ class MediaData {
     var data: ArrayList<LocalMedia>? = null
 
     constructor() : super() {}
-    constructor(isHasNextMore: Boolean, data: ArrayList<LocalMedia>?) : super() {
+    constructor(isHasNextMore: Boolean, data: ArrayList<LocalMedia>) : super() {
         this.isHasNextMore = isHasNextMore
         this.data = data
     }

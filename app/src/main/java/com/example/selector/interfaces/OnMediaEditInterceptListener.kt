@@ -1,6 +1,7 @@
 package com.example.selector.interfaces
 
 import androidx.fragment.app.Fragment
+import com.luck.picture.lib.entity.LocalMedia
 
 interface OnMediaEditInterceptListener {
     /**
@@ -38,5 +39,5 @@ interface OnMediaEditInterceptListener {
      * @param currentLocalMedia current edit LocalMedia
      * @param requestCode       Activity or fragment result code
      */
-    fun onStartMediaEdit(fragment: Fragment?, currentLocalMedia: LocalMedia?, requestCode: Int)
+    fun onStartMediaEdit(fragment: Fragment?, currentLocalMedia: LocalMedia, requestCode: Int)
 }

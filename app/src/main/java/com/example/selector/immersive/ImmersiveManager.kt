@@ -7,7 +7,7 @@ import android.view.*
 import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
-import java.lang.Exception
+import com.example.selector.utils.DensityUtil
 
 object ImmersiveManager {
     /**

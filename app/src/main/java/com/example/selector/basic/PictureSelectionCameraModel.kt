@@ -7,13 +7,24 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
-import com.example.selector.engine.CropEngine
-import java.lang.NullPointerException
-import java.util.ArrayList
+import com.example.mygallery.R
+import com.example.selector.PictureOnlyCameraFragment
+import com.example.selector.config.FileSizeUnit
+import com.example.selector.config.PictureSelectionConfig
+import com.example.selector.config.SelectMimeType
+import com.example.selector.config.SelectModeConfig
+import com.example.selector.engine.*
+import com.example.selector.interfaces.*
+import com.example.selector.manager.SelectedManager
+import com.example.selector.utils.DoubleUtils
+import com.example.selector.utils.PictureFileUtils.TAG
+import com.example.selector.utils.SdkVersionUtils
+import com.luck.picture.lib.entity.LocalMedia
+import java.util.*
 
 class PictureSelectionCameraModel(selector: PictureSelector, chooseMode: Int) {
-    private val selectionConfig: PictureSelectionConfig
-    private val selector: PictureSelector
+    private val selectionConfig: PictureSelectionConfig = PictureSelectionConfig.cleanInstance
+    private val selector: PictureSelector = selector
 
     /**
      * Set App Language
@@ -85,7 +96,7 @@ class PictureSelectionCameraModel(selector: PictureSelector, chooseMode: Int) {
      */
     @Deprecated("")
     fun setSandboxFileEngine(engine: SandboxFileEngine): PictureSelectionCameraModel {
-        if (SdkVersionUtils.isQ()) {
+        if (SdkVersionUtils.isQ) {
             PictureSelectionConfig.sandboxFileEngine = engine
             selectionConfig.isSandboxFileEngine = true
         } else {
@@ -101,7 +112,7 @@ class PictureSelectionCameraModel(selector: PictureSelector, chooseMode: Int) {
      * @return
      */
     fun setSandboxFileEngine(engine: UriToFileTransformEngine): PictureSelectionCameraModel {
-        if (SdkVersionUtils.isQ()) {
+        if (SdkVersionUtils.isQ) {
             PictureSelectionConfig.uriToFileTransformEngine = engine
             selectionConfig.isSandboxFileEngine = true
         } else {
@@ -456,7 +467,7 @@ class PictureSelectionCameraModel(selector: PictureSelector, chooseMode: Int) {
         if (selectionConfig.selectionMode === SelectModeConfig.SINGLE && selectionConfig.isDirectReturnSingle) {
             SelectedManager.clearSelectResult()
         } else {
-            SelectedManager.addAllSelectResult(ArrayList<Any?>(selectedList))
+            SelectedManager.addAllSelectResult(ArrayList(selectedList))
         }
         return this
     }
@@ -502,8 +513,8 @@ class PictureSelectionCameraModel(selector: PictureSelector, chooseMode: Int) {
      *
      */
     fun forResult() {
-        if (!DoubleUtils.isFastDoubleClick()) {
-            val activity: Activity = selector.getActivity()
+        if (!DoubleUtils.isFastDoubleClick) {
+            val activity: Activity = selector.activity
                 ?: throw NullPointerException("Activity cannot be null")
             selectionConfig.isResultListenerBack = false
             selectionConfig.isActivityResultBack = true
@@ -520,12 +531,12 @@ class PictureSelectionCameraModel(selector: PictureSelector, chooseMode: Int) {
                 throw NullPointerException("Use only camera openCamera mode," +
                         "Activity or Fragment interface needs to be implemented " + IBridgePictureBehavior::class.java)
             }
-            val fragment = fragmentManager.findFragmentByTag(PictureOnlyCameraFragment.TAG)
+            val fragment = fragmentManager.findFragmentByTag(TAG)
             if (fragment != null) {
                 fragmentManager.beginTransaction().remove(fragment).commitAllowingStateLoss()
             }
             FragmentInjectManager.injectSystemRoomFragment(fragmentManager,
-                PictureOnlyCameraFragment.TAG, PictureOnlyCameraFragment.newInstance())
+                TAG, PictureOnlyCameraFragment.newInstance())
         }
     }
 
@@ -539,13 +550,10 @@ class PictureSelectionCameraModel(selector: PictureSelector, chooseMode: Int) {
      *
      * @param call
      */
-    fun forResult(call: OnResultCallbackListener<LocalMedia?>?) {
-        if (!DoubleUtils.isFastDoubleClick()) {
-            val activity: Activity = selector.getActivity()
+    fun forResult(call: OnResultCallbackListener<LocalMedia>) {
+        if (!DoubleUtils.isFastDoubleClick) {
+            val activity: Activity = selector.activity
                 ?: throw NullPointerException("Activity cannot be null")
-            if (call == null) {
-                throw NullPointerException("OnResultCallbackListener cannot be null")
-            }
             // 绑定回调监听
             selectionConfig.isResultListenerBack = true
             selectionConfig.isActivityResultBack = false
@@ -559,12 +567,12 @@ class PictureSelectionCameraModel(selector: PictureSelector, chooseMode: Int) {
             if (fragmentManager == null) {
                 throw NullPointerException("FragmentManager cannot be null")
             }
-            val fragment = fragmentManager.findFragmentByTag(PictureOnlyCameraFragment.TAG)
+            val fragment = fragmentManager.findFragmentByTag(TAG)
             if (fragment != null) {
                 fragmentManager.beginTransaction().remove(fragment).commitAllowingStateLoss()
             }
             FragmentInjectManager.injectSystemRoomFragment(fragmentManager,
-                PictureOnlyCameraFragment.TAG, PictureOnlyCameraFragment.newInstance())
+TAG, PictureOnlyCameraFragment.newInstance())
         }
     }
 
@@ -577,7 +585,7 @@ class PictureSelectionCameraModel(selector: PictureSelector, chooseMode: Int) {
      *
      */
     fun build(): PictureOnlyCameraFragment {
-        val activity: Activity = selector.getActivity()
+        val activity: Activity = selector.activity
             ?: throw NullPointerException("Activity cannot be null")
         if (activity !is IBridgePictureBehavior) {
             throw NullPointerException("Use only build PictureOnlyCameraFragment," +
@@ -598,13 +606,10 @@ class PictureSelectionCameraModel(selector: PictureSelector, chooseMode: Int) {
      */
     fun buildLaunch(
         containerViewId: Int,
-        call: OnResultCallbackListener<LocalMedia?>?,
+        call: OnResultCallbackListener<LocalMedia>,
     ): PictureOnlyCameraFragment {
-        val activity: Activity = selector.getActivity()
+        val activity: Activity = selector.activity
             ?: throw NullPointerException("Activity cannot be null")
-        if (call == null) {
-            throw NullPointerException("OnResultCallbackListener cannot be null")
-        }
         // 绑定回调监听
         selectionConfig.isResultListenerBack = true
         selectionConfig.isActivityResultBack = false
@@ -619,13 +624,13 @@ class PictureSelectionCameraModel(selector: PictureSelector, chooseMode: Int) {
             throw NullPointerException("FragmentManager cannot be null")
         }
         val onlyCameraFragment = PictureOnlyCameraFragment()
-        val fragment = fragmentManager.findFragmentByTag(onlyCameraFragment.getFragmentTag())
+        val fragment = fragmentManager.findFragmentByTag(onlyCameraFragment.tag)
         if (fragment != null) {
             fragmentManager.beginTransaction().remove(fragment).commitAllowingStateLoss()
         }
         fragmentManager.beginTransaction()
-            .add(containerViewId, onlyCameraFragment, onlyCameraFragment.getFragmentTag())
-            .addToBackStack(onlyCameraFragment.getFragmentTag())
+            .add(containerViewId, onlyCameraFragment, onlyCameraFragment.tag)
+            .addToBackStack(onlyCameraFragment.tag)
             .commitAllowingStateLoss()
         return onlyCameraFragment
     }
@@ -636,18 +641,14 @@ class PictureSelectionCameraModel(selector: PictureSelector, chooseMode: Int) {
      * @param requestCode
      */
     fun forResultActivity(requestCode: Int) {
-        if (!DoubleUtils.isFastDoubleClick()) {
-            val activity: Activity = selector.getActivity()
+        if (!DoubleUtils.isFastDoubleClick) {
+            val activity: Activity = selector.activity
                 ?: throw NullPointerException("Activity cannot be null")
             selectionConfig.isResultListenerBack = false
             selectionConfig.isActivityResultBack = true
             val intent = Intent(activity, PictureSelectorTransparentActivity::class.java)
-            val fragment: Fragment = selector.getFragment()
-            if (fragment != null) {
-                fragment.startActivityForResult(intent, requestCode)
-            } else {
-                activity.startActivityForResult(intent, requestCode)
-            }
+            val fragment: Fragment = selector.fragment!!
+            fragment.startActivityForResult(intent, requestCode)
             activity.overridePendingTransition(R.anim.ps_anim_fade_in, 0)
         }
     }
@@ -658,8 +659,8 @@ class PictureSelectionCameraModel(selector: PictureSelector, chooseMode: Int) {
      * @param launcher use []
      */
     fun forResultActivity(launcher: ActivityResultLauncher<Intent?>?) {
-        if (!DoubleUtils.isFastDoubleClick()) {
-            val activity: Activity = selector.getActivity()
+        if (!DoubleUtils.isFastDoubleClick) {
+            val activity: Activity = selector.activity
                 ?: throw NullPointerException("Activity cannot be null")
             if (launcher == null) {
                 throw NullPointerException("ActivityResultLauncher cannot be null")
@@ -677,13 +678,10 @@ class PictureSelectionCameraModel(selector: PictureSelector, chooseMode: Int) {
      *
      * @param call
      */
-    fun forResultActivity(call: OnResultCallbackListener<LocalMedia?>?) {
-        if (!DoubleUtils.isFastDoubleClick()) {
-            val activity: Activity = selector.getActivity()
+    fun forResultActivity(call: OnResultCallbackListener<LocalMedia>) {
+        if (!DoubleUtils.isFastDoubleClick) {
+            val activity: Activity = selector.activity
                 ?: throw NullPointerException("Activity cannot be null")
-            if (call == null) {
-                throw NullPointerException("OnResultCallbackListener cannot be null")
-            }
             // 绑定回调监听
             selectionConfig.isResultListenerBack = true
             selectionConfig.isActivityResultBack = false
@@ -695,8 +693,6 @@ class PictureSelectionCameraModel(selector: PictureSelector, chooseMode: Int) {
     }
 
     init {
-        this.selector = selector
-        selectionConfig = PictureSelectionConfig.getCleanInstance()
         selectionConfig.chooseMode = chooseMode
         selectionConfig.isOnlyCamera = true
         selectionConfig.isDisplayTimeAxis = false

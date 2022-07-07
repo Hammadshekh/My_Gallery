@@ -2,6 +2,8 @@ package com.example.selector.basic
 
 import android.content.Context
 import android.content.ContextWrapper
+import com.example.selector.config.LanguageConfig
+import com.example.selector.utils.PictureLanguageUtils
 
 class PictureContextWrapper(base: Context?) : ContextWrapper(base) {
     override fun getSystemService(name: String): Any {
@@ -13,7 +15,7 @@ class PictureContextWrapper(base: Context?) : ContextWrapper(base) {
     companion object {
         fun wrap(context: Context?, language: Int): ContextWrapper {
             if (language != LanguageConfig.UNKNOWN_LANGUAGE) {
-                PictureLanguageUtils.setAppLanguage(context, language)
+                context?.let { PictureLanguageUtils.setAppLanguage(it, language) }
             }
             return PictureContextWrapper(context)
         }

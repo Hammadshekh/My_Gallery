@@ -5,9 +5,9 @@ import android.content.Context
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
 import android.widget.Button
 import android.widget.TextView
+import com.example.mygallery.R
 
 class PictureCommonDialog(context: Context?, title: String?, content: String?) :
     Dialog(context!!, R.style.Picture_Theme_Dialog), View.OnClickListener {

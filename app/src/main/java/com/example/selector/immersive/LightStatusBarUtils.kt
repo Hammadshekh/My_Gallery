@@ -6,7 +6,6 @@ import android.os.Build
 import android.view.View
 import android.view.Window
 import android.view.WindowManager
-import java.lang.Exception
 
 object LightStatusBarUtils {
     fun setLightStatusBarAboveAPI23(
@@ -30,8 +29,8 @@ object LightStatusBarUtils {
         activity: Activity, isMarginStatusBar: Boolean,
         isMarginNavigationBar: Boolean, isTransStatusBar: Boolean, dark: Boolean,
     ) {
-        when (RomUtils.getLightStatausBarAvailableRomType()) {
-            RomUtils.AvailableRomType.MIUI -> if (RomUtils.getMIUIVersionCode() >= 7) {
+        when (RomUtils.lightStatausBarAvailableRomType) {
+            RomUtils.AvailableRomType.MIUI -> if (RomUtils.mIUIVersionCode >= 7) {
                 setAndroidNativeLightStatusBar(activity,
                     isMarginStatusBar,
                     isMarginNavigationBar,
@@ -109,7 +108,7 @@ object LightStatusBarUtils {
                 meizuFlags.setInt(lp, value)
                 activity.window.attributes = lp
                 result = true
-                if (RomUtils.getFlymeVersion() >= 7) {
+                if (RomUtils.flymeVersion >= 7) {
                     setAndroidNativeLightStatusBar(activity,
                         isMarginStatusBar,
                         isMarginNavigationBar,

@@ -1,8 +1,10 @@
 package com.example.selector.config
 
+import com.example.ucrop.BuildConfig.LIBRARY_PACKAGE_NAME
+
 object PictureConfig {
     const val SP_NAME = "PictureSpUtils"
-    private val KEY: String = BuildConfig.LIBRARY_PACKAGE_NAME
+    private val KEY: String = LIBRARY_PACKAGE_NAME
     const val EXTRA_RESULT_SELECTION = "extra_result_media"
     val EXTRA_PICTURE_SELECTOR_CONFIG = KEY + ".PictureSelectorConfig"
     const val CAMERA_FACING = "android.intent.extras.CAMERA_FACING"

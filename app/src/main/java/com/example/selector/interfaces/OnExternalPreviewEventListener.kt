@@ -1,5 +1,7 @@
 package com.example.selector.interfaces
 
+import com.luck.picture.lib.entity.LocalMedia
+
 interface OnExternalPreviewEventListener {
     /**
      * 删除图片
@@ -14,5 +16,5 @@ interface OnExternalPreviewEventListener {
      * @param media 资源
      * @return false 自己实现下载逻辑；默认true
      */
-    fun onLongPressDownload(media: LocalMedia?): Boolean
+    fun onLongPressDownload(media: LocalMedia): Boolean
 }

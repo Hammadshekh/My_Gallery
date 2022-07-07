@@ -21,6 +21,7 @@ import com.example.selector.utils.SdkVersionUtils
 import com.luck.picture.lib.entity.LocalMedia
 import java.lang.NullPointerException
 import java.util.*
+import kotlin.collections.ArrayList
 
 /**
  * @author：luck
@@ -966,7 +967,7 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
      */
     fun setQueryOnlyMimeType(vararg mimeTypes: String?): PictureSelectionModel {
         if (mimeTypes.isNotEmpty()) {
-            selectionConfig.queryOnlyList?.addAll(listOf(*mimeTypes))
+            selectionConfig.queryOnlyList?.addAll(listOf(arrayListOf(mimeTypes).toString()))
         }
         return this
     }
@@ -979,7 +980,7 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
      */
     fun setSkipCropMimeType(vararg mimeTypes: String?): PictureSelectionModel {
         if (mimeTypes.isNotEmpty()) {
-            mutableListOf(*mimeTypes).let { selectionConfig.skipCropList?.addAll(it) }
+            mutableListOf(*mimeTypes).let { selectionConfig.skipCropList?.addAll(listOf(arrayListOf(mimeTypes).toString())) }
         }
         return this
     }
@@ -1199,7 +1200,7 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
         if (selectionConfig.selectionMode == SelectModeConfig.SINGLE && selectionConfig.isDirectReturnSingle) {
             SelectedManager.clearSelectResult()
         } else {
-            SelectedManager.addAllSelectResult(ArrayList<Any?>(selectedList))
+            ArrayList<Any>(selectedList).let { SelectedManager.addAllSelectResult(it) }
         }
         return this
     }
@@ -1221,7 +1222,7 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
      *
      * @param call
      */
-    fun forResult(call: OnResultCallbackListener<LocalMedia?>?) {
+    fun forResult(call: OnResultCallbackListener<LocalMedia>) {
         if (!DoubleUtils.isFastDoubleClick) {
             val activity: Activity = selector.activity
                 ?: throw NullPointerException("Activity cannot be null")
@@ -1324,7 +1325,7 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
      */
     fun buildLaunch(
         containerViewId: Int,
-        call: OnResultCallbackListener<LocalMedia?>?,
+        call: OnResultCallbackListener<LocalMedia>?,
     ): PictureSelectorFragment {
         val activity: Activity = selector.activity
             ?: throw NullPointerException("Activity cannot be null")
@@ -1345,21 +1346,21 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
             throw NullPointerException("FragmentManager cannot be null")
         }
         val selectorFragment = PictureSelectorFragment()
-        val fragment = fragmentManager.findFragmentByTag(selectorFragment.getFragmentTag())
+        val fragment = fragmentManager.findFragmentByTag(selectorFragment.tag)
         if (fragment != null) {
             fragmentManager.beginTransaction().remove(fragment).commitAllowingStateLoss()
         }
         fragmentManager.beginTransaction()
-            .add(containerViewId, selectorFragment, selectorFragment.getFragmentTag())
-            .addToBackStack(selectorFragment.isFragmentTag())
+            .add(containerViewId, selectorFragment, selectorFragment.tag)
+            .addToBackStack(selectorFragment.tag)
             .commitAllowingStateLoss()
         return selectorFragment
     }
 
     init {
         this.selector = selector
-        selectionConfig = PictureSelectionConfig.cleanInstance!!
+        selectionConfig = PictureSelectionConfig.cleanInstance
         selectionConfig.chooseMode = chooseMode
         setMaxVideoSelectNum(selectionConfig.maxVideoSelectNum)
     }
-}}
+}

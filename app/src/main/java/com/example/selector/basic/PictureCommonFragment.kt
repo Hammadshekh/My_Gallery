@@ -23,10 +23,12 @@ import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import androidx.fragment.app.Fragment
 import com.example.mygallery.R
+import com.example.selector.app.PictureAppMaster
 import com.example.selector.config.*
 import com.example.selector.dialog.PhotoItemSelectedDialog
 import com.example.selector.dialog.PictureLoadingDialog
 import com.example.selector.dialog.RemindDialog
+import com.example.selector.engine.PictureSelectorEngine
 import com.example.selector.immersive.ImmersiveManager
 import com.example.selector.interfaces.*
 import com.example.selector.loader.IBridgeMediaLoader
@@ -47,10 +49,7 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.InputStream
-import java.lang.Exception
-import java.lang.NullPointerException
-import java.util.ArrayList
-import java.util.HashSet
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -108,7 +107,7 @@ abstract class PictureCommonFragment : Fragment(),
     /**
      * tipsDialog
      */
-    protected var tipsDialog: Dialog? = null
+    private var tipsDialog: Dialog? = null
     override fun onCreateLoader() {}
     override val resourceId: Int
         get() = 0
@@ -116,12 +115,12 @@ abstract class PictureCommonFragment : Fragment(),
     override fun onFragmentResume() {}
     override fun reStartSavedInstance(savedInstanceState: Bundle?) {}
     override fun onCheckOriginalChange() {}
-    override fun dispatchCameraMediaResult(media: LocalMedia?) {}
-    override fun onSelectedChange(isAddRemove: Boolean, currentMedia: LocalMedia?) {}
-    override fun onFixedSelectedChange(oldLocalMedia: LocalMedia?) {}
+    override fun dispatchCameraMediaResult(media: LocalMedia) {}
+    override fun onSelectedChange(isAddRemove: Boolean, currentMedia: LocalMedia) {}
+    override fun onFixedSelectedChange(oldLocalMedia: LocalMedia) {}
     override fun sendChangeSubSelectPositionEvent(adapterChange: Boolean) {}
     override fun handlePermissionSettingResult(permissions: Array<String>) {}
-    override fun onEditMedia(intent: Intent?) {}
+    override fun onEditMedia(intent: Intent) {}
     override fun onEnterFragment() {}
     override fun onExitFragment() {}
     override fun onRequestPermissionsResult(
@@ -152,7 +151,7 @@ abstract class PictureCommonFragment : Fragment(),
             SpUtils.putBoolean(requireContext(), permissionArray[0], true)
         }
         if (PictureSelectionConfig.onPermissionDeniedListener != null) {
-            onPermissionExplainEvent(false, null)
+            onPermissionExplainEvent(false, emptyArray())
             PictureSelectionConfig.onPermissionDeniedListener!!
                 .onDenied(this, permissionArray, PictureConfig.REQUEST_GO_SETTING,
                     object : OnCallbackListener<Boolean?> {
@@ -822,7 +821,7 @@ abstract class PictureCommonFragment : Fragment(),
      */
     protected fun startCameraImageCapture() {
         if (!ActivityCompatHelper.isDestroy(requireActivity())) {
-            onPermissionExplainEvent(false, null)
+            onPermissionExplainEvent(false, emptyArray())
             if (PictureSelectionConfig.onCameraInterceptListener != null) {
                 onInterceptCameraEvent(SelectMimeType.TYPE_IMAGE)
             } else {
@@ -865,7 +864,7 @@ abstract class PictureCommonFragment : Fragment(),
      */
     protected fun startCameraVideoCapture() {
         if (!ActivityCompatHelper.isDestroy(requireActivity())) {
-            onPermissionExplainEvent(false, null)
+            onPermissionExplainEvent(false, emptyArray())
             if (PictureSelectionConfig.onCameraInterceptListener != null) {
                 onInterceptCameraEvent(SelectMimeType.TYPE_VIDEO)
             } else {
@@ -934,7 +933,7 @@ abstract class PictureCommonFragment : Fragment(),
 
     override fun onPermissionExplainEvent(
         isDisplayExplain: Boolean,
-        permissionArray: Array<String>
+        permissionArray: Array<String>,
     ) {
         if (PictureSelectionConfig.onPermissionDescriptionListener != null) {
             if (isDisplayExplain) {
@@ -983,7 +982,7 @@ abstract class PictureCommonFragment : Fragment(),
             if (requestCode == PictureConfig.REQUEST_CAMERA) {
                 dispatchHandleCamera(data)
             } else if (requestCode == Crop.REQUEST_EDIT_CROP) {
-                onEditMedia(data)
+                onEditMedia(data!!)
             } else if (requestCode == Crop.REQUEST_CROP) {
                 val selectedResult: List<LocalMedia> = SelectedManager.selectedResult
                 try {
@@ -1012,13 +1011,17 @@ abstract class PictureCommonFragment : Fragment(),
                                 val item = array.optJSONObject(i)
                                 media.cutPath = item.optString(CustomIntentKey.EXTRA_OUT_PUT_PATH)
                                 media.setCut(!TextUtils.isEmpty(media.cutPath))
-                                media.cropImageWidth = item.optInt(CustomIntentKey.EXTRA_IMAGE_WIDTH)
-                                media.cropImageHeight = item.optInt(CustomIntentKey.EXTRA_IMAGE_HEIGHT)
+                                media.cropImageWidth =
+                                    item.optInt(CustomIntentKey.EXTRA_IMAGE_WIDTH)
+                                media.cropImageHeight =
+                                    item.optInt(CustomIntentKey.EXTRA_IMAGE_HEIGHT)
                                 media.cropOffsetX = item.optInt(CustomIntentKey.EXTRA_OFFSET_X)
                                 media.cropOffsetY = item.optInt(CustomIntentKey.EXTRA_OFFSET_Y)
-                                media.cropResultAspectRatio = item.optDouble(CustomIntentKey.EXTRA_ASPECT_RATIO)
-                                    .toFloat()
-                                media.customData = item.optString(CustomIntentKey.EXTRA_CUSTOM_EXTRA_DATA)
+                                media.cropResultAspectRatio =
+                                    item.optDouble(CustomIntentKey.EXTRA_ASPECT_RATIO)
+                                        .toFloat()
+                                media.customData =
+                                    item.optString(CustomIntentKey.EXTRA_CUSTOM_EXTRA_DATA)
                                 media.sandboxPath = media.cutPath
                             }
                         }
@@ -1088,16 +1091,16 @@ abstract class PictureCommonFragment : Fragment(),
      */
     private fun copyOutputAudioToDir() {
         try {
-            if (!TextUtils.isEmpty(config.outPutAudioDir) && PictureMimeType.isContent(config.cameraPath)) {
+            if (!TextUtils.isEmpty(config.outPutAudioDir) && PictureMimeType.isContent(config.cameraPath!!)) {
                 val inputStream: InputStream? =
                     PictureContentResolver.getContentResolverOpenInputStream(
                         requireContext(),
                         Uri.parse(config.cameraPath))
-                val audioFileName: String
-                audioFileName = if (TextUtils.isEmpty(config.outPutAudioFileName)) {
+                val audioFileName: String = if (TextUtils.isEmpty(config.outPutAudioFileName)) {
                     ""
                 } else {
-                    if (config.isOnlyCamera) config.outPutAudioFileName ?: "" else System.currentTimeMillis()
+                    if (config.isOnlyCamera) config.outPutAudioFileName
+                        ?: "" else System.currentTimeMillis()
                         .toString() + "_" + config.outPutAudioFileName
                 }
                 val outputFile: File = PictureFileUtils.createCameraFile(requireContext(),
@@ -1140,16 +1143,20 @@ abstract class PictureCommonFragment : Fragment(),
             return
         }
         if (SdkVersionUtils.isQ) {
-            if (PictureMimeType.isHasVideo(media.mimeType ?: "") && PictureMimeType.isContent(config.cameraPath)) {
+            if (PictureMimeType.isHasVideo(media.mimeType
+                    ?: "") && PictureMimeType.isContent(config.cameraPath!!)
+            ) {
                 PictureMediaScannerConnection(requireActivity(), media.realPath ?: "")
             }
         } else {
             val path: String =
-                if (PictureMimeType.isContent(config.cameraPath ?: "")) media.realPath ?: "" else config.cameraPath ?: ""
+                if (PictureMimeType.isContent(config.cameraPath ?: "")) media.realPath
+                    ?: "" else config.cameraPath ?: ""
             PictureMediaScannerConnection(requireActivity(), path)
             if (PictureMimeType.isHasImage(media.mimeType)) {
                 val dirFile = File(path)
-                val lastImageId: Int = MediaUtils.getDCIMLastImageId(requireContext(), dirFile.parent ?: "")
+                val lastImageId: Int =
+                    MediaUtils.getDCIMLastImageId(requireContext(), dirFile.parent ?: "")
                 if (lastImageId != -1) {
                     MediaUtils.removeMedia(requireContext(), lastImageId)
                 }
@@ -1191,7 +1198,7 @@ abstract class PictureCommonFragment : Fragment(),
             var selectImageSize = 0
             var selectVideoSize = 0
             for (i in selectedResult.indices) {
-                val mimeType: String = selectedResult[i].mimeType
+                val mimeType: String = selectedResult[i].mimeType!!
                 if (PictureMimeType.isHasVideo(mimeType)) {
                     selectVideoSize++
                 } else {
@@ -1200,8 +1207,10 @@ abstract class PictureCommonFragment : Fragment(),
             }
             if (config.minSelectNum > 0) {
                 if (selectImageSize < config.minSelectNum) {
-                    val isSelectLimit: Boolean = PictureSelectionConfig.onSelectLimitTipsListener
-                        .onSelectLimitTips(context, config, SelectLimitType.SELECT_MIN_SELECT_LIMIT)
+                    val isSelectLimit: Boolean =
+                        PictureSelectionConfig.onSelectLimitTipsListener!!.onSelectLimitTips(context,
+                            config,
+                            SelectLimitType.SELECT_MIN_SELECT_LIMIT)
                     if (isSelectLimit) {
                         return true
                     }
@@ -1212,8 +1221,8 @@ abstract class PictureCommonFragment : Fragment(),
             }
             if (config.minVideoSelectNum > 0) {
                 if (selectVideoSize < config.minVideoSelectNum) {
-                    val isSelectLimit: Boolean = PictureSelectionConfig.onSelectLimitTipsListener
-                        .onSelectLimitTips(context,
+                    val isSelectLimit: Boolean =
+                        PictureSelectionConfig.onSelectLimitTipsListener!!.onSelectLimitTips(context,
                             config,
                             SelectLimitType.SELECT_MIN_VIDEO_SELECT_LIMIT)
                     if (isSelectLimit) {
@@ -1331,7 +1340,7 @@ abstract class PictureCommonFragment : Fragment(),
             Crop.REQUEST_CROP)
     }
 
-    fun onOldCrop(result: ArrayList<LocalMedia>) {
+    override fun onOldCrop(result: ArrayList<LocalMedia>) {
         var currentLocalMedia: LocalMedia? = null
         for (i in result.indices) {
             val item: LocalMedia = result[i]
@@ -1375,7 +1384,8 @@ abstract class PictureCommonFragment : Fragment(),
                             if (media != null) {
                                 media.compressPath = resultPath
                                 media.setCompressed(!TextUtils.isEmpty(resultPath))
-                                media.sandboxPath = (if (SdkVersionUtils.isQ) media.compressPath else null)
+                                media.sandboxPath =
+                                    (if (SdkVersionUtils.isQ) media.compressPath else null)
                                 queue.remove(srcPath)
                             }
                             if (queue.size == 0) {
@@ -1513,7 +1523,7 @@ abstract class PictureCommonFragment : Fragment(),
         for (i in result.indices) {
             val media: LocalMedia = result[i]
             val availablePath: String = media.availablePath
-            if (PictureMimeType.isHasVideo(media.mimeType) || PictureMimeType.isUrlHasVideo(
+            if (media.mimeType?.let { PictureMimeType.isHasVideo(it) } == true || PictureMimeType.isUrlHasVideo(
                     availablePath)
             ) {
                 queue[availablePath] = media
@@ -1619,12 +1629,13 @@ abstract class PictureCommonFragment : Fragment(),
         val queue: ConcurrentHashMap<String, LocalMedia> = ConcurrentHashMap<String, LocalMedia>()
         for (i in result.indices) {
             val media: LocalMedia = result[i]
-            queue[media.path] = media
+            queue[media.path!!] = media
         }
         if (queue.size == 0) {
             dispatchUriToFileTransformResult(result)
         } else {
-            PictureThreadUtils.executeByIo(object : PictureThreadUtils.SimpleTask<ArrayList<LocalMedia>>() {
+            PictureThreadUtils.executeByIo(object :
+                PictureThreadUtils.SimpleTask<ArrayList<LocalMedia>>() {
                 override fun doInBackground(): ArrayList<LocalMedia> {
                     for ((_, media) in queue) {
                         if (config.isCheckOriginalImage || TextUtils.isEmpty(media.sandboxPath)) {
@@ -1671,7 +1682,8 @@ abstract class PictureCommonFragment : Fragment(),
     @Deprecated("")
     private fun copyExternalPathToAppInDirFor29(result: ArrayList<LocalMedia>) {
         showLoading()
-        PictureThreadUtils.executeByIo(object : PictureThreadUtils.SimpleTask<ArrayList<LocalMedia>>() {
+        PictureThreadUtils.executeByIo(object :
+            PictureThreadUtils.SimpleTask<ArrayList<LocalMedia>>() {
             override fun doInBackground(): ArrayList<LocalMedia> {
                 for (i in result.indices) {
                     val media: LocalMedia = result[i]
@@ -1682,7 +1694,7 @@ abstract class PictureCommonFragment : Fragment(),
                         object : OnCallbackIndexListener<LocalMedia?> {
                             override fun onCall(data: LocalMedia?, index: Int) {
                                 val media: LocalMedia = result[index]
-                                media.sandboxPath =  data?.sandboxPath
+                                media.sandboxPath = data?.sandboxPath
                                 if (config.isCheckOriginalImage) {
                                     media.originalPath = data?.originalPath
                                     media.setOriginal(!TextUtils.isEmpty(data?.originalPath))
@@ -1741,7 +1753,8 @@ abstract class PictureCommonFragment : Fragment(),
         if (!ActivityCompatHelper.isDestroy(requireActivity())) {
             dismissLoading()
             if (config.isActivityResultBack) {
-                requireActivity().setResult(Activity.RESULT_OK, PictureSelector.putIntentResult(result))
+                requireActivity().setResult(Activity.RESULT_OK,
+                    PictureSelector.putIntentResult(result))
                 onSelectFinish(Activity.RESULT_OK, result)
             } else {
                 if (PictureSelectionConfig.onResultCallListener != null) {
@@ -1756,9 +1769,9 @@ abstract class PictureCommonFragment : Fragment(),
      * set app language
      */
     override fun initAppLanguage() {
-        val config: PictureSelectionConfig = PictureSelectionConfig.instance
-        if (config.language != LanguageConfig.UNKNOWN_LANGUAGE) {
-            PictureLanguageUtils.setAppLanguage(activity, config.language)
+        val config: PictureSelectionConfig? = PictureSelectionConfig.instance
+        if (config?.language != LanguageConfig.UNKNOWN_LANGUAGE) {
+            config?.language?.let { PictureLanguageUtils.setAppLanguage(requireActivity(), it) }
         }
     }
 
@@ -1774,11 +1787,11 @@ abstract class PictureCommonFragment : Fragment(),
     override fun onKeyBackFragmentFinish() {
         if (!ActivityCompatHelper.isDestroy(activity)) {
             if (config.isActivityResultBack) {
-                activity!!.setResult(Activity.RESULT_CANCELED)
+                requireActivity().setResult(Activity.RESULT_CANCELED)
                 onSelectFinish(Activity.RESULT_CANCELED, null)
             } else {
                 if (PictureSelectionConfig.onResultCallListener != null) {
-                    PictureSelectionConfig.onResultCallListener.onCancel()
+                    PictureSelectionConfig.onResultCallListener!!.onCancel()
                 }
             }
             onExitPictureSelector()
@@ -1866,7 +1879,7 @@ abstract class PictureCommonFragment : Fragment(),
      */
     protected fun onSelectFinish(resultCode: Int, result: ArrayList<LocalMedia>?) {
         if (null != iBridgePictureBehavior) {
-            val selectorResult: com.luck.picture.lib.basic.PictureCommonFragment.SelectorResult =
+            val selectorResult: SelectorResult =
                 getResult(resultCode, result)
             iBridgePictureBehavior!!.onSelectFinish(selectorResult)
         }
@@ -1879,11 +1892,11 @@ abstract class PictureCommonFragment : Fragment(),
         if (!ActivityCompatHelper.isDestroy(activity)) {
             if (isNormalDefaultEnter) {
                 if (PictureSelectionConfig.viewLifecycle != null) {
-                    PictureSelectionConfig.viewLifecycle.onDestroy(this)
+                    PictureSelectionConfig.viewLifecycle!!.onDestroy(this)
                 }
-                activity!!.finish()
+                requireActivity().finish()
             } else {
-                val fragments = activity!!.supportFragmentManager.fragments
+                val fragments = requireActivity().supportFragmentManager.fragments
                 for (i in fragments.indices) {
                     val fragment = fragments[i]
                     if (fragment is PictureCommonFragment) {
@@ -1901,10 +1914,8 @@ abstract class PictureCommonFragment : Fragment(),
     private fun createImageLoaderEngine() {
         if (PictureSelectionConfig.imageEngine == null) {
             val baseEngine: PictureSelectorEngine =
-                PictureAppMaster.getInstance().getPictureSelectorEngine()
-            if (baseEngine != null) {
-                PictureSelectionConfig.imageEngine = baseEngine.createImageLoaderEngine()
-            }
+                PictureAppMaster.instance?.pictureSelectorEngine!!
+            PictureSelectionConfig.imageEngine = baseEngine.createImageLoaderEngine()
         }
     }
 
@@ -1912,19 +1923,19 @@ abstract class PictureCommonFragment : Fragment(),
      * Get the image loader data engine again, provided that the user implements the IApp interface in the Application
      */
     private fun createLoaderDataEngine() {
-        if (PictureSelectionConfig.getInstance().isLoaderDataEngine) {
+        if (PictureSelectionConfig.instance?.isLoaderDataEngine == true) {
             if (PictureSelectionConfig.loaderDataEngine == null) {
                 val baseEngine: PictureSelectorEngine =
-                    PictureAppMaster.getInstance().getPictureSelectorEngine()
-                if (baseEngine != null) PictureSelectionConfig.loaderDataEngine =
+                    PictureAppMaster.instance?.pictureSelectorEngine!!
+                PictureSelectionConfig.loaderDataEngine =
                     baseEngine.createLoaderDataEngine()
             }
         }
-        if (PictureSelectionConfig.getInstance().isLoaderFactoryEngine) {
+        if (PictureSelectionConfig.instance?.isLoaderFactoryEngine == true) {
             if (PictureSelectionConfig.loaderFactory == null) {
                 val baseEngine: PictureSelectorEngine =
-                    PictureAppMaster.getInstance().getPictureSelectorEngine()
-                if (baseEngine != null) PictureSelectionConfig.loaderFactory =
+                    PictureAppMaster.instance?.pictureSelectorEngine!!
+                PictureSelectionConfig.loaderFactory =
                     baseEngine.onCreateLoader()
             }
         }
@@ -1934,17 +1945,17 @@ abstract class PictureCommonFragment : Fragment(),
      * Get the image compress engine again, provided that the user implements the IApp interface in the Application
      */
     private fun createCompressEngine() {
-        if (PictureSelectionConfig.getInstance().isCompressEngine) {
+        if (PictureSelectionConfig.instance?.isCompressEngine == true) {
             if (PictureSelectionConfig.compressFileEngine == null) {
                 val baseEngine: PictureSelectorEngine =
-                    PictureAppMaster.getInstance().getPictureSelectorEngine()
-                if (baseEngine != null) PictureSelectionConfig.compressFileEngine =
+                    PictureAppMaster.instance?.pictureSelectorEngine!!
+                PictureSelectionConfig.compressFileEngine =
                     baseEngine.createCompressFileEngine()
             }
             if (PictureSelectionConfig.compressEngine == null) {
                 val baseEngine: PictureSelectorEngine =
-                    PictureAppMaster.getInstance().getPictureSelectorEngine()
-                if (baseEngine != null) PictureSelectionConfig.compressEngine =
+                    PictureAppMaster.instance?.pictureSelectorEngine!!
+                PictureSelectionConfig.compressEngine =
                     baseEngine.createCompressEngine()
             }
         }
@@ -1954,17 +1965,17 @@ abstract class PictureCommonFragment : Fragment(),
      * Get the Sandbox engine again, provided that the user implements the IApp interface in the Application
      */
     private fun createSandboxFileEngine() {
-        if (PictureSelectionConfig.getInstance().isSandboxFileEngine) {
+        if (PictureSelectionConfig.instance?.isSandboxFileEngine == true) {
             if (PictureSelectionConfig.uriToFileTransformEngine == null) {
-                val baseEngine: PictureSelectorEngine =
-                    PictureAppMaster.getInstance().getPictureSelectorEngine()
+                val baseEngine: PictureSelectorEngine? =
+                    PictureAppMaster.instance?.pictureSelectorEngine
                 if (baseEngine != null) PictureSelectionConfig.uriToFileTransformEngine =
                     baseEngine.createUriToFileTransformEngine()
             }
             if (PictureSelectionConfig.sandboxFileEngine == null) {
                 val baseEngine: PictureSelectorEngine =
-                    PictureAppMaster.getInstance().getPictureSelectorEngine()
-                if (baseEngine != null) PictureSelectionConfig.sandboxFileEngine =
+                    PictureAppMaster.instance?.pictureSelectorEngine!!
+                PictureSelectionConfig.sandboxFileEngine =
                     baseEngine.createSandboxFileEngine()
             }
         }
@@ -1974,14 +1985,12 @@ abstract class PictureCommonFragment : Fragment(),
      * Retrieve the result callback listener, provided that the user implements the IApp interface in the Application
      */
     private fun createResultCallbackListener() {
-        if (PictureSelectionConfig.getInstance().isResultListenerBack) {
+        if (PictureSelectionConfig.instance?.isResultListenerBack == true) {
             if (PictureSelectionConfig.onResultCallListener == null) {
                 val baseEngine: PictureSelectorEngine =
-                    PictureAppMaster.getInstance().getPictureSelectorEngine()
-                if (baseEngine != null) {
-                    PictureSelectionConfig.onResultCallListener =
-                        baseEngine.getResultCallbackListener()
-                }
+                    PictureAppMaster.instance?.pictureSelectorEngine!!
+                PictureSelectionConfig.onResultCallListener =
+                    baseEngine.resultCallbackListener
             }
         }
     }
@@ -1990,14 +1999,12 @@ abstract class PictureCommonFragment : Fragment(),
      * Retrieve the layout callback listener, provided that the user implements the IApp interface in the Application
      */
     private fun createLayoutResourceListener() {
-        if (PictureSelectionConfig.getInstance().isInjectLayoutResource) {
+        if (PictureSelectionConfig.instance?.isInjectLayoutResource == true) {
             if (PictureSelectionConfig.onLayoutResourceListener == null) {
                 val baseEngine: PictureSelectorEngine =
-                    PictureAppMaster.getInstance().getPictureSelectorEngine()
-                if (baseEngine != null) {
-                    PictureSelectionConfig.onLayoutResourceListener =
-                        baseEngine.createLayoutResourceListener()
-                }
+                    PictureAppMaster.instance?.pictureSelectorEngine!!
+                PictureSelectionConfig.onLayoutResourceListener =
+                    baseEngine.createLayoutResourceListener()
             }
         }
     }
@@ -2008,12 +2015,14 @@ abstract class PictureCommonFragment : Fragment(),
      * @param data result
      * @return
      */
-    protected fun getResult(
+    private fun getResult(
         resultCode: Int,
         data: ArrayList<LocalMedia>?,
-    ): com.luck.picture.lib.basic.PictureCommonFragment.SelectorResult {
-        return com.luck.picture.lib.basic.PictureCommonFragment.SelectorResult(resultCode,
-            if (data != null) PictureSelector.putIntentResult(data) else null)
+    ): SelectorResult {
+        return (if (data != null) PictureSelector.putIntentResult(data) else null)?.let {
+            SelectorResult(resultCode,
+                it)
+        }!!
     }
 
     /**
@@ -2021,8 +2030,8 @@ abstract class PictureCommonFragment : Fragment(),
      */
     class SelectorResult(var mResultCode: Int, var mResultData: Intent)
     companion object {
-        val fragmentTag = PictureCommonFragment::class.java.simpleName
-            get() = Companion.field
+        /*    val fragmentTag = PictureCommonFragment::class.java.simpleName
+                get() = Companion.field*/
 
         /**
          * 根据类型获取相应的Toast文案
@@ -2034,12 +2043,16 @@ abstract class PictureCommonFragment : Fragment(),
          */
         @SuppressLint("StringFormatInvalid")
         private fun getTipsMsg(context: Context?, mimeType: String, maxSelectNum: Int): String {
-            return if (PictureMimeType.isHasVideo(mimeType)) {
-                context!!.getString(R.string.ps_message_video_max_num, maxSelectNum.toString())
-            } else if (PictureMimeType.isHasAudio(mimeType)) {
-                context!!.getString(R.string.ps_message_audio_max_num, maxSelectNum.toString())
-            } else {
-                context!!.getString(R.string.ps_message_max_num, maxSelectNum.toString())
+            return when {
+                PictureMimeType.isHasVideo(mimeType) -> {
+                    context!!.getString(R.string.ps_message_video_max_num, maxSelectNum.toString())
+                }
+                PictureMimeType.isHasAudio(mimeType) -> {
+                    context!!.getString(R.string.ps_message_audio_max_num, maxSelectNum.toString())
+                }
+                else -> {
+                    context!!.getString(R.string.ps_message_max_num, maxSelectNum.toString())
+                }
             }
         }
     }

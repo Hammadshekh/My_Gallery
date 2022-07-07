@@ -3,7 +3,7 @@ package com.example.selector.basic
 import android.content.Intent
 import android.os.Bundle
 import com.luck.picture.lib.entity.LocalMedia
-import java.util.ArrayList
+import java.util.*
 
 interface IPictureSelectorCommonEvent {
     /**
@@ -93,7 +93,7 @@ interface IPictureSelectorCommonEvent {
      */
     fun confirmSelect(currentMedia: LocalMedia, isSelected: Boolean): Int
 
-    /**
+/*    *//**
      *
     Validate co-selection type mode optional conditions
      *

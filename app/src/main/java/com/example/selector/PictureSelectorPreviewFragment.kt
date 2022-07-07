@@ -28,7 +28,6 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.RecyclerView.ItemAnimator
 import androidx.recyclerview.widget.SimpleItemAnimator
 import androidx.viewpager2.widget.MarginPageTransformer
 import androidx.viewpager2.widget.ViewPager2
@@ -133,7 +132,7 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
     fun setExternalPreviewData(
         position: Int,
         totalNum: Int,
-        data: ArrayList<LocalMedia?>?,
+        data: ArrayList<LocalMedia>,
         isDisplayDelete: Boolean,
     ) {
         mData = data

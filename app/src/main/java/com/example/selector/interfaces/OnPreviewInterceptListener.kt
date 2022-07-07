@@ -1,7 +1,8 @@
 package com.example.selector.interfaces
 
 import android.content.Context
-import java.util.ArrayList
+import com.luck.picture.lib.entity.LocalMedia
+import java.util.*
 
 interface OnPreviewInterceptListener {
     /**
@@ -20,6 +21,6 @@ interface OnPreviewInterceptListener {
     fun onPreview(
         context: Context?, position: Int, totalNum: Int, page: Int,
         currentBucketId: Long, currentAlbumName: String?, isShowCamera: Boolean,
-        data: ArrayList<LocalMedia?>?, isBottomPreview: Boolean,
+        data: ArrayList<LocalMedia>, isBottomPreview: Boolean,
     )
 }

@@ -2,11 +2,21 @@ package com.example.selector.loader
 
 import android.content.Context
 import android.text.TextUtils
+import com.example.selector.config.PictureMimeType
+import com.example.selector.config.PictureSelectionConfig
+import com.example.selector.config.SelectMimeType
+import com.example.selector.entity.LocalMediaFolder
+import com.example.selector.entity.MediaExtraInfo
+import com.example.selector.utils.MediaUtils
+import com.example.selector.utils.SdkVersionUtils
+import com.example.selector.utils.SortUtils
+import com.example.selector.utils.ValueOf
+import com.luck.picture.lib.entity.LocalMedia
 import java.io.File
 import java.math.BigInteger
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
-import java.util.ArrayList
+import java.util.*
 
 object SandboxFileLoader {
     /**
@@ -22,12 +32,12 @@ object SandboxFileLoader {
             SortUtils.sortLocalMediaAddedTime(list)
             val firstMedia: LocalMedia = list[0]
             folder = LocalMediaFolder()
-            folder.setFolderName(firstMedia.getParentFolderName())
-            folder.setFirstImagePath(firstMedia.getPath())
-            folder.setFirstMimeType(firstMedia.getMimeType())
-            folder.setBucketId(firstMedia.getBucketId())
-            folder.setFolderTotalNum(list.size)
-            folder.setData(list)
+            folder.folderName = firstMedia.parentFolderName
+            folder.firstImagePath = firstMedia.path
+            folder.firstMimeType = firstMedia.mimeType
+            folder.bucketId = firstMedia.bucketId
+            folder.folderTotalNum = list.size
+            folder.data = list
         }
         return folder
     }
@@ -46,7 +56,7 @@ object SandboxFileLoader {
         val sandboxFile = File(sandboxDir)
         if (sandboxFile.exists()) {
             val files = sandboxFile.listFiles { file -> !file.isDirectory } ?: return list
-            val config: PictureSelectionConfig = PictureSelectionConfig.getInstance()
+            val config: PictureSelectionConfig = PictureSelectionConfig.instance!!
             var md: MessageDigest? = null
             try {
                 md = MessageDigest.getInstance("MD5")
@@ -55,20 +65,20 @@ object SandboxFileLoader {
             }
             for (f in files) {
                 val mimeType: String = MediaUtils.getMimeTypeFromMediaUrl(f.absolutePath)
-                if (config.chooseMode === SelectMimeType.ofImage()) {
+                if (config.chooseMode == SelectMimeType.ofImage()) {
                     if (!PictureMimeType.isHasImage(mimeType)) {
                         continue
                     }
-                } else if (config.chooseMode === SelectMimeType.ofVideo()) {
+                } else if (config.chooseMode == SelectMimeType.ofVideo()) {
                     if (!PictureMimeType.isHasVideo(mimeType)) {
                         continue
                     }
-                } else if (config.chooseMode === SelectMimeType.ofAudio()) {
+                } else if (config.chooseMode == SelectMimeType.ofAudio()) {
                     if (!PictureMimeType.isHasAudio(mimeType)) {
                         continue
                     }
                 }
-                if (config.queryOnlyList != null && config.queryOnlyList.size() > 0 && !config.queryOnlyList.contains(
+                if (config.queryOnlyList != null && config.queryOnlyList!!.size > 0 && !config.queryOnlyList!!.contains(
                         mimeType)
                 ) {
                     continue
@@ -83,8 +93,7 @@ object SandboxFileLoader {
                 if (size <= 0) {
                     continue
                 }
-                var id: Long
-                id = if (md != null) {
+                val id: Long = if (md != null) {
                     md.update(absolutePath.toByteArray())
                     BigInteger(1, md.digest()).toLong()
                 } else {
@@ -97,18 +106,18 @@ object SandboxFileLoader {
                 var height: Int
                 if (PictureMimeType.isHasVideo(mimeType)) {
                     val videoSize: MediaExtraInfo = MediaUtils.getVideoSize(context, absolutePath)
-                    width = videoSize.getWidth()
-                    height = videoSize.getHeight()
-                    duration = videoSize.getDuration()
+                    width = videoSize.width
+                    height = videoSize.height
+                    duration = videoSize.duration
                 } else if (PictureMimeType.isHasAudio(mimeType)) {
                     val audioSize: MediaExtraInfo = MediaUtils.getAudioSize(context, absolutePath)
-                    width = audioSize.getWidth()
-                    height = audioSize.getHeight()
-                    duration = audioSize.getDuration()
+                    width = audioSize.width
+                    height = audioSize.height
+                    duration = audioSize.duration
                 } else {
                     val imageSize: MediaExtraInfo = MediaUtils.getImageSize(context, absolutePath)
-                    width = imageSize.getWidth()
-                    height = imageSize.getHeight()
+                    width = imageSize.width
+                    height = imageSize.height
                     duration = 0L
                 }
                 if (PictureMimeType.isHasVideo(mimeType) || PictureMimeType.isHasAudio(mimeType)) {
@@ -126,25 +135,25 @@ object SandboxFileLoader {
                     }
                 }
                 val media: LocalMedia = LocalMedia.create()
-                media.setId(id)
-                media.setPath(absolutePath)
-                media.setRealPath(absolutePath)
-                media.setFileName(f.name)
-                media.setParentFolderName(sandboxFile.name)
-                media.setDuration(duration)
-                media.setChooseModel(config.chooseMode)
-                media.setMimeType(mimeType)
-                media.setWidth(width)
-                media.setHeight(height)
-                media.setSize(size)
-                media.setBucketId(bucketId)
-                media.setDateAddedTime(dateAdded)
+                media.id = id
+                media.path = absolutePath
+                media.realPath = absolutePath
+                media.fileName = f.name
+                media.parentFolderName = sandboxFile.name
+                media.duration = duration
+                media.chooseModel = config.chooseMode
+                media.mimeType = mimeType
+                media.width = width
+                media.height = height
+                media.size = size
+                media.bucketId =bucketId
+                media.dateAddedTime = dateAdded
                 if (PictureSelectionConfig.onQueryFilterListener != null) {
-                    if (PictureSelectionConfig.onQueryFilterListener.onFilter(media)) {
+                    if (PictureSelectionConfig.onQueryFilterListener!!.onFilter(media)) {
                         continue
                     }
                 }
-                media.setSandboxPath(if (SdkVersionUtils.isQ()) absolutePath else null)
+                media.sandboxPath = if (SdkVersionUtils.isQ) absolutePath else null
                 list.add(media)
             }
         }

@@ -4,7 +4,10 @@ import android.content.pm.ActivityInfo
 import android.os.Parcel
 import android.os.Parcelable
 import android.os.Parcelable.Creator
-import com.example.selector.basic.*
+import com.example.selector.basic.IBridgeLoaderFactory
+import com.example.selector.basic.IBridgeViewLifecycle
+import com.example.selector.basic.InterpolatorFactory
+import com.example.selector.basic.OnBitmapWatermarkEventListener
 import com.example.selector.engine.*
 import com.example.selector.interfaces.*
 import com.example.selector.magical.BuildRecycleItemViewParams
@@ -13,7 +16,6 @@ import com.example.selector.style.PictureSelectorStyle
 import com.example.selector.threads.PictureThreadUtils
 import com.example.selector.utils.SdkVersionUtils
 import com.luck.picture.lib.entity.LocalMedia
-import java.util.ArrayList
 
 class PictureSelectionConfig() : Parcelable {
     var chooseMode = 0
@@ -57,8 +59,8 @@ class PictureSelectionConfig() : Parcelable {
     var isEmptyResultReturn = false
     var isHidePreviewDownload = false
     var isWithVideoImage = false
-    var queryOnlyList: List<String>? = null
-    var skipCropList: List<String>? = null
+    var queryOnlyList: ArrayList<String>? = null
+    var skipCropList: ArrayList<String>? = null
     var isCheckOriginalImage = false
     var outPutCameraImageFileName: String? = null
     var outPutCameraVideoFileName: String? = null
@@ -145,7 +147,7 @@ class PictureSelectionConfig() : Parcelable {
         isHidePreviewDownload = `in`.readByte().toInt() != 0
         isWithVideoImage = `in`.readByte().toInt() != 0
         queryOnlyList = `in`.createStringArrayList()
-        skipCropList = `in`.createStringArrayList()
+        skipCropList = `in`.createStringArrayList()!!
         isCheckOriginalImage = `in`.readByte().toInt() != 0
         outPutCameraImageFileName = `in`.readString()
         outPutCameraVideoFileName = `in`.readString()
@@ -386,7 +388,7 @@ class PictureSelectionConfig() : Parcelable {
         var onCameraInterceptListener: OnCameraInterceptListener? = null
         var onSelectLimitTipsListener: OnSelectLimitTipsListener? = null
         var onResultCallListener: OnResultCallbackListener<LocalMedia>? = null
-        private var onExternalPreviewEventListener: OnExternalPreviewEventListener? = null
+        var onExternalPreviewEventListener: OnExternalPreviewEventListener? = null
         private var onInjectActivityPreviewListener: OnInjectActivityPreviewListener? = null
         var onEditMediaEventListener: OnMediaEditInterceptListener? = null
         var onPermissionsEventListener: OnPermissionsInterceptListener? = null

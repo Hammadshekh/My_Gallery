@@ -67,5 +67,5 @@ interface PictureSelectorEngine {
      *
      * @return
      */
-    val resultCallbackListener: OnResultCallbackListener<LocalMedia?>?
+    val resultCallbackListener: OnResultCallbackListener<LocalMedia>
 }

@@ -5,7 +5,7 @@ import android.content.Context
 import android.os.Bundle
 import android.view.Gravity
 import android.view.ViewGroup
-import android.view.WindowManager
+import com.example.mygallery.R
 
 class PictureLoadingDialog(context: Context?) :
     Dialog(context!!, R.style.Picture_Theme_AlertDialog) {

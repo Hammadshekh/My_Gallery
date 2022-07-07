@@ -1,6 +1,7 @@
 package com.example.selector.interfaces
 
 import android.content.Context
+import com.example.selector.config.PictureSelectionConfig
 
 interface OnSelectLimitTipsListener {
     /**
