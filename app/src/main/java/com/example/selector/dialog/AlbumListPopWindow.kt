@@ -44,15 +44,15 @@ class AlbumListPopWindow(private val mContext: Context?) : PopupWindow() {
 
     @SuppressLint("NotifyDataSetChanged")
     fun bindAlbumData(list: List<LocalMediaFolder?>) {
-        mAdapter?.bindAlbumData(list)
-        mAdapter?.notifyDataSetChanged()
+        mAdapter!!.bindAlbumData(list)
+        mAdapter!!.notifyDataSetChanged()
         val lp = mRecyclerView!!.layoutParams
         lp.height =
             if (list.size > ALBUM_MAX_COUNT) windowMaxHeight else ViewGroup.LayoutParams.WRAP_CONTENT
     }
 
-    val albumList: List<Any>?
-        get() = mAdapter?.getAlbumList()
+    val albumList: List<Any>
+        get() = mAdapter!!.getAlbumList()
 
     fun getFolder(position: Int): LocalMediaFolder? {
         return if (mAdapter?.getAlbumList()?.isNotEmpty() == true
@@ -63,7 +63,7 @@ class AlbumListPopWindow(private val mContext: Context?) : PopupWindow() {
     val firstAlbumImageCount: Int?
         get() = if (folderCount > 0) getFolder(0)?.folderTotalNum else 0
     val folderCount: Int
-        get() = mAdapter?.getAlbumList()?.size!!
+        get() = mAdapter!!.getAlbumList()?.size!!
 
     /**
      * 专辑列表桥接类
@@ -75,7 +75,7 @@ class AlbumListPopWindow(private val mContext: Context?) : PopupWindow() {
     }
 
     override fun showAsDropDown(anchor: View) {
-        if (albumList == null || albumList!!.isEmpty()) {
+        if (albumList.isEmpty()) {
             return
         }
         if (SdkVersionUtils.isN) {
@@ -98,19 +98,19 @@ class AlbumListPopWindow(private val mContext: Context?) : PopupWindow() {
     set selected state
      */
     private fun changeSelectedAlbumStyle() {
-        val folders: List<LocalMediaFolder>? = mAdapter?.getAlbumList()
+        val folders: List<LocalMediaFolder>? = mAdapter!!.getAlbumList()
         if (folders != null) {
             for (i in folders.indices) {
                 val folder: LocalMediaFolder = folders[i]
                 folder.isSelectTag = (false)
-                mAdapter?.notifyItemChanged(i)
+                mAdapter!!.notifyItemChanged(i)
                 for (j in 0 until SelectedManager.selectCount) {
                     val media: LocalMedia = SelectedManager.selectedResult[j]
-                    if (TextUtils.equals(folder.getFolderName(), media.parentFolderName)
+                    if (TextUtils.equals(folder.folderName, media.parentFolderName)
                         || folder.bucketId.equals(PictureConfig.ALL)
                     ) {
                         folder.isSelectTag=(true)
-                        mAdapter?.notifyItemChanged(i)
+                        mAdapter!!.notifyItemChanged(i)
                         break
                     }
                 }

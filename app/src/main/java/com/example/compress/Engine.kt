@@ -3,6 +3,7 @@ package com.example.compress
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
+import com.example.compress.adapter.InputStreamProvider
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream

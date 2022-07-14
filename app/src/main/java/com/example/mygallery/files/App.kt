@@ -9,7 +9,7 @@ import java.io.File
 class App : Application(), IApp, CameraXConfig.Provider, ImageLoaderFactory {
     override fun onCreate() {
         super.onCreate()
-        PictureAppMaster.getInstance().setApp(this)
+        PictureAppMaster.instance.setApp(this)
     }
 
     val appContext: Context

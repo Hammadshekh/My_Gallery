@@ -22,7 +22,7 @@ class ViewParams : Parcelable {
     }
 
     constructor() {}
-    protected constructor(`in`: Parcel) {
+    private constructor(`in`: Parcel) {
         left = `in`.readInt()
         top = `in`.readInt()
         width = `in`.readInt()
@@ -30,14 +30,24 @@ class ViewParams : Parcelable {
     }
 
     companion object {
-        val CREATOR: Creator<ViewParams> = object : Creator<ViewParams?> {
-            override fun createFromParcel(source: Parcel): ViewParams? {
+        val CREATOR: Creator<ViewParams> = object : Creator<ViewParams> {
+            override fun createFromParcel(source: Parcel): ViewParams {
                 return ViewParams(source)
             }
 
             override fun newArray(size: Int): Array<ViewParams?> {
                 return arrayOfNulls(size)
             }
+        }
+    }
+
+     object CREATOR : Creator<ViewParams> {
+        override fun createFromParcel(parcel: Parcel): ViewParams {
+            return ViewParams(parcel)
+        }
+
+        override fun newArray(size: Int): Array<ViewParams?> {
+            return arrayOfNulls(size)
         }
     }
 }

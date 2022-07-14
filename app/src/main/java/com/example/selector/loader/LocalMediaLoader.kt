@@ -46,7 +46,7 @@ class LocalMediaLoader : IBridgeMediaLoader() {
                             allImageFolder.folderTotalNum = imageNum + 1
                         } while (data.moveToNext())
                         val selfFolder: LocalMediaFolder = SandboxFileLoader
-                            .loadInAppSandboxFolderFile(context, config?.sandboxDir)
+                            .loadInAppSandboxFolderFile(context, config.sandboxDir)
                         imageFolders.add(selfFolder)
                         allImageFolder.folderTotalNum = (allImageFolder.folderTotalNum + selfFolder.folderTotalNum)
                         allImageFolder.data = selfFolder.data
@@ -64,11 +64,11 @@ class LocalMediaLoader : IBridgeMediaLoader() {
                             imageFolders.add(0, allImageFolder)
                             allImageFolder.firstImagePath = (latelyImages[0].path)
                             allImageFolder.firstMimeType = (latelyImages[0].mimeType)
-                            val folderName: String? = if (TextUtils.isEmpty(config?.defaultAlbumName)) {
-                                if (config?.chooseMode == SelectMimeType.ofAudio()) context?.getString(
+                            val folderName: String? = if (TextUtils.isEmpty(config.defaultAlbumName)) {
+                                if (config.chooseMode == SelectMimeType.ofAudio()) context?.getString(
                                     R.string.ps_all_audio) else context?.getString(R.string.ps_camera_roll)
                             } else {
-                                config?.defaultAlbumName
+                                config.defaultAlbumName
                             }
                             allImageFolder.folderName = folderName
                             allImageFolder.bucketId = PictureConfig.ALL.toLong()
@@ -92,11 +92,11 @@ class LocalMediaLoader : IBridgeMediaLoader() {
         })
     }
 
-    override fun loadOnlyInAppDirAllMedia(listener: OnQueryAlbumListener<LocalMediaFolder?>?) {
+    override fun loadOnlyInAppDirAllMedia(listener: OnQueryAlbumListener<LocalMediaFolder>) {
         PictureThreadUtils.executeByIo(object : PictureThreadUtils.SimpleTask<LocalMediaFolder?>() {
             override fun doInBackground(): LocalMediaFolder {
                 return SandboxFileLoader.loadInAppSandboxFolderFile(context,
-                    config!!.sandboxDir)
+                    config.sandboxDir)
             }
 
             override fun onSuccess(result: LocalMediaFolder?) {
@@ -124,7 +124,7 @@ class LocalMediaLoader : IBridgeMediaLoader() {
             val durationCondition: String = durationCondition
             val fileSizeCondition: String = fileSizeCondition
             val queryMimeCondition: String = queryMimeCondition
-            when (config?.chooseMode) {
+            when (config.chooseMode) {
                 SelectMimeType.TYPE_ALL ->                 // Get all, not including audio
                     return getSelectionArgsForAllMediaCondition(durationCondition,
                         fileSizeCondition,
@@ -145,7 +145,7 @@ class LocalMediaLoader : IBridgeMediaLoader() {
     // Get all
     override val selectionArgs: Array<String>
          get() {
-            when (config?.chooseMode) {
+            when (config.chooseMode) {
                 SelectMimeType.TYPE_ALL ->                 // Get all
                     return arrayOf(MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE.toString(),
                         MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO.toString())
@@ -160,7 +160,7 @@ class LocalMediaLoader : IBridgeMediaLoader() {
         }
 
     override val sortOrder: String?
-         get() = if (TextUtils.isEmpty(config?.sortOrder)) ORDER_BY else config?.sortOrder
+         get() = if (TextUtils.isEmpty(config.sortOrder)) ORDER_BY else config.sortOrder
 
      override fun parseLocalMedia(data: Cursor?, isUsePool: Boolean): LocalMedia? {
         val idColumn = data?.getColumnIndexOrThrow(PROJECTION[0])
@@ -187,7 +187,7 @@ class LocalMediaLoader : IBridgeMediaLoader() {
          if (mimeType != null) {
              if (mimeType.endsWith("image/*")) {
                  mimeType = MediaUtils.getMimeTypeFromMediaUrl(absolutePath)
-                 if (config?.isGif == true) {
+                 if (config.isGif == true) {
                      if (PictureMimeType.isHasGif(mimeType)) {
                          return null
                      }
@@ -199,12 +199,12 @@ class LocalMediaLoader : IBridgeMediaLoader() {
                  return null
              }
          }
-        if (config?.isWebp == true) {
+        if (config.isWebp == true) {
             if (mimeType?.startsWith(PictureMimeType.ofWEBP()) == true) {
                 return null
             }
         }
-        if (config!!.isBmp) {
+        if (config.isBmp) {
             if (mimeType?.let { PictureMimeType.isHasBmp(it) } == true) {
                 return null
             }
@@ -224,20 +224,20 @@ class LocalMediaLoader : IBridgeMediaLoader() {
         if (TextUtils.isEmpty(fileName)) {
             fileName = absolutePath?.let { PictureMimeType.getUrlToFileName(it) }
         }
-        if (config!!.isFilterSizeDuration && size!! > 0 && size < FileSizeUnit.KB) {
+        if (config.isFilterSizeDuration && size!! > 0 && size < FileSizeUnit.KB) {
             // Filter out files less than 1KB
             return null
         }
         if (mimeType?.let { PictureMimeType.isHasVideo(it) } == true || PictureMimeType.isHasAudio(mimeType)) {
-            if (config?.filterVideoMinSecond!!  > 0 && duration!! < config!!.filterVideoMinSecond) {
+            if (config.filterVideoMinSecond!!  > 0 && duration!! < config.filterVideoMinSecond) {
                 // If you set the minimum number of seconds of video to display
                 return null
             }
-            if (config?.filterVideoMaxSecond!! in 1 until duration!!) {
+            if (config.filterVideoMaxSecond!! in 1 until duration!!) {
                 // If you set the maximum number of seconds of video to display
                 return null
             }
-            if (config?.isFilterSizeDuration == true && duration <= 0) {
+            if (config.isFilterSizeDuration == true && duration <= 0) {
                 //If the length is 0, the corrupted video is processed and filtered out
                 return null
             }
@@ -252,7 +252,7 @@ class LocalMediaLoader : IBridgeMediaLoader() {
         media.fileName = fileName
         media.parentFolderName = folderName
         media.duration = duration!!
-        media.chooseModel = config!!.chooseMode
+        media.chooseModel = config.chooseMode
         media.mimeType = mimeType
          if (width != null) {
              media.width = width

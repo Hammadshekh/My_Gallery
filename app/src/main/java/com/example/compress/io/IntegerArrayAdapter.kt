@@ -1,9 +1,7 @@
 package com.example.compress.io
 
-class IntegerArrayAdapter(override val tag: String?) : ArrayAdapterInterface<IntArray?> {
-   override fun getArrayLength(array: IntArray?): Int {
-        return array?.size!!
-    }
+class IntegerArrayAdapter : ArrayAdapterInterface<IntArray> {
+
 
     override fun newArray(length: Int): IntArray {
         return IntArray(length)
@@ -14,7 +12,13 @@ class IntegerArrayAdapter(override val tag: String?) : ArrayAdapterInterface<Int
 
     companion object {
         val tag = "IntegerArrayPool"
-            get() = Companion.field
+    }
+
+    override val tag: String?
+        get() = TODO("Not yet implemented")
+
+    override fun getArrayLength(array: IntArray): Int {
+        return array.size
     }
 
 

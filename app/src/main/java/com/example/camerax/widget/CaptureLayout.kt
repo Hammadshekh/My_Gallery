@@ -4,31 +4,38 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.Configuration
-import android.graphics.ColorFilter
 import android.util.AttributeSet
 import android.view.Gravity
+import android.view.View.OnClickListener
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.graphics.BlendModeColorFilterCompat
 import androidx.core.graphics.BlendModeCompat
+import com.example.camerax.CustomCameraConfig
+import com.example.camerax.listener.CaptureListener
+import com.example.camerax.listener.ClickListener
+import com.example.camerax.listener.TypeListener
+import com.example.camerax.utils.DensityUtil
+import com.example.mygallery.R
 
-class CaptureLayout @JvmOverloads constructor(
+class CaptureLayout (
     context: Context?,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0,
 ) :
     FrameLayout(context!!, attrs, defStyleAttr) {
-    private var captureListener //拍照按钮监听
+    private var captureListener //Camera button monitor
             : CaptureListener? = null
-    private var typeListener //拍照或录制后接结果按钮监听
+    private var typeListener //Take a picture or record followed by the result button monitoring
             : TypeListener? = null
-    private var leftClickListener //左边按钮监听
+    private var leftClickListener //left button monitor
             : ClickListener? = null
-    private var rightClickListener //右边按钮监听
+    private var rightClickListener //Right button monitor
             : ClickListener? = null
 
     fun setTypeListener(typeListener: TypeListener?) {
@@ -65,34 +72,36 @@ class CaptureLayout @JvmOverloads constructor(
         setMeasuredDimension(layout_width, layout_height)
     }
 
-    fun initEvent() {
+    private fun initEvent() {
         //默认TypeButton为隐藏
         iv_custom_right!!.visibility = GONE
-        btn_cancel.setVisibility(GONE)
-        btn_confirm.setVisibility(GONE)
+        btn_cancel!!.visibility = GONE
+        btn_confirm!!.visibility = GONE
     }
 
+    @SuppressLint("ObjectAnimatorBinding")
     fun startTypeBtnAnimator() {
-        //拍照录制结果后的动画
-        if (iconLeft != 0) iv_custom_left!!.visibility = GONE else btn_return.setVisibility(GONE)
+        //The animation after taking a picture and recording the result
+        if (iconLeft != 0) iv_custom_left!!.visibility = GONE else btn_return!!.visibility =
+            GONE
         if (iconRight != 0) iv_custom_right!!.visibility = GONE
         btn_capture!!.visibility = GONE
-        btn_cancel.setVisibility(VISIBLE)
-        btn_confirm.setVisibility(VISIBLE)
-        btn_cancel.setClickable(false)
-        btn_confirm.setClickable(false)
+        btn_cancel!!.visibility = VISIBLE
+        btn_confirm!!.visibility = VISIBLE
+        btn_cancel!!.isClickable = false
+        btn_confirm!!.isClickable = false
         iv_custom_left!!.visibility = GONE
         val animator_cancel: ObjectAnimator =
-            ObjectAnimator.ofFloat(btn_cancel, "translationX", layout_width / 4, 0)
+            ObjectAnimator.ofFloat(btn_cancel, "translationX", layout_width / 4f, 0f)
         val animator_confirm: ObjectAnimator =
-            ObjectAnimator.ofFloat(btn_confirm, "translationX", -layout_width / 4, 0)
+            ObjectAnimator.ofFloat(btn_confirm, "translationX", -layout_width / 4f, 0f)
         val set = AnimatorSet()
         set.playTogether(animator_cancel, animator_confirm)
         set.addListener(object : AnimatorListenerAdapter() {
             override fun onAnimationEnd(animation: Animator) {
                 super.onAnimationEnd(animation)
-                btn_cancel.setClickable(true)
-                btn_confirm.setClickable(true)
+                btn_cancel!!.isClickable = true
+                btn_confirm!!.isClickable = true
             }
         })
         set.duration = 500
@@ -111,50 +120,36 @@ class CaptureLayout @JvmOverloads constructor(
         val btn_capture_param = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
         btn_capture_param.gravity = Gravity.CENTER
         btn_capture!!.layoutParams = btn_capture_param
-        btn_capture!!.setCaptureListener(object : CaptureListener() {
-            fun takePictures() {
-                if (captureListener != null) {
-                    captureListener.takePictures()
-                }
+        btn_capture!!.setCaptureListener(object : CaptureListener {
+            override fun takePictures() {
+                captureListener?.takePictures()
                 startAlphaAnimation()
             }
 
-            fun recordShort(time: Long) {
-                if (captureListener != null) {
-                    captureListener.recordShort(time)
-                }
+            override fun recordShort(time: Long) {
+                captureListener?.recordShort(time)
             }
 
-            fun recordStart() {
-                if (captureListener != null) {
-                    captureListener.recordStart()
-                }
+            override fun recordStart() {
+                captureListener?.recordStart()
                 startAlphaAnimation()
             }
 
-            fun recordEnd(time: Long) {
-                if (captureListener != null) {
-                    captureListener.recordEnd(time)
-                }
+            override fun recordEnd(time: Long) {
+                captureListener?.recordEnd(time)
                 startTypeBtnAnimator()
             }
 
-            fun changeTime(time: Long) {
-                if (captureListener != null) {
-                    captureListener.changeTime(time)
-                }
+            override fun changeTime(time: Long) {
+                captureListener?.changeTime(time)
             }
 
-            fun recordZoom(zoom: Float) {
-                if (captureListener != null) {
-                    captureListener.recordZoom(zoom)
-                }
+            override fun recordZoom(zoom: Float) {
+                captureListener?.recordZoom(zoom)
             }
 
-            fun recordError() {
-                if (captureListener != null) {
-                    captureListener.recordError()
-                }
+            override fun recordError() {
+                captureListener?.recordError()
             }
         })
 
@@ -163,11 +158,9 @@ class CaptureLayout @JvmOverloads constructor(
         val btn_cancel_param = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
         btn_cancel_param.gravity = Gravity.CENTER_VERTICAL
         btn_cancel_param.setMargins(layout_width / 4 - button_size / 2, 0, 0, 0)
-        btn_cancel.setLayoutParams(btn_cancel_param)
-        btn_cancel.setOnClickListener(OnClickListener {
-            if (typeListener != null) {
-                typeListener.cancel()
-            }
+        btn_cancel!!.layoutParams = btn_cancel_param
+        btn_cancel!!.setOnClickListener(OnClickListener {
+            typeListener?.cancel()
         })
 
         //确认按钮
@@ -175,11 +168,9 @@ class CaptureLayout @JvmOverloads constructor(
         val btn_confirm_param = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
         btn_confirm_param.gravity = Gravity.CENTER_VERTICAL or Gravity.RIGHT
         btn_confirm_param.setMargins(0, 0, layout_width / 4 - button_size / 2, 0)
-        btn_confirm.setLayoutParams(btn_confirm_param)
-        btn_confirm.setOnClickListener(OnClickListener {
-            if (typeListener != null) {
-                typeListener.confirm()
-            }
+        btn_confirm!!.layoutParams = btn_confirm_param
+        btn_confirm!!.setOnClickListener(OnClickListener {
+            typeListener?.confirm()
         })
 
         //返回按钮
@@ -187,11 +178,9 @@ class CaptureLayout @JvmOverloads constructor(
         val btn_return_param = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
         btn_return_param.gravity = Gravity.CENTER_VERTICAL
         btn_return_param.setMargins(layout_width / 6, 0, 0, 0)
-        btn_return.setLayoutParams(btn_return_param)
-        btn_return.setOnClickListener(OnClickListener {
-            if (leftClickListener != null) {
-                leftClickListener.onClick()
-            }
+        btn_return!!.setLayoutParams(btn_return_param)
+        btn_return!!.setOnClickListener(OnClickListener {
+            leftClickListener?.onClick()
         })
         //左边自定义按钮
         iv_custom_left = ImageView(context)
@@ -201,9 +190,7 @@ class CaptureLayout @JvmOverloads constructor(
         iv_custom_param_left.setMargins(layout_width / 6, 0, 0, 0)
         iv_custom_left!!.layoutParams = iv_custom_param_left
         iv_custom_left!!.setOnClickListener {
-            if (leftClickListener != null) {
-                leftClickListener.onClick()
-            }
+            leftClickListener?.onClick()
         }
 
         //右边自定义按钮
@@ -214,9 +201,7 @@ class CaptureLayout @JvmOverloads constructor(
         iv_custom_param_right.setMargins(0, 0, layout_width / 6, 0)
         iv_custom_right!!.layoutParams = iv_custom_param_right
         iv_custom_right!!.setOnClickListener {
-            if (rightClickListener != null) {
-                rightClickListener.onClick()
-            }
+            rightClickListener?.onClick()
         }
         txt_tip = TextView(context)
         val txt_param = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
@@ -237,8 +222,8 @@ class CaptureLayout @JvmOverloads constructor(
     }
 
     private val captureTip: String
-        private get() {
-            val buttonFeatures: Int = btn_capture.getButtonFeatures()
+         get() {
+            val buttonFeatures: Int = btn_capture!!.buttonFeatures
             return when (buttonFeatures) {
                 CustomCameraConfig.BUTTON_STATE_ONLY_CAPTURE -> context.getString(R.string.picture_photo_pictures)
                 CustomCameraConfig.BUTTON_STATE_ONLY_RECORDER -> context.getString(R.string.picture_photo_recording)
@@ -263,13 +248,13 @@ class CaptureLayout @JvmOverloads constructor(
 
     fun resetCaptureLayout() {
         btn_capture!!.resetState()
-        btn_cancel.setVisibility(GONE)
-        btn_confirm.setVisibility(GONE)
+        btn_cancel!!.visibility = GONE
+        btn_confirm!!.visibility = GONE
         btn_capture!!.visibility = VISIBLE
         txt_tip!!.text = captureTip
         txt_tip!!.visibility = VISIBLE
-        if (iconLeft != 0) iv_custom_left!!.visibility = VISIBLE else btn_return.setVisibility(
-            VISIBLE)
+        if (iconLeft != 0) iv_custom_left!!.visibility = VISIBLE else btn_return!!.visibility =
+            VISIBLE
         if (iconRight != 0) iv_custom_right!!.visibility = VISIBLE
     }
 
@@ -277,6 +262,7 @@ class CaptureLayout @JvmOverloads constructor(
         txt_tip!!.visibility = INVISIBLE
     }
 
+    @SuppressLint("ObjectAnimatorBinding")
     fun setTextWithAnimation(tip: String?) {
         txt_tip!!.text = tip
         val animator_txt_tip = ObjectAnimator.ofFloat(txt_tip, "alpha", 0f, 1f, 1f, 0f)
@@ -300,7 +286,7 @@ class CaptureLayout @JvmOverloads constructor(
     }
 
     fun setButtonFeatures(state: Int) {
-        btn_capture.setButtonFeatures(state)
+        btn_capture!!.buttonFeatures = state
         txt_tip!!.text = captureTip
     }
 
@@ -318,10 +304,10 @@ class CaptureLayout @JvmOverloads constructor(
         if (this.iconLeft != 0) {
             iv_custom_left!!.setImageResource(iconLeft)
             iv_custom_left!!.visibility = VISIBLE
-            btn_return.setVisibility(GONE)
+            btn_return!!.visibility = GONE
         } else {
             iv_custom_left!!.visibility = GONE
-            btn_return.setVisibility(VISIBLE)
+            btn_return!!.visibility = VISIBLE
         }
         if (this.iconRight != 0) {
             iv_custom_right!!.setImageResource(iconRight)
@@ -340,7 +326,7 @@ class CaptureLayout @JvmOverloads constructor(
     }
 
     init {
-        val screenWidth: Int = DensityUtil.getScreenWidth(getContext())
+        val screenWidth: Int = DensityUtil.getScreenWidth(requireContext())
         layout_width =
             if (this.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
                 screenWidth

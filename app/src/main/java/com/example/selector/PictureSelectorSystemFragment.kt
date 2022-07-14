@@ -26,7 +26,7 @@ import com.example.selector.permissions.PermissionConfig.READ_WRITE_EXTERNAL_STO
 import com.example.selector.permissions.PermissionResultCallback
 import com.example.selector.utils.SdkVersionUtils
 import com.example.selector.utils.ToastUtils
-import java.util.ArrayList
+import java.util.*
 
 class PictureSelectorSystemFragment : PictureCommonFragment() {
     override val resourceId: Int
@@ -39,8 +39,8 @@ class PictureSelectorSystemFragment : PictureCommonFragment() {
         super.onViewCreated(view, savedInstanceState)
         createSystemContracts()
         val isCheckReadStorage =
-            if (SdkVersionUtils.isR() && config!!.isAllFilesAccess) Environment.isExternalStorageManager() else PermissionChecker.isCheckReadStorage(
-                context!!)
+            if (SdkVersionUtils.isR() && config.isAllFilesAccess) Environment.isExternalStorageManager() else PermissionChecker.isCheckReadStorage(
+                requireContext())
         if (isCheckReadStorage) {
             openSystemAlbum()
         } else {
@@ -49,8 +49,8 @@ class PictureSelectorSystemFragment : PictureCommonFragment() {
                 onApplyPermissionsEvent(PermissionEvent.EVENT_SYSTEM_SOURCE_DATA,
                     READ_WRITE_EXTERNAL_STORAGE)
             } else {
-                PermissionChecker.getInstance().requestPermissions(this,
-                    READ_WRITE_EXTERNAL_STORAGE, object : PermissionResultCallback() {
+                PermissionChecker.instance!!.requestPermissions(this,
+                    READ_WRITE_EXTERNAL_STORAGE, object : PermissionResultCallback {
                         override fun onGranted() {
                             openSystemAlbum()
                         }
@@ -63,11 +63,11 @@ class PictureSelectorSystemFragment : PictureCommonFragment() {
         }
     }
 
-    fun onApplyPermissionsEvent(event: Int, permissionArray: Array<String?>?) {
+    override fun onApplyPermissionsEvent(event: Int, permissionArray: Array<String>) {
         if (event == PermissionEvent.EVENT_SYSTEM_SOURCE_DATA) {
-            PictureSelectionConfig.onPermissionsEventListener.requestPermission(this,
+            PictureSelectionConfig.onPermissionsEventListener!!.requestPermission(this,
                 READ_WRITE_EXTERNAL_STORAGE, object : OnRequestPermissionListener {
-                    override fun onCall(permissionArray: Array<String?>?, isResult: Boolean) {
+                    override fun onCall(permissionArray: Array<String>, isResult: Boolean) {
                         if (isResult) {
                             openSystemAlbum()
                         } else {
@@ -82,15 +82,15 @@ class PictureSelectorSystemFragment : PictureCommonFragment() {
      * 打开系统相册
      */
     private fun openSystemAlbum() {
-        onPermissionExplainEvent(false, null)
-        if (config!!.selectionMode === SelectModeConfig.SINGLE) {
-            if (config!!.chooseMode === SelectMimeType.ofAll()) {
+        onPermissionExplainEvent(false, emptyArray())
+        if (config.selectionMode == SelectModeConfig.SINGLE) {
+            if (config.chooseMode == SelectMimeType.ofAll()) {
                 mDocSingleLauncher!!.launch(SelectMimeType.SYSTEM_ALL)
             } else {
                 mContentLauncher!!.launch(input)
             }
         } else {
-            if (config!!.chooseMode === SelectMimeType.ofAll()) {
+            if (config.chooseMode == SelectMimeType.ofAll()) {
                 mDocMultipleLauncher!!.launch(SelectMimeType.SYSTEM_ALL)
             } else {
                 mContentsLauncher!!.launch(input)
@@ -102,14 +102,14 @@ class PictureSelectorSystemFragment : PictureCommonFragment() {
      * createSystemContracts
      */
     private fun createSystemContracts() {
-        if (config!!.selectionMode === SelectModeConfig.SINGLE) {
-            if (config!!.chooseMode === SelectMimeType.ofAll()) {
+        if (config.selectionMode == SelectModeConfig.SINGLE) {
+            if (config.chooseMode == SelectMimeType.ofAll()) {
                 createSingleDocuments()
             } else {
                 createContent()
             }
         } else {
-            if (config!!.chooseMode === SelectMimeType.ofAll()) {
+            if (config.chooseMode == SelectMimeType.ofAll()) {
                 createMultipleDocuments()
             } else {
                 createMultipleContents()
@@ -124,9 +124,9 @@ class PictureSelectorSystemFragment : PictureCommonFragment() {
      */
     private fun createMultipleDocuments() {
         mDocMultipleLauncher =
-            registerForActivityResult(object : ActivityResultContract<String?, List<Uri?>>() {
-                override fun parseResult(resultCode: Int, intent: Intent?): List<Uri?> {
-                    val result: MutableList<Uri?> = ArrayList()
+            registerForActivityResult(object : ActivityResultContract<String, List<Uri>>() {
+                override fun parseResult(resultCode: Int, intent: Intent?): List<Uri> {
+                    val result: MutableList<Uri> = ArrayList()
                     if (intent == null) {
                         return result
                     }
@@ -139,7 +139,7 @@ class PictureSelectorSystemFragment : PictureCommonFragment() {
                             result.add(uri)
                         }
                     } else if (intent.data != null) {
-                        result.add(intent.data)
+                        result.add(intent.data!!)
                     }
                     return result
                 }
@@ -157,7 +157,7 @@ class PictureSelectorSystemFragment : PictureCommonFragment() {
                     } else {
                         for (i in result.indices) {
                             val media = buildLocalMedia(result[i].toString())
-                            media.path = if (SdkVersionUtils.isQ()) media.path else media.realPath
+                            media.path = if (SdkVersionUtils.isQ) media.path else media.realPath
                             SelectedManager.addSelectResult(media)
                         }
                         dispatchTransformResult()
@@ -170,7 +170,7 @@ class PictureSelectorSystemFragment : PictureCommonFragment() {
      */
     private fun createSingleDocuments() {
         mDocSingleLauncher =
-            registerForActivityResult(object : ActivityResultContract<String?, Uri?>() {
+            registerForActivityResult(object : ActivityResultContract<String, Uri?>() {
                 override fun parseResult(resultCode: Int, intent: Intent?): Uri? {
                     return intent?.data
                 }
@@ -185,7 +185,7 @@ class PictureSelectorSystemFragment : PictureCommonFragment() {
                     onKeyBackFragmentFinish()
                 } else {
                     val media = buildLocalMedia(result.toString())
-                    media.path = if (SdkVersionUtils.isQ()) media.path else media.realPath
+                    media.path = if (SdkVersionUtils.isQ) media.path else media.realPath
                     val selectResultCode = confirmSelect(media, false)
                     if (selectResultCode == SelectedManager.ADD_SUCCESS) {
                         dispatchTransformResult()
@@ -203,7 +203,7 @@ class PictureSelectorSystemFragment : PictureCommonFragment() {
      */
     private fun createMultipleContents() {
         mContentsLauncher =
-            registerForActivityResult(object : ActivityResultContract<String?, List<Uri?>>() {
+            registerForActivityResult(object : ActivityResultContract<String, List<Uri?>>() {
                 override fun parseResult(resultCode: Int, intent: Intent?): List<Uri?> {
                     val result: MutableList<Uri?> = ArrayList()
                     if (intent == null) {
@@ -224,25 +224,25 @@ class PictureSelectorSystemFragment : PictureCommonFragment() {
                 }
 
                 override fun createIntent(context: Context, mimeType: String?): Intent {
-                    val intent: Intent
-                    intent = if (TextUtils.equals(SelectMimeType.SYSTEM_VIDEO, mimeType)) {
-                        Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
-                    } else if (TextUtils.equals(SelectMimeType.SYSTEM_AUDIO, mimeType)) {
-                        Intent(Intent.ACTION_PICK, MediaStore.Audio.Media.EXTERNAL_CONTENT_URI)
-                    } else {
-                        Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-                    }
+                    val intent: Intent =
+                        if (TextUtils.equals(SelectMimeType.SYSTEM_VIDEO, mimeType)) {
+                            Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
+                        } else if (TextUtils.equals(SelectMimeType.SYSTEM_AUDIO, mimeType)) {
+                            Intent(Intent.ACTION_PICK, MediaStore.Audio.Media.EXTERNAL_CONTENT_URI)
+                        } else {
+                            Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+                        }
                     intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
                     return intent
                 }
             },
-                ActivityResultCallback<List<Uri>?> { result ->
+                ActivityResultCallback<List<Uri?>> { result ->
                     if (result == null || result.size == 0) {
                         onKeyBackFragmentFinish()
                     } else {
                         for (i in result.indices) {
                             val media = buildLocalMedia(result[i].toString())
-                            media.path = if (SdkVersionUtils.isQ()) media.path else media.realPath
+                            media.path = if (SdkVersionUtils.isQ) media.path else media.realPath
                             SelectedManager.addSelectResult(media)
                         }
                         dispatchTransformResult()
@@ -255,19 +255,22 @@ class PictureSelectorSystemFragment : PictureCommonFragment() {
      */
     private fun createContent() {
         mContentLauncher =
-            registerForActivityResult(object : ActivityResultContract<String?, Uri?>() {
+            registerForActivityResult(object : ActivityResultContract<String, Uri?>() {
                 override fun parseResult(resultCode: Int, intent: Intent?): Uri? {
                     return intent?.data
                 }
 
                 override fun createIntent(context: Context, mimeType: String?): Intent {
-                    val intent: Intent
-                    intent = if (TextUtils.equals(SelectMimeType.SYSTEM_VIDEO, mimeType)) {
-                        Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
-                    } else if (TextUtils.equals(SelectMimeType.SYSTEM_AUDIO, mimeType)) {
-                        Intent(Intent.ACTION_PICK, MediaStore.Audio.Media.EXTERNAL_CONTENT_URI)
-                    } else {
-                        Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+                    val intent: Intent = when {
+                        TextUtils.equals(SelectMimeType.SYSTEM_VIDEO, mimeType) -> {
+                            Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
+                        }
+                        TextUtils.equals(SelectMimeType.SYSTEM_AUDIO, mimeType) -> {
+                            Intent(Intent.ACTION_PICK, MediaStore.Audio.Media.EXTERNAL_CONTENT_URI)
+                        }
+                        else -> {
+                            Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+                        }
                     }
                     return intent
                 }
@@ -276,7 +279,7 @@ class PictureSelectorSystemFragment : PictureCommonFragment() {
                     onKeyBackFragmentFinish()
                 } else {
                     val media = buildLocalMedia(result.toString())
-                    media.path = if (SdkVersionUtils.isQ()) media.path else media.realPath
+                    media.path = if (SdkVersionUtils.isQ) media.path else media.realPath
                     val selectResultCode = confirmSelect(media, false)
                     if (selectResultCode == SelectedManager.ADD_SUCCESS) {
                         dispatchTransformResult()
@@ -293,27 +296,31 @@ class PictureSelectorSystemFragment : PictureCommonFragment() {
      * @return
      */
     private val input: String
-        private get() = if (config!!.chooseMode === SelectMimeType.ofVideo()) {
-            SelectMimeType.SYSTEM_VIDEO
-        } else if (config!!.chooseMode === SelectMimeType.ofAudio()) {
-            SelectMimeType.SYSTEM_AUDIO
-        } else {
-            SelectMimeType.SYSTEM_IMAGE
+        get() = when (config.chooseMode) {
+            SelectMimeType.ofVideo() -> {
+                SelectMimeType.SYSTEM_VIDEO
+            }
+            SelectMimeType.ofAudio() -> {
+                SelectMimeType.SYSTEM_AUDIO
+            }
+            else -> {
+                SelectMimeType.SYSTEM_IMAGE
+            }
         }
 
     override fun handlePermissionSettingResult(permissions: Array<String>) {
-        onPermissionExplainEvent(false, null)
-        val isCheckReadStorage: Boolean
-        isCheckReadStorage = if (PictureSelectionConfig.onPermissionsEventListener != null) {
-            PictureSelectionConfig.onPermissionsEventListener
-                .hasPermissions(this, permissions)
-        } else {
-            if (SdkVersionUtils.isR() && config!!.isAllFilesAccess) {
-                Environment.isExternalStorageManager()
+        onPermissionExplainEvent(false, emptyArray())
+        val isCheckReadStorage: Boolean =
+            if (PictureSelectionConfig.onPermissionsEventListener != null) {
+                PictureSelectionConfig.onPermissionsEventListener!!
+                    .hasPermissions(this, permissions)
             } else {
-                PermissionChecker.isCheckReadStorage(requireContext())
+                if (SdkVersionUtils.isR() && config.isAllFilesAccess) {
+                    Environment.isExternalStorageManager()
+                } else {
+                    PermissionChecker.isCheckReadStorage(requireContext())
+                }
             }
-        }
         if (isCheckReadStorage) {
             openSystemAlbum()
         } else {
@@ -347,8 +354,8 @@ class PictureSelectorSystemFragment : PictureCommonFragment() {
     }
 
     companion object {
-        val fragmentTag = PictureSelectorSystemFragment::class.java.simpleName
-            get() = Companion.field
+        /*    val fragmentTag = PictureSelectorSystemFragment::class.java.simpleName
+                get() = Companion.field*/
 
         fun newInstance(): PictureSelectorSystemFragment {
             return PictureSelectorSystemFragment()

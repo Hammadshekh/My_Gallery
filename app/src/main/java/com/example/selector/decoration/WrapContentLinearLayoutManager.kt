@@ -7,7 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.Recycler
 import java.lang.IndexOutOfBoundsException
 
-class WrapContentLinearLayoutManager : LinearLayoutManager {
+open class WrapContentLinearLayoutManager : LinearLayoutManager {
     constructor(context: Context?) : super(context) {}
     constructor(context: Context?, orientation: Int, reverseLayout: Boolean) : super(context,
         orientation,

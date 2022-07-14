@@ -7,11 +7,13 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import androidx.fragment.app.Fragment
+import com.example.camerax.listener.OnSimpleXPermissionDeniedListener
+import com.example.camerax.listener.OnSimpleXPermissionDescriptionListener
 import com.example.camerax.utils.FileUtils
-import java.lang.NullPointerException
+import com.example.ucrop.BuildConfig.LIBRARY_PACKAGE_NAME
 
 class SimpleCameraX private constructor() {
-    private val mCameraIntent: Intent
+    private val mCameraIntent: Intent = Intent()
     private val mCameraBundle: Bundle
 
     /**
@@ -288,24 +290,24 @@ class SimpleCameraX private constructor() {
     }
 
     companion object {
-        private val EXTRA_PREFIX: String = BuildConfig.LIBRARY_PACKAGE_NAME
-        val EXTRA_OUTPUT_PATH_DIR = EXTRA_PREFIX + ".OutputPathDir"
-        val EXTRA_CAMERA_FILE_NAME = EXTRA_PREFIX + ".CameraFileName"
-        val EXTRA_CAMERA_MODE = EXTRA_PREFIX + ".CameraMode"
-        val EXTRA_VIDEO_FRAME_RATE = EXTRA_PREFIX + ".VideoFrameRate"
-        val EXTRA_VIDEO_BIT_RATE = EXTRA_PREFIX + ".VideoBitRate"
-        val EXTRA_CAMERA_AROUND_STATE = EXTRA_PREFIX + ".CameraAroundState"
-        val EXTRA_RECORD_VIDEO_MAX_SECOND = EXTRA_PREFIX + ".RecordVideoMaxSecond"
-        val EXTRA_RECORD_VIDEO_MIN_SECOND = EXTRA_PREFIX + ".RecordVideoMinSecond"
-        val EXTRA_CAMERA_IMAGE_FORMAT = EXTRA_PREFIX + ".CameraImageFormat"
-        val EXTRA_CAMERA_IMAGE_FORMAT_FOR_Q = EXTRA_PREFIX + ".CameraImageFormatForQ"
-        val EXTRA_CAMERA_VIDEO_FORMAT = EXTRA_PREFIX + ".CameraVideoFormat"
-        val EXTRA_CAMERA_VIDEO_FORMAT_FOR_Q = EXTRA_PREFIX + ".CameraVideoFormatForQ"
-        val EXTRA_CAPTURE_LOADING_COLOR = EXTRA_PREFIX + ".CaptureLoadingColor"
-        val EXTRA_DISPLAY_RECORD_CHANGE_TIME = EXTRA_PREFIX + ".DisplayRecordChangeTime"
-        val EXTRA_MANUAL_FOCUS = EXTRA_PREFIX + ".isManualFocus"
-        val EXTRA_ZOOM_PREVIEW = EXTRA_PREFIX + ".isZoomPreview"
-        val EXTRA_AUTO_ROTATION = EXTRA_PREFIX + ".isAutoRotation"
+        private const val EXTRA_PREFIX: String = LIBRARY_PACKAGE_NAME
+        const val EXTRA_OUTPUT_PATH_DIR = "$EXTRA_PREFIX.OutputPathDir"
+        const val EXTRA_CAMERA_FILE_NAME = "$EXTRA_PREFIX.CameraFileName"
+        const val EXTRA_CAMERA_MODE = "$EXTRA_PREFIX.CameraMode"
+        const val EXTRA_VIDEO_FRAME_RATE = "$EXTRA_PREFIX.VideoFrameRate"
+        const val EXTRA_VIDEO_BIT_RATE = "$EXTRA_PREFIX.VideoBitRate"
+        const val EXTRA_CAMERA_AROUND_STATE = "$EXTRA_PREFIX.CameraAroundState"
+        const val EXTRA_RECORD_VIDEO_MAX_SECOND = "$EXTRA_PREFIX.RecordVideoMaxSecond"
+        const val EXTRA_RECORD_VIDEO_MIN_SECOND = "$EXTRA_PREFIX.RecordVideoMinSecond"
+        const val EXTRA_CAMERA_IMAGE_FORMAT = "$EXTRA_PREFIX.CameraImageFormat"
+        const val EXTRA_CAMERA_IMAGE_FORMAT_FOR_Q = "$EXTRA_PREFIX.CameraImageFormatForQ"
+        const val EXTRA_CAMERA_VIDEO_FORMAT = "$EXTRA_PREFIX.CameraVideoFormat"
+        const val EXTRA_CAMERA_VIDEO_FORMAT_FOR_Q = "$EXTRA_PREFIX.CameraVideoFormatForQ"
+        const val EXTRA_CAPTURE_LOADING_COLOR = "$EXTRA_PREFIX.CaptureLoadingColor"
+        const val EXTRA_DISPLAY_RECORD_CHANGE_TIME = "$EXTRA_PREFIX.DisplayRecordChangeTime"
+        const val EXTRA_MANUAL_FOCUS = "$EXTRA_PREFIX.isManualFocus"
+        const val EXTRA_ZOOM_PREVIEW = "$EXTRA_PREFIX.isZoomPreview"
+        const val EXTRA_AUTO_ROTATION = "$EXTRA_PREFIX.isAutoRotation"
         fun of(): SimpleCameraX {
             return SimpleCameraX()
         }
@@ -334,7 +336,6 @@ class SimpleCameraX private constructor() {
     }
 
     init {
-        mCameraIntent = Intent()
         mCameraBundle = Bundle()
     }
 }

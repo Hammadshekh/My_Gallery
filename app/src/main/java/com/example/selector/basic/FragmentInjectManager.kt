@@ -18,7 +18,7 @@ object FragmentInjectManager {
     fun injectFragment(
         activity: FragmentActivity,
         targetFragmentTag: String?,
-        targetFragment: PictureSelectionConfig?,
+        targetFragment: PictureSelectionconfig,
     ) {
         if (ActivityCompatHelper.checkFragmentNonExits(activity, targetFragmentTag)) {
             activity.supportFragmentManager.beginTransaction()

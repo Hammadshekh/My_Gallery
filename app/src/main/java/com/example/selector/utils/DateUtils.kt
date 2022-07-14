@@ -2,7 +2,8 @@ package com.example.selector.utils
 
 import android.annotation.SuppressLint
 import android.content.Context
-import java.lang.Exception
+import com.example.mygallery.R
+import com.google.android.exoplayer2.C
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -41,7 +42,7 @@ object DateUtils {
     }
 
     private fun isThisWeek(time: Long): Boolean {
-        val calendar = Calendar.getInstance()
+        val calendar = Calendar.instance
         val currentWeek = calendar[Calendar.WEEK_OF_YEAR]
         calendar.time = Date(time)
         val paramWeek = calendar[Calendar.WEEK_OF_YEAR]
@@ -140,8 +141,9 @@ object DateUtils {
      * @param eTime
      * @return
      */
-    fun cdTime(sTime: Long, eTime: Long): String {
+     fun cdTime(sTime: Long, eTime: Long): String {
         val diff = eTime - sTime
-        return if (diff > 1000) diff / 1000.toString() + "秒" else diff.toString() + "毫秒"
+        return if (diff > 1000) diff.div(1000).toString() + "second" else diff.toString() + "\n" +
+                "millisecond"
     }
 }

@@ -221,7 +221,7 @@ class PictureSelectionQueryModel(selector: PictureSelector, selectMimeType: Int)
                                 }
                             })
                     } else {
-                        val data: ArrayList<LocalMedia> = all.getData()
+                        val data: ArrayList<LocalMedia> = all.data
                         call.onComplete(data)
                     }
                 }

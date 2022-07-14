@@ -3,12 +3,12 @@ package com.example.camerax.permissions
 import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Build
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import java.util.ArrayList
+import com.example.camerax.PictureCameraActivity
+import java.util.*
 
-class PermissionChecker private constructor() {
+class PermissionChecker() {
     fun requestPermissions(
         activity: Activity,
         permissionArray: Array<String>,
@@ -34,13 +34,7 @@ class PermissionChecker private constructor() {
         permissionResultCallback: PermissionResultCallback?,
     ) {
         if (activity is PictureCameraActivity) {
-            if (Build.VERSION.SDK_INT < 23) {
-                if (permissionResultCallback != null) {
-                    permissionResultCallback.onGranted()
-                }
-                return
-            }
-            val permissionList: MutableList<String> = ArrayList()
+            val permissionList: ArrayList<String> = ArrayList()
             for (permissionArray in permissionGroupList) {
                 for (permission in permissionArray) {
                     if (ContextCompat.checkSelfPermission(activity,
@@ -57,14 +51,12 @@ class PermissionChecker private constructor() {
                 permissionList.toArray<String>(requestArray)
                 ActivityCompat.requestPermissions(activity, requestArray, requestCode)
             } else {
-                if (permissionResultCallback != null) {
-                    permissionResultCallback.onGranted()
-                }
+                permissionResultCallback?.onGranted()
             }
         }
     }
 
-    fun onRequestPermissionsResult(grantResults: IntArray?, action: PermissionResultCallback) {
+    fun onRequestPermissionsResult(grantResults: IntArray, action: PermissionResultCallback) {
         if (PermissionUtil.isAllGranted(grantResults)) {
             action.onGranted()
         } else {
@@ -73,36 +65,37 @@ class PermissionChecker private constructor() {
     }
 
     companion object {
-        /**
-         * 权限设置
-         */
-        const val PERMISSION_SETTING_CODE = 1102
+
+        // Permission settings
+        val PERMISSION_SETTING_CODE: Int = 1102
 
         /**
          * 录音权限设置
          */
         const val PERMISSION_RECORD_AUDIO_SETTING_CODE = 1103
+
         private const val REQUEST_CODE = 10086
+
         private var mInstance: PermissionChecker? = null
-        val instance: PermissionChecker?
-            get() {
-                if (mInstance == null) {
-                    synchronized(PermissionChecker::class.java) {
-                        if (mInstance == null) {
-                            mInstance = PermissionChecker()
-                        }
+
+        private fun PermissionChecker(): PermissionChecker? {
+            return null
+        }
+
+        fun getInstance(): PermissionChecker? {
+            if (mInstance == null) {
+                synchronized(PermissionChecker::class.java) {
+                    if (mInstance == null) {
+                        mInstance = PermissionChecker()
                     }
                 }
-                return mInstance
             }
+            return mInstance
+        }
 
-        /**
-         * 检查是否有某个权限
-         *
-         * @param ctx
-         * @param permissions
-         * @return
-         */
+
+        //  Check if there is a certain permission
+
         fun checkSelfPermission(ctx: Context, permissions: Array<String?>): Boolean {
             var isAllGranted = true
             for (permission in permissions) {

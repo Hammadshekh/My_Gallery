@@ -13,7 +13,7 @@ class CustomBottomNavBar : BottomNavBar, View.OnClickListener {
         defStyleAttr) {
     }
 
-    protected fun inflateLayout() {
-        inflate(getContext(), R.layout.ps_custom_bottom_nav_bar, this)
+    private fun inflateLayout() {
+        inflate(requireContext(), R.layout.ps_custom_bottom_nav_bar, this)
     }
 }

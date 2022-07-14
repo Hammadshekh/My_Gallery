@@ -15,7 +15,7 @@ interface OnSelectLimitTipsListener {
      */
     fun onSelectLimitTips(
         context: Context?,
-        config: PictureSelectionConfig?,
+        config: PictureSelectionconfig,
         limitType: Int,
     ): Boolean
 }

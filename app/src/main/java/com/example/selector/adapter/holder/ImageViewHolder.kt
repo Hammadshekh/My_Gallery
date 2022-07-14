@@ -12,8 +12,8 @@ import com.example.selector.utils.MediaUtils
 import com.example.selector.utils.StyleUtils
 import com.luck.picture.lib.entity.LocalMedia
 
-class ImageViewHolder(itemView: View, config: PictureSelectionConfig?) :
-    BaseRecyclerMediaHolder(itemView, config!!) {
+class ImageViewHolder(itemView: View, config: PictureSelectionConfig) :
+    BaseRecyclerMediaHolder(itemView, config) {
     private val ivEditor: ImageView = itemView.findViewById(R.id.ivEditor)
     private val tvMediaTag: TextView = itemView.findViewById(R.id.tv_media_tag)
     override fun bindData(media: LocalMedia, position: Int) {

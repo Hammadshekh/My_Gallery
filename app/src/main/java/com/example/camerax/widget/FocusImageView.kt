@@ -1,7 +1,6 @@
 package com.example.camerax.widget
 
 import android.content.Context
-import android.content.res.TypedArray
 import android.graphics.Point
 import android.os.Handler
 import android.os.Looper
@@ -18,7 +17,8 @@ class FocusImageView : AppCompatImageView {
     private var mFocusSucceedImg = 0
     private var mFocusFailedImg = 0
     private var mAnimation: Animation? = null
-    private var mHandler: Handler? = null
+    private lateinit var mHandler: Handler
+    private lateinit var runnable : Runnable
 
     @Volatile
     private var isDisappear = false
@@ -63,16 +63,16 @@ class FocusImageView : AppCompatImageView {
         if (isDisappear) {
             setFocusResource(mFocusSucceedImg)
         }
-        mHandler!!.removeCallbacks(null, null)
-        mHandler!!.postDelayed({ setFocusGone() }, DELAY_MILLIS)
+        mHandler.removeCallbacks(runnable, null)
+        mHandler.postDelayed({ setFocusGone() }, DELAY_MILLIS)
     }
 
     fun onFocusFailed() {
         if (isDisappear) {
             setFocusResource(mFocusFailedImg)
         }
-        mHandler!!.removeCallbacks(null, null)
-        mHandler!!.postDelayed({ setFocusGone() }, DELAY_MILLIS)
+        mHandler.removeCallbacks(runnable,null )
+        mHandler.postDelayed({ setFocusGone() }, DELAY_MILLIS)
     }
 
     private fun setFocusResource(@DrawableRes resId: Int) {
@@ -86,7 +86,7 @@ class FocusImageView : AppCompatImageView {
     }
 
     fun destroy() {
-        mHandler!!.removeCallbacks(null, null)
+        mHandler.removeCallbacks(runnable,null )
         visibility = GONE
     }
 

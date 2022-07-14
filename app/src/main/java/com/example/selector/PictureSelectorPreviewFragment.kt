@@ -32,67 +32,90 @@ import androidx.recyclerview.widget.SimpleItemAnimator
 import androidx.viewpager2.widget.MarginPageTransformer
 import androidx.viewpager2.widget.ViewPager2
 import androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback
+import com.example.mygallery.R
+import com.example.mygallery.adapter.PicturePreviewAdapter
 import com.example.selector.adapter.PreviewGalleryAdapter
+import com.example.selector.adapter.holder.BasePreviewHolder
+import com.example.selector.adapter.holder.PreviewVideoHolder
 import com.example.selector.basic.PictureCommonFragment
-import com.example.selector.config.InjectResourceSource
+import com.example.selector.basic.PictureMediaScannerConnection
+import com.example.selector.config.*
+import com.example.selector.decoration.HorizontalItemDecoration
+import com.example.selector.decoration.WrapContentLinearLayoutManager
+import com.example.selector.dialog.PictureCommonDialog
+import com.example.selector.entity.MediaExtraInfo
+import com.example.selector.interfaces.OnCallbackListener
+import com.example.selector.interfaces.OnItemClickListener
+import com.example.selector.interfaces.OnQueryDataResultListener
+import com.example.selector.loader.IBridgeMediaLoader
+import com.example.selector.loader.LocalMediaLoader
+import com.example.selector.loader.LocalMediaPageLoader
+import com.example.selector.magical.BuildRecycleItemViewParams
+import com.example.selector.magical.MagicalView
+import com.example.selector.magical.OnMagicalViewCallback
+import com.example.selector.magical.ViewParams
 import com.example.selector.manager.SelectedManager
-import com.example.selector.widget.CompleteSelectView
-import com.example.selector.widget.PreviewBottomNavBar
-import com.example.selector.widget.PreviewTitleBar
+import com.example.selector.style.PictureWindowAnimationStyle
+import com.example.selector.style.SelectMainStyle
+import com.example.selector.utils.*
+import com.example.selector.widget.*
 import com.luck.picture.lib.entity.LocalMedia
 import java.lang.Exception
 import java.lang.NullPointerException
 import java.util.*
+import java.util.Collections
 
 class PictureSelectorPreviewFragment : PictureCommonFragment() {
-    protected var mData: ArrayList<LocalMedia?>? = ArrayList<LocalMedia?>()
-    protected var magicalView: MagicalView? = null
+    private var mData: ArrayList<LocalMedia> = ArrayList<LocalMedia>()
+    private var magicalView: MagicalView? = null
     var viewPager2: ViewPager2? = null
-     var viewPageAdapter: PicturePreviewAdapter? = null
-     var bottomNarBar: PreviewBottomNavBar? = null
+    var viewPageAdapter: PicturePreviewAdapter? = null
+    var bottomNarBar: PreviewBottomNavBar? = null
     var titleBar: PreviewTitleBar? = null
 
     /**
      * if there more
      */
-    protected var isHasMore = true
-    protected var curPosition = 0
-    protected var isInternalBottomPreview = false
-    protected var isSaveInstanceState = false
+    private var isHasMore = true
+    private var curPosition = 0
+    private var isInternalBottomPreview = false
+    private var isSaveInstanceState = false
 
     /**
      * 当前相册
      */
-    protected var currentAlbum: String? = null
+    private var currentAlbum: String? = null
 
     /**
      * 是否显示了拍照入口
      */
-    protected var isShowCamera = false
+    private var isShowCamera = false
 
     /**
      * 是否外部预览进来
      */
-    protected var isExternalPreview = false
+    private var isExternalPreview = false
 
     /**
      * 外部预览是否支持删除
      */
-    protected var isDisplayDelete = false
-    protected var isAnimationStart = false
-    protected var totalNum = 0
-    protected var screenWidth = 0
-    protected var screenHeight = 0
-    protected var mBucketId: Long = -1
-    protected var tvSelected: TextView? = null
-    protected var tvSelectedWord: TextView? = null
-    protected var selectClickArea: View? = null
-    protected var completeSelectView: CompleteSelectView? = null
-    protected var needScaleBig = true
-    protected var needScaleSmall = false
-    protected var mGalleryRecycle: RecyclerView? = null
-    protected var mGalleryAdapter: PreviewGalleryAdapter? = null
+    private var isDisplayDelete = false
+    private var isAnimationStart = false
+    private var totalNum = 0
+    private var screenWidth = 0
+    private var screenHeight = 0
+    private var mBucketId: Long = -1
+    private var tvSelected: TextView? = null
+    private var tvSelectedWord: TextView? = null
+    private var selectClickArea: View? = null
+    private var completeSelectView: CompleteSelectView? = null
+    private var needScaleBig = true
+    private var needScaleSmall = false
+    private var mGalleryRecycle: RecyclerView? = null
+    private var mGalleryAdapter: PreviewGalleryAdapter? = null
     protected var mAnimViews: List<View> = ArrayList()
+
+    // private var mAnimViews: MutableCollection<View> = ArrayList()
 
     /**
      * 内部预览
@@ -109,7 +132,7 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
     fun setInternalPreviewData(
         isBottomPreview: Boolean, currentAlbumName: String?, isShowCamera: Boolean,
         position: Int, totalNum: Int, page: Int, currentBucketId: Long,
-        data: ArrayList<LocalMedia?>?,
+        data: ArrayList<LocalMedia>,
     ) {
         this.mPage = page
         mBucketId = currentBucketId
@@ -142,43 +165,43 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
         isExternalPreview = true
     }
 
-    val resourceId: Int
+    override val resourceId: Int
         get() {
-            val layoutResourceId: Int = InjectResourceSource.getLayoutResource(getContext(),
+            val layoutResourceId: Int = InjectResourceSource.getLayoutResource(requireContext(),
                 InjectResourceSource.PREVIEW_LAYOUT_RESOURCE)
             return if (layoutResourceId != InjectResourceSource.DEFAULT_LAYOUT_RESOURCE) {
                 layoutResourceId
             } else R.layout.ps_fragment_preview
         }
 
-    fun onSelectedChange(isAddRemove: Boolean, currentMedia: LocalMedia?) {
+    override fun onSelectedChange(isAddRemove: Boolean, currentMedia: LocalMedia) {
         // 更新TitleBar和BottomNarBar选择态
-        tvSelected!!.isSelected = SelectedManager.getSelectedResult().contains(currentMedia)
-        bottomNarBar.setSelectedChange()
-        completeSelectView.setSelectedChange(true)
+        tvSelected?.isSelected = SelectedManager.selectedResult.contains(currentMedia)
+        bottomNarBar?.setSelectedChange()
+        completeSelectView?.setSelectedChange(true)
         notifySelectNumberStyle(currentMedia)
         notifyPreviewGalleryData(isAddRemove, currentMedia)
     }
 
-    fun onCheckOriginalChange() {
-        bottomNarBar.setOriginalCheck()
+    override fun onCheckOriginalChange() {
+        bottomNarBar?.setOriginalCheck()
     }
 
-    fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         reStartSavedInstance(savedInstanceState)
         isSaveInstanceState = savedInstanceState != null
-        screenWidth = DensityUtil.getRealScreenWidth(getContext())
-        screenHeight = DensityUtil.getScreenHeight(getContext())
+        screenWidth = context?.let { DensityUtil.getRealScreenWidth(it) }!!
+        screenHeight = context?.let { DensityUtil.getScreenHeight(it) }!!
         titleBar = view.findViewById(R.id.title_bar)
         tvSelected = view.findViewById(R.id.ps_tv_selected)
         tvSelectedWord = view.findViewById(R.id.ps_tv_selected_word)
         selectClickArea = view.findViewById(R.id.select_click_area)
         completeSelectView = view.findViewById(R.id.ps_complete_select)
         magicalView = view.findViewById(R.id.magical)
-        viewPager2 = ViewPager2(getContext())
+        viewPager2 = ViewPager2(requireContext())
         bottomNarBar = view.findViewById(R.id.bottom_nar_bar)
-        magicalView.setMagicalContent(viewPager2)
+        magicalView!!.setMagicalContent(viewPager2)
         setMagicalViewBackgroundColor()
         addAminViews(titleBar,
             tvSelected,
@@ -205,27 +228,28 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
      * @param views
      */
     fun addAminViews(vararg views: View?) {
-        Collections.addAll(mAnimViews, *views)
+        Collections.addAll(mAnimViews, views)
+        ///
     }
 
     private fun setMagicalViewBackgroundColor() {
-        val mainStyle: SelectMainStyle = PictureSelectionConfig.selectorStyle.getSelectMainStyle()
-        if (StyleUtils.checkStyleValidity(mainStyle.getPreviewBackgroundColor())) {
-            magicalView.setBackgroundColor(mainStyle.getPreviewBackgroundColor())
+        val mainStyle: SelectMainStyle = PictureSelectionConfig.selectorStyle.selectMainStyle!!
+        if (StyleUtils.checkStyleValidity(mainStyle.previewBackgroundColor)) {
+            magicalView?.setBackgroundColor(mainStyle.previewBackgroundColor)
         } else {
-            if (config.chooseMode === SelectMimeType.ofAudio()
-                || mData != null && mData!!.size > 0 && PictureMimeType.isHasAudio(mData!![0].getMimeType())
+            if (config.chooseMode == SelectMimeType.ofAudio() || mData.size > 0 && PictureMimeType.isHasAudio(
+                    mData[0].mimeType)
             ) {
-                magicalView.setBackgroundColor(ContextCompat.getColor(getContext(),
+                magicalView?.setBackgroundColor(ContextCompat.getColor(requireContext(),
                     R.color.ps_color_white))
             } else {
-                magicalView.setBackgroundColor(ContextCompat.getColor(getContext(),
+                magicalView?.setBackgroundColor(ContextCompat.getColor(requireContext(),
                     R.color.ps_color_black))
             }
         }
     }
 
-    fun reStartSavedInstance(savedInstanceState: Bundle?) {
+    override fun reStartSavedInstance(savedInstanceState: Bundle?) {
         if (savedInstanceState != null) {
             mPage = savedInstanceState.getInt(PictureConfig.EXTRA_CURRENT_PAGE, 1)
             mBucketId = savedInstanceState.getLong(PictureConfig.EXTRA_CURRENT_BUCKET_ID, -1)
@@ -245,12 +269,12 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
                     isInternalBottomPreview)
             currentAlbum = savedInstanceState.getString(PictureConfig.EXTRA_CURRENT_ALBUM_NAME, "")
             if (mData!!.size == 0) {
-                mData!!.addAll(ArrayList<Any?>(SelectedManager.getSelectedPreviewResult()))
+                mData!!.addAll(ArrayList(SelectedManager.getSelectedPreviewResult()))
             }
         }
     }
 
-    fun onKeyBackFragmentFinish() {
+    override fun onKeyBackFragmentFinish() {
         onKeyDownBackToMin()
     }
 
@@ -261,7 +285,7 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
         if (isHasMagicalEffect) {
             setMagicalViewAction()
             val alpha = if (isSaveInstanceState) 1.0f else 0.0f
-            magicalView.setBackgroundAlpha(alpha)
+            magicalView?.setBackgroundAlpha(alpha)
             for (i in mAnimViews.indices) {
                 if (mAnimViews[i] is TitleBar) {
                     continue
@@ -269,63 +293,66 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
                 mAnimViews[i].alpha = alpha
             }
         } else {
-            magicalView.setBackgroundAlpha(1.0f)
+            magicalView?.setBackgroundAlpha(1.0f)
         }
     }
 
     private val isHasMagicalEffect: Boolean
-        private get() = !isInternalBottomPreview && config.isPreviewZoomEffect
+        get() = !isInternalBottomPreview && config.isPreviewZoomEffect
 
     /**
      * 设置MagicalView监听器
      */
-    protected fun setMagicalViewAction() {
-        magicalView.setOnMojitoViewCallback(object : OnMagicalViewCallback() {
-            fun onBeginBackMinAnim() {
-                val currentHolder: BasePreviewHolder = viewPageAdapter.getCurrentHolder(
+    private fun setMagicalViewAction() {
+        magicalView?.setOnMojitoViewCallback(object : OnMagicalViewCallback {
+            override fun onBeginBackMinAnim() {
+                val currentHolder: BasePreviewHolder = viewPageAdapter?.getCurrentHolder(
                     viewPager2!!.currentItem) ?: return
-                if (currentHolder.coverImageView.getVisibility() === View.GONE) {
-                    currentHolder.coverImageView.setVisibility(View.VISIBLE)
+                if (currentHolder.coverImageView?.visibility == View.GONE) {
+                    currentHolder.coverImageView?.visibility = View.VISIBLE
                 }
                 if (currentHolder is PreviewVideoHolder) {
                     val videoHolder: PreviewVideoHolder = currentHolder as PreviewVideoHolder
-                    if (videoHolder.ivPlayButton.getVisibility() === View.VISIBLE) {
-                        videoHolder.ivPlayButton.setVisibility(View.GONE)
+                    if (videoHolder.ivPlayButton.visibility == View.VISIBLE) {
+                        videoHolder.ivPlayButton.visibility = View.GONE
                     }
                 }
             }
 
-            fun onBeginMagicalAnimComplete(mojitoView: MagicalView?, showImmediately: Boolean) {
-                val currentHolder: BasePreviewHolder = viewPageAdapter.getCurrentHolder(
+            override fun onBeginMagicalAnimComplete(
+                mojitoView: MagicalView?,
+                showImmediately: Boolean,
+            ) {
+                val currentHolder: BasePreviewHolder = viewPageAdapter?.getCurrentHolder(
                     viewPager2!!.currentItem) ?: return
                 val media: LocalMedia? = mData!![viewPager2!!.currentItem]
                 val realWidth: Int
                 val realHeight: Int
-                if (media.isCut() && media.getCropImageWidth() > 0 && media.getCropImageHeight() > 0) {
-                    realWidth = media.getCropImageWidth()
-                    realHeight = media.getCropImageHeight()
+                if (media?.isCut() == true && media.cropImageWidth > 0 && media.cropImageHeight > 0) {
+                    realWidth = media.cropImageWidth
+                    realHeight = media.cropImageHeight
                 } else {
-                    realWidth = media.getWidth()
-                    realHeight = media.getHeight()
+                    realWidth = media?.width!!
+                    realHeight = media.height
                 }
                 if (MediaUtils.isLongImage(realWidth, realHeight)) {
-                    currentHolder.coverImageView.setScaleType(ImageView.ScaleType.CENTER_CROP)
+                    currentHolder.coverImageView?.scaleType = ImageView.ScaleType.CENTER_CROP
                 } else {
-                    currentHolder.coverImageView.setScaleType(ImageView.ScaleType.FIT_CENTER)
+                    currentHolder.coverImageView?.scaleType = ImageView.ScaleType.FIT_CENTER
                 }
                 if (currentHolder is PreviewVideoHolder) {
                     val videoHolder: PreviewVideoHolder = currentHolder as PreviewVideoHolder
                     if (config.isAutoVideoPlay) {
                         startAutoVideoPlay(viewPager2!!.currentItem)
                     } else {
-                        if (videoHolder.ivPlayButton.getVisibility() === View.GONE) {
-                            videoHolder.ivPlayButton.setVisibility(View.VISIBLE)
+                        if (videoHolder.ivPlayButton.visibility == View.GONE) {
+                            videoHolder.ivPlayButton.visibility = View.VISIBLE
                         }
                     }
                 }
             }
 
-            fun onBackgroundAlpha(alpha: Float) {
+            override fun onBackgroundAlpha(alpha: Float) {
                 for (i in mAnimViews.indices) {
                     if (mAnimViews[i] is TitleBar) {
                         continue
@@ -334,28 +361,28 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
                 }
             }
 
-            fun onMagicalViewFinish() {
-                if (isExternalPreview && isNormalDefaultEnter() && isHasMagicalEffect) {
+            override fun onMagicalViewFinish() {
+                if (isExternalPreview && isNormalDefaultEnter && isHasMagicalEffect) {
                     onExitPictureSelector()
                 } else {
                     onBackCurrentFragment()
                 }
             }
 
-            fun onBeginBackMinMagicalFinish(isResetSize: Boolean) {
+            override fun onBeginBackMinMagicalFinish(isResetSize: Boolean) {
                 val itemViewParams: ViewParams =
                     BuildRecycleItemViewParams.getItemViewParams(if (isShowCamera) curPosition + 1 else curPosition)
                         ?: return
-                val currentHolder: BasePreviewHolder = viewPageAdapter.getCurrentHolder(
+                val currentHolder: BasePreviewHolder = viewPageAdapter?.getCurrentHolder(
                     viewPager2!!.currentItem) ?: return
-                currentHolder.coverImageView.getLayoutParams().width = itemViewParams.width
-                currentHolder.coverImageView.getLayoutParams().height = itemViewParams.height
-                currentHolder.coverImageView.setScaleType(ImageView.ScaleType.CENTER_CROP)
+                currentHolder.coverImageView?.layoutParams?.width = itemViewParams.width
+                currentHolder.coverImageView?.layoutParams?.height = itemViewParams.height
+                currentHolder.coverImageView?.scaleType = ImageView.ScaleType.CENTER_CROP
             }
         })
     }
 
-    fun onSaveInstanceState(outState: Bundle) {
+    override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putInt(PictureConfig.EXTRA_CURRENT_PAGE, mPage)
         outState.putLong(PictureConfig.EXTRA_CURRENT_BUCKET_ID, mBucketId)
@@ -369,15 +396,15 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
         SelectedManager.addSelectedPreviewResult(mData)
     }
 
-    fun onCreateAnimation(transit: Int, enter: Boolean, nextAnim: Int): Animation? {
+    override fun onCreateAnimation(transit: Int, enter: Boolean, nextAnim: Int): Animation? {
         if (isHasMagicalEffect) {
             // config.isPreviewZoomEffect模式下使用缩放动画
             return null
         }
         val windowAnimationStyle: PictureWindowAnimationStyle =
-            PictureSelectionConfig.selectorStyle.getWindowAnimationStyle()
-        return if (windowAnimationStyle.activityPreviewEnterAnimation !== 0 && windowAnimationStyle.activityPreviewExitAnimation !== 0) {
-            val loadAnimation = AnimationUtils.loadAnimation(getActivity(),
+            PictureSelectionConfig.selectorStyle?.windowAnimationStyle!!
+        return if (windowAnimationStyle.activityPreviewEnterAnimation != 0 && windowAnimationStyle.activityPreviewExitAnimation != 0) {
+            val loadAnimation = AnimationUtils.loadAnimation(requireActivity(),
                 if (enter) windowAnimationStyle.activityPreviewEnterAnimation else windowAnimationStyle.activityPreviewExitAnimation)
             if (enter) {
                 onEnterFragment()
@@ -390,54 +417,54 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
         }
     }
 
-    fun sendChangeSubSelectPositionEvent(adapterChange: Boolean) {
-        if (PictureSelectionConfig.selectorStyle.getSelectMainStyle()
-                .isPreviewSelectNumberStyle()
+    override fun sendChangeSubSelectPositionEvent(adapterChange: Boolean) {
+        if (PictureSelectionConfig.selectorStyle?.selectMainStyle
+                ?.isPreviewSelectNumberStyle == true
         ) {
-            if (PictureSelectionConfig.selectorStyle.getSelectMainStyle().isSelectNumberStyle()) {
-                for (index in 0 until SelectedManager.getSelectCount()) {
-                    val media: LocalMedia = SelectedManager.getSelectedResult().get(index)
-                    media.setNum(index + 1)
+            if (PictureSelectionConfig.selectorStyle?.selectMainStyle?.isSelectNumberStyle == true) {
+                for (index in 0 until SelectedManager.selectCount) {
+                    val media: LocalMedia = SelectedManager.selectedResult[index]
+                    media.num = index + 1
                 }
             }
         }
     }
 
-    fun onConfigurationChanged(newConfig: Configuration) {
+    override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        if (isHasMagicalEffect && mData!!.size > curPosition) {
-            val media: LocalMedia? = mData!![curPosition]
+        if (isHasMagicalEffect && mData.size > curPosition) {
+            val media: LocalMedia = mData[curPosition]
             val size = getRealSizeFromMedia(media)
-            val viewParams: ViewParams =
+            val viewParams: ViewParams? =
                 BuildRecycleItemViewParams.getItemViewParams(if (isShowCamera) curPosition + 1 else curPosition)
             if (viewParams == null || size[0] == 0 || size[1] == 0) {
-                magicalView.setViewParams(0, 0, 0, 0, size[0], size[1])
-                magicalView.resetStartNormal(size[0], size[1], false)
+                magicalView?.setViewParams(0, 0, 0, 0, size[0], size[1])
+                magicalView?.resetStartNormal(size[0], size[1], false)
             } else {
-                magicalView.setViewParams(viewParams.left,
+                magicalView?.setViewParams(viewParams.left,
                     viewParams.top,
                     viewParams.width,
                     viewParams.height,
                     size[0],
                     size[1])
-                magicalView.resetStart()
+                magicalView?.resetStart()
             }
         }
     }
 
-    fun onCreateLoader() {
+    override fun onCreateLoader() {
         if (isExternalPreview) {
             return
         }
         if (PictureSelectionConfig.loaderFactory != null) {
-            mLoader = PictureSelectionConfig.loaderFactory.onCreateLoader()
+            mLoader = PictureSelectionConfig.loaderFactory!!.onCreateLoader()
             if (mLoader == null) {
                 throw NullPointerException("No available " + IBridgeMediaLoader::class.java + " loader found")
             }
         } else {
             mLoader = if (config.isPageStrategy) LocalMediaPageLoader() else LocalMediaLoader()
         }
-        mLoader.initConfig(getContext(), config)
+        mLoader!!.initConfig(requireContext(), config)
     }
 
     /**
@@ -446,39 +473,39 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
     private fun loadMoreData() {
         mPage++
         if (PictureSelectionConfig.loaderDataEngine != null) {
-            PictureSelectionConfig.loaderDataEngine.loadMoreMediaData(getContext(),
+            PictureSelectionConfig.loaderDataEngine!!.loadMoreMediaData(requireContext(),
                 mBucketId,
                 mPage,
                 config.pageSize,
                 config.pageSize,
-                object : OnQueryDataResultListener<LocalMedia?>() {
-                    fun onComplete(result: ArrayList<LocalMedia?>, isHasMore: Boolean) {
+                object : OnQueryDataResultListener<LocalMedia>() {
+                    override fun onComplete(result: ArrayList<LocalMedia>, isHasMore: Boolean) {
                         handleMoreData(result, isHasMore)
                     }
                 })
         } else {
-            mLoader.loadPageMediaData(mBucketId,
+            mLoader?.loadPageMediaData(mBucketId,
                 mPage,
                 config.pageSize,
-                object : OnQueryDataResultListener<LocalMedia?>() {
-                    fun onComplete(result: ArrayList<LocalMedia?>, isHasMore: Boolean) {
+                object : OnQueryDataResultListener<LocalMedia>() {
+                    override fun onComplete(result: ArrayList<LocalMedia>, isHasMore: Boolean) {
                         handleMoreData(result, isHasMore)
                     }
                 })
         }
     }
 
-    private fun handleMoreData(result: List<LocalMedia?>, isHasMore: Boolean) {
-        if (ActivityCompatHelper.isDestroy(getActivity())) {
+    private fun handleMoreData(result: Collection<LocalMedia>, isHasMore: Boolean) {
+        if (ActivityCompatHelper.isDestroy(requireActivity())) {
             return
         }
         this@PictureSelectorPreviewFragment.isHasMore = isHasMore
         if (isHasMore) {
-            if (result.size > 0) {
-                val oldStartPosition = mData!!.size
-                mData!!.addAll(result)
-                val itemCount = mData!!.size
-                viewPageAdapter.notifyItemRangeChanged(oldStartPosition, itemCount)
+            if (result.isNotEmpty()) {
+                val oldStartPosition = mData.size
+                mData.addAll(result)
+                val itemCount = mData.size
+                viewPageAdapter?.notifyItemRangeChanged(oldStartPosition, itemCount)
             } else {
                 loadMoreData()
             }
@@ -486,103 +513,105 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
     }
 
     private fun initComplete() {
-        val selectMainStyle: SelectMainStyle =
-            PictureSelectionConfig.selectorStyle.getSelectMainStyle()
-        if (StyleUtils.checkStyleValidity(selectMainStyle.getPreviewSelectBackground())) {
-            tvSelected!!.setBackgroundResource(selectMainStyle.getPreviewSelectBackground())
-        } else if (StyleUtils.checkStyleValidity(selectMainStyle.getSelectBackground())) {
-            tvSelected!!.setBackgroundResource(selectMainStyle.getSelectBackground())
+        val selectMainStyle: SelectMainStyle? =
+            PictureSelectionConfig.selectorStyle?.selectMainStyle
+        if (selectMainStyle?.previewSelectBackground?.let { StyleUtils.checkStyleValidity(it) } == true) {
+            selectMainStyle.previewSelectBackground.let { tvSelected!!.setBackgroundResource(it) }
+        } else if (selectMainStyle?.selectBackground?.let { StyleUtils.checkStyleValidity(it) } == true) {
+            selectMainStyle.selectBackground.let { tvSelected!!.setBackgroundResource(it) }
         }
-        if (StyleUtils.checkTextValidity(selectMainStyle.getPreviewSelectText())) {
-            tvSelectedWord.setText(selectMainStyle.getPreviewSelectText())
+        if (StyleUtils.checkTextValidity(selectMainStyle?.previewSelectText)) {
+            tvSelectedWord?.text = (selectMainStyle?.previewSelectText)
         } else {
             tvSelectedWord!!.text = ""
         }
-        if (StyleUtils.checkSizeValidity(selectMainStyle.getPreviewSelectTextSize())) {
-            tvSelectedWord!!.textSize = selectMainStyle.getPreviewSelectTextSize()
+        if (selectMainStyle?.previewSelectTextSize?.let { StyleUtils.checkSizeValidity(it) } == true) {
+            tvSelectedWord!!.textSize = selectMainStyle.previewSelectTextSize.toFloat()
         }
-        if (StyleUtils.checkStyleValidity(selectMainStyle.getPreviewSelectTextColor())) {
-            tvSelectedWord.setTextColor(selectMainStyle.getPreviewSelectTextColor())
+        if (selectMainStyle?.previewSelectTextColor?.let { StyleUtils.checkStyleValidity(it) } == true) {
+            selectMainStyle.previewSelectTextColor.let { tvSelectedWord?.setTextColor(it) }
         }
-        if (StyleUtils.checkSizeValidity(selectMainStyle.getPreviewSelectMarginRight())) {
+        if (selectMainStyle?.previewSelectMarginRight?.let { StyleUtils.checkSizeValidity(it) } == true) {
             if (tvSelected!!.layoutParams is ConstraintLayout.LayoutParams) {
                 if (tvSelected!!.layoutParams is ConstraintLayout.LayoutParams) {
                     val layoutParams = tvSelected!!.layoutParams as ConstraintLayout.LayoutParams
-                    layoutParams.rightMargin = selectMainStyle.getPreviewSelectMarginRight()
+                    layoutParams.rightMargin = selectMainStyle.previewSelectMarginRight
                 }
             } else if (tvSelected!!.layoutParams is RelativeLayout.LayoutParams) {
                 val layoutParams = tvSelected!!.layoutParams as RelativeLayout.LayoutParams
-                layoutParams.rightMargin = selectMainStyle.getPreviewSelectMarginRight()
+                layoutParams.rightMargin = selectMainStyle.previewSelectMarginRight
             }
         }
-        completeSelectView.setCompleteSelectViewStyle()
-        completeSelectView.setSelectedChange(true)
-        if (selectMainStyle.isCompleteSelectRelativeTop()) {
-            if (completeSelectView.getLayoutParams() is ConstraintLayout.LayoutParams) {
+        completeSelectView?.setCompleteSelectViewStyle()
+        completeSelectView?.setSelectedChange(true)
+        if (selectMainStyle?.isCompleteSelectRelativeTop == true) {
+            if (completeSelectView?.layoutParams is ConstraintLayout.LayoutParams) {
                 (completeSelectView
-                    .getLayoutParams() as ConstraintLayout.LayoutParams).topToTop = R.id.title_bar
+                    ?.layoutParams as ConstraintLayout.LayoutParams).topToTop = R.id.title_bar
                 (completeSelectView
-                    .getLayoutParams() as ConstraintLayout.LayoutParams).bottomToBottom =
+                    ?.layoutParams as ConstraintLayout.LayoutParams).bottomToBottom =
                     R.id.title_bar
                 if (config.isPreviewFullScreenMode) {
-                    (completeSelectView
-                        .getLayoutParams() as ConstraintLayout.LayoutParams).topMargin =
-                        DensityUtil.getStatusBarHeight(getContext())
+                    (completeSelectView!!
+                        .layoutParams as ConstraintLayout.LayoutParams).topMargin =
+                        DensityUtil.getStatusBarHeight(requireContext())
                 }
-            } else if (completeSelectView.getLayoutParams() is RelativeLayout.LayoutParams) {
+            } else if (completeSelectView?.layoutParams is RelativeLayout.LayoutParams) {
                 if (config.isPreviewFullScreenMode) {
                     (completeSelectView
-                        .getLayoutParams() as RelativeLayout.LayoutParams).topMargin =
-                        DensityUtil.getStatusBarHeight(getContext())
+                        ?.layoutParams as RelativeLayout.LayoutParams).topMargin =
+                        DensityUtil.getStatusBarHeight(requireContext())
                 }
             }
         }
-        if (selectMainStyle.isPreviewSelectRelativeBottom()) {
+        if (selectMainStyle?.isPreviewSelectRelativeBottom == true) {
             if (tvSelected!!.layoutParams is ConstraintLayout.LayoutParams) {
-                (tvSelected
-                    .getLayoutParams() as ConstraintLayout.LayoutParams).topToTop =
+                (tvSelected!!
+                    .layoutParams as ConstraintLayout.LayoutParams).topToTop =
                     R.id.bottom_nar_bar
-                (tvSelected
-                    .getLayoutParams() as ConstraintLayout.LayoutParams).bottomToBottom =
-                    R.id.bottom_nar_bar
-                (tvSelectedWord
-                    .getLayoutParams() as ConstraintLayout.LayoutParams).topToTop =
+                (tvSelected!!
+                    .layoutParams as ConstraintLayout.LayoutParams).bottomToBottom =
                     R.id.bottom_nar_bar
                 (tvSelectedWord
-                    .getLayoutParams() as ConstraintLayout.LayoutParams).bottomToBottom =
+                    ?.layoutParams as ConstraintLayout.LayoutParams).topToTop =
+                    R.id.bottom_nar_bar
+                (tvSelectedWord
+                    ?.layoutParams as ConstraintLayout.LayoutParams).bottomToBottom =
                     R.id.bottom_nar_bar
                 (selectClickArea
-                    .getLayoutParams() as ConstraintLayout.LayoutParams).topToTop =
+                    ?.layoutParams as ConstraintLayout.LayoutParams).topToTop =
                     R.id.bottom_nar_bar
                 (selectClickArea
-                    .getLayoutParams() as ConstraintLayout.LayoutParams).bottomToBottom =
+                    ?.layoutParams as ConstraintLayout.LayoutParams).bottomToBottom =
                     R.id.bottom_nar_bar
             }
         } else {
             if (config.isPreviewFullScreenMode) {
                 if (tvSelectedWord!!.layoutParams is ConstraintLayout.LayoutParams) {
-                    (tvSelectedWord
-                        .getLayoutParams() as ConstraintLayout.LayoutParams).topMargin =
-                        DensityUtil.getStatusBarHeight(getContext())
+                    (tvSelectedWord!!
+                        .layoutParams as ConstraintLayout.LayoutParams).topMargin =
+                        DensityUtil.getStatusBarHeight(requireContext())
                 } else if (tvSelectedWord!!.layoutParams is RelativeLayout.LayoutParams) {
-                    (tvSelectedWord
-                        .getLayoutParams() as RelativeLayout.LayoutParams).topMargin =
-                        DensityUtil.getStatusBarHeight(getContext())
+                    (tvSelectedWord!!
+                        .layoutParams as RelativeLayout.LayoutParams).topMargin =
+                        DensityUtil.getStatusBarHeight(requireContext())
                 }
             }
         }
-        completeSelectView.setOnClickListener(View.OnClickListener {
-            val isComplete: Boolean
-            if (selectMainStyle.isCompleteSelectRelativeTop() && SelectedManager.getSelectCount() === 0) {
-                isComplete = (confirmSelect(mData!![viewPager2!!.currentItem], false)
-                        === SelectedManager.ADD_SUCCESS)
-            } else {
-                isComplete = SelectedManager.getSelectCount() > 0
+        completeSelectView?.setOnClickListener(View.OnClickListener {
+            var isComplete: Boolean? = null
+            if (selectMainStyle != null) {
+                if (selectMainStyle.isCompleteSelectRelativeTop && SelectedManager.selectCount == 0) {
+                    isComplete = (confirmSelect(mData[viewPager2?.currentItem!!], false)
+                            == SelectedManager.ADD_SUCCESS)
+                } else {
+                    isComplete = SelectedManager.selectCount > 0
+                }
             }
-            if (config.isEmptyResultReturn && SelectedManager.getSelectCount() === 0) {
+            if (config.isEmptyResultReturn && SelectedManager.selectCount == 0) {
                 onExitPictureSelector()
             } else {
-                if (isComplete) {
+                if (isComplete == true) {
                     dispatchTransformResult()
                 }
             }
@@ -590,39 +619,39 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
     }
 
     private fun initTitleBar() {
-        if (PictureSelectionConfig.selectorStyle.getTitleBarStyle().isHideTitleBar()) {
-            titleBar.setVisibility(View.GONE)
+        if (PictureSelectionConfig.selectorStyle?.titleBarStyle?.isHideTitleBar == true) {
+            titleBar?.visibility = View.GONE
         }
-        titleBar.setTitleBarStyle()
-        titleBar.setOnTitleBarListener(object : OnTitleBarListener() {
-            fun onBackPressed() {
+        titleBar?.setTitleBarStyle()
+        titleBar?.setOnTitleBarListener(object : TitleBar.OnTitleBarListener() {
+            override fun onBackPressed() {
                 if (isExternalPreview) {
                     if (config.isPreviewZoomEffect) {
-                        magicalView.backToMin()
+                        magicalView?.backToMin()
                     } else {
                         handleExternalPreviewBack()
                     }
                 } else {
                     if (!isInternalBottomPreview && config.isPreviewZoomEffect) {
-                        magicalView.backToMin()
+                        magicalView?.backToMin()
                     } else {
                         onBackCurrentFragment()
                     }
                 }
             }
         })
-        titleBar.setTitle((curPosition + 1).toString() + "/" + totalNum)
-        titleBar.getImageDelete().setOnClickListener(View.OnClickListener { deletePreview() })
+        titleBar?.setTitle((curPosition + 1).toString() + "/" + totalNum)
+        titleBar?.imageDelete?.setOnClickListener(View.OnClickListener { deletePreview() })
         selectClickArea!!.setOnClickListener {
             if (isExternalPreview) {
                 deletePreview()
             } else {
-                val currentMedia: LocalMedia? = mData!![viewPager2!!.currentItem]
+                val currentMedia: LocalMedia = mData[viewPager2!!.currentItem]
                 val selectResultCode: Int =
                     confirmSelect(currentMedia, tvSelected!!.isSelected)
                 if (selectResultCode == SelectedManager.ADD_SUCCESS) {
                     tvSelected!!.startAnimation(AnimationUtils.loadAnimation(
-                        getContext(),
+                        requireContext(),
                         R.anim.ps_anim_modal_in))
                 }
             }
@@ -630,13 +659,13 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
         tvSelected!!.setOnClickListener { selectClickArea!!.performClick() }
     }
 
-    protected fun initPreviewSelectGallery(group: ViewGroup) {
-        val selectMainStyle: SelectMainStyle =
-            PictureSelectionConfig.selectorStyle.getSelectMainStyle()
-        if (selectMainStyle.isPreviewDisplaySelectGallery()) {
-            mGalleryRecycle = RecyclerView(getContext())
-            if (StyleUtils.checkStyleValidity(selectMainStyle.getAdapterPreviewGalleryBackgroundResource())) {
-                mGalleryRecycle!!.setBackgroundResource(selectMainStyle.getAdapterPreviewGalleryBackgroundResource())
+    private fun initPreviewSelectGallery(group: ViewGroup) {
+        val selectMainStyle: SelectMainStyle? =
+            PictureSelectionConfig.selectorStyle?.selectMainStyle
+        if (selectMainStyle?.isPreviewDisplaySelectGallery == true) {
+            mGalleryRecycle = RecyclerView(requireContext())
+            if (StyleUtils.checkStyleValidity(selectMainStyle.adapterPreviewGalleryBackgroundResource)) {
+                mGalleryRecycle!!.setBackgroundResource(selectMainStyle.adapterPreviewGalleryBackgroundResource)
             } else {
                 mGalleryRecycle!!.setBackgroundResource(R.drawable.ps_preview_gallery_bg)
             }
@@ -651,8 +680,8 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
                 params.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID
             }
             val layoutManager: WrapContentLinearLayoutManager =
-                object : WrapContentLinearLayoutManager(getContext()) {
-                    fun smoothScrollToPosition(
+                object : WrapContentLinearLayoutManager(requireContext()) {
+                    override fun smoothScrollToPosition(
                         recyclerView: RecyclerView,
                         state: RecyclerView.State?,
                         position: Int,
@@ -674,28 +703,29 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
             }
             if (mGalleryRecycle!!.itemDecorationCount == 0) {
                 mGalleryRecycle!!.addItemDecoration(HorizontalItemDecoration(Int.MAX_VALUE,
-                    DensityUtil.dip2px(getContext(), 6)))
+                    DensityUtil.dip2px(requireContext(), 6f)))
             }
-            layoutManager.setOrientation(WrapContentLinearLayoutManager.HORIZONTAL)
+            layoutManager.orientation = WrapContentLinearLayoutManager.HORIZONTAL
             mGalleryRecycle!!.layoutManager = layoutManager
-            if (SelectedManager.getSelectCount() > 0) {
+            if (SelectedManager.selectCount > 0) {
                 mGalleryRecycle!!.layoutAnimation = AnimationUtils
-                    .loadLayoutAnimation(getContext(), R.anim.ps_anim_layout_fall_enter)
+                    .loadLayoutAnimation(requireContext(), R.anim.ps_anim_layout_fall_enter)
             }
             mGalleryAdapter =
-                PreviewGalleryAdapter(isInternalBottomPreview, SelectedManager.getSelectedResult())
-            notifyGallerySelectMedia(mData!![curPosition])
+                PreviewGalleryAdapter(isInternalBottomPreview, SelectedManager.selectedResult)
+            notifyGallerySelectMedia(mData[curPosition])
             mGalleryRecycle!!.adapter = mGalleryAdapter
-            mGalleryAdapter.setItemClickListener(object : OnItemClickListener() {
-                fun onItemClick(position: Int, media: LocalMedia, v: View?) {
+            mGalleryAdapter!!.setItemClickListener(object :
+                PreviewGalleryAdapter.OnItemClickListener {
+                override fun onItemClick(position: Int, media: LocalMedia?, v: View?) {
                     val albumName: String =
-                        if (TextUtils.isEmpty(config.defaultAlbumName)) getString(R.string.ps_camera_roll) else config.defaultAlbumName
+                        if (TextUtils.isEmpty(config.defaultAlbumName)) getString(R.string.ps_camera_roll) else config.defaultAlbumName.toString()
                     if (isInternalBottomPreview || TextUtils.equals(currentAlbum, albumName)
-                        || TextUtils.equals(media.getParentFolderName(), currentAlbum)
+                        || TextUtils.equals(media?.parentFolderName, currentAlbum)
                     ) {
                         val newPosition =
-                            if (isInternalBottomPreview) position else if (isShowCamera) media.position - 1 else media.position
-                        if (newPosition == viewPager2!!.currentItem && media.isChecked()) {
+                            if (isInternalBottomPreview) position else if (isShowCamera) media?.position!! - 1 else media?.position
+                        if (newPosition == viewPager2!!.currentItem && media?.isChecked == true) {
                             return
                         }
                         if (viewPager2!!.adapter != null) {
@@ -703,17 +733,21 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
                             viewPager2!!.adapter = null
                             viewPager2!!.adapter = viewPageAdapter
                         }
-                        viewPager2!!.setCurrentItem(newPosition, false)
+                        if (newPosition != null) {
+                            viewPager2!!.setCurrentItem(newPosition, false)
+                        }
                         notifyGallerySelectMedia(media)
                         viewPager2!!.post {
                             if (config.isPreviewZoomEffect) {
-                                viewPageAdapter.setVideoPlayButtonUI(newPosition)
+                                if (newPosition != null) {
+                                    viewPageAdapter?.setVideoPlayButtonUI(newPosition)
+                                }
                             }
                         }
                     }
                 }
             })
-            if (SelectedManager.getSelectCount() > 0) {
+            if (SelectedManager.selectCount > 0) {
                 mGalleryRecycle!!.visibility = View.VISIBLE
             } else {
                 mGalleryRecycle!!.visibility = View.INVISIBLE
@@ -740,27 +774,27 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
                 ): Boolean {
                     try {
                         //得到item原来的position
-                        val fromPosition: Int = viewHolder.getAbsoluteAdapterPosition()
+                        val fromPosition: Int = viewHolder.absoluteAdapterPosition
                         //得到目标position
-                        val toPosition: Int = target.getAbsoluteAdapterPosition()
+                        val toPosition: Int = target.absoluteAdapterPosition
                         if (fromPosition < toPosition) {
                             for (i in fromPosition until toPosition) {
-                                Collections.swap(mGalleryAdapter.getData(), i, i + 1)
-                                Collections.swap(SelectedManager.getSelectedResult(), i, i + 1)
+                                Collections.swap(mGalleryAdapter!!.data, i, i + 1)
+                                Collections.swap(SelectedManager.selectedResult, i, i + 1)
                                 if (isInternalBottomPreview) {
                                     Collections.swap(mData, i, i + 1)
                                 }
                             }
                         } else {
                             for (i in fromPosition downTo toPosition + 1) {
-                                Collections.swap(mGalleryAdapter.getData(), i, i - 1)
-                                Collections.swap(SelectedManager.getSelectedResult(), i, i - 1)
+                                Collections.swap(mGalleryAdapter!!.data, i, i - 1)
+                                Collections.swap(SelectedManager.selectedResult, i, i - 1)
                                 if (isInternalBottomPreview) {
                                     Collections.swap(mData, i, i - 1)
                                 }
                             }
                         }
-                        mGalleryAdapter.notifyItemMoved(fromPosition, toPosition)
+                        mGalleryAdapter!!.notifyItemMoved(fromPosition, toPosition)
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
@@ -840,9 +874,9 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
                         })
                     }
                     super.clearView(recyclerView, viewHolder)
-                    mGalleryAdapter.notifyItemChanged(viewHolder.getAbsoluteAdapterPosition())
+                    mGalleryAdapter!!.notifyItemChanged(viewHolder.absoluteAdapterPosition)
                     if (isInternalBottomPreview) {
-                        val position: Int = mGalleryAdapter.getLastCheckPosition()
+                        val position: Int = mGalleryAdapter!!.lastCheckPosition
                         if (viewPager2!!.currentItem != position && position != RecyclerView.NO_POSITION) {
                             if (viewPager2!!.adapter != null) {
                                 viewPager2!!.adapter = null
@@ -851,12 +885,11 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
                             viewPager2!!.setCurrentItem(position, false)
                         }
                     }
-                    if (PictureSelectionConfig.selectorStyle.getSelectMainStyle()
-                            .isSelectNumberStyle()
+                    if (PictureSelectionConfig.selectorStyle?.selectMainStyle?.isSelectNumberStyle == true
                     ) {
-                        if (!ActivityCompatHelper.isDestroy(getActivity())) {
+                        if (!ActivityCompatHelper.isDestroy(requireActivity())) {
                             val fragments: List<Fragment> =
-                                getActivity().getSupportFragmentManager().getFragments()
+                                requireActivity().supportFragmentManager.fragments
                             for (i in fragments.indices) {
                                 val fragment = fragments[i]
                                 if (fragment is PictureCommonFragment) {
@@ -869,17 +902,22 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
                 }
             })
             mItemTouchHelper.attachToRecyclerView(mGalleryRecycle)
-            mGalleryAdapter.setItemLongClickListener(object : OnItemLongClickListener() {
-                fun onItemLongClick(holder: RecyclerView.ViewHolder, position: Int, v: View?) {
+            mGalleryAdapter?.setItemLongClickListener(object :
+                PreviewGalleryAdapter.OnItemLongClickListener {
+                override fun onItemLongClick(
+                    holder: RecyclerView.ViewHolder?,
+                    position: Int,
+                    v: View?,
+                ) {
                     val vibrator =
-                        getActivity().getSystemService(Service.VIBRATOR_SERVICE) as Vibrator
+                        requireActivity().getSystemService(Service.VIBRATOR_SERVICE) as Vibrator
                     vibrator.vibrate(50)
-                    if (mGalleryAdapter.getItemCount() !== config.maxSelectNum) {
-                        mItemTouchHelper.startDrag(holder)
+                    if (mGalleryAdapter?.itemCount != config.maxSelectNum) {
+                        holder?.let { mItemTouchHelper.startDrag(it) }
                         return
                     }
-                    if (holder.layoutPosition != mGalleryAdapter.getItemCount() - 1) {
-                        mItemTouchHelper.startDrag(holder)
+                    if (holder?.layoutPosition != mGalleryAdapter?.itemCount!! - 1) {
+                        holder?.let { mItemTouchHelper.startDrag(it) }
                     }
                 }
             })
@@ -893,9 +931,9 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
      */
     private fun notifyGallerySelectMedia(currentMedia: LocalMedia?) {
         if (mGalleryAdapter != null && PictureSelectionConfig.selectorStyle
-                .getSelectMainStyle().isPreviewDisplaySelectGallery()
+                ?.selectMainStyle?.isPreviewDisplaySelectGallery == true
         ) {
-            mGalleryAdapter.isSelectMedia(currentMedia)
+            currentMedia?.let { mGalleryAdapter?.isSelectMedia(it) }
         }
     }
 
@@ -904,20 +942,21 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
      */
     private fun notifyPreviewGalleryData(isAddRemove: Boolean, currentMedia: LocalMedia?) {
         if (mGalleryAdapter != null && PictureSelectionConfig.selectorStyle
-                .getSelectMainStyle().isPreviewDisplaySelectGallery()
+                ?.selectMainStyle?.isPreviewDisplaySelectGallery == true
         ) {
+
             if (mGalleryRecycle!!.visibility == View.INVISIBLE) {
                 mGalleryRecycle!!.visibility = View.VISIBLE
             }
             if (isAddRemove) {
-                if (config.selectionMode === SelectModeConfig.SINGLE) {
-                    mGalleryAdapter.clear()
+                if (config.selectionMode == SelectModeConfig.SINGLE) {
+                    mGalleryAdapter?.clear()
                 }
-                mGalleryAdapter.addGalleryData(currentMedia)
-                mGalleryRecycle!!.smoothScrollToPosition(mGalleryAdapter.getItemCount() - 1)
+                mGalleryAdapter?.addGalleryData(currentMedia!!)
+                mGalleryRecycle!!.smoothScrollToPosition(mGalleryAdapter!!.itemCount - 1)
             } else {
-                mGalleryAdapter.removeGalleryData(currentMedia)
-                if (SelectedManager.getSelectCount() === 0) {
+                mGalleryAdapter?.removeGalleryData(currentMedia!!)
+                if (SelectedManager.selectCount == 0) {
                     mGalleryRecycle!!.visibility = View.INVISIBLE
                 }
             }
@@ -931,16 +970,16 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
     private fun deletePreview() {
         if (isDisplayDelete) {
             if (PictureSelectionConfig.onExternalPreviewEventListener != null) {
-                PictureSelectionConfig.onExternalPreviewEventListener.onPreviewDelete(viewPager2!!.currentItem)
+                PictureSelectionConfig.onExternalPreviewEventListener!!.onPreviewDelete(viewPager2!!.currentItem)
                 val currentItem = viewPager2!!.currentItem
-                mData!!.removeAt(currentItem)
-                if (mData!!.size == 0) {
+                mData.removeAt(currentItem)
+                if (mData.size == 0) {
                     handleExternalPreviewBack()
                     return
                 }
-                titleBar.setTitle(getString(R.string.ps_preview_image_num,
-                    curPosition + 1, mData!!.size))
-                totalNum = mData!!.size
+                titleBar?.setTitle(getString(R.string.ps_preview_image_num,
+                    curPosition + 1, mData.size))
+                totalNum = mData.size
                 curPosition = currentItem
                 if (viewPager2!!.adapter != null) {
                     viewPager2!!.adapter = null
@@ -951,11 +990,9 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
         }
     }
 
-    /**
-     * 处理外部预览返回处理
-     */
+    // Handling external preview return handling
     private fun handleExternalPreviewBack() {
-        if (!ActivityCompatHelper.isDestroy(getActivity())) {
+        if (!ActivityCompatHelper.isDestroy(requireActivity())) {
             if (config.isPreviewFullScreenMode) {
                 hideFullScreenStatusBar()
             }
@@ -963,34 +1000,34 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
         }
     }
 
-    fun onExitFragment() {
+    override fun onExitFragment() {
         if (config.isPreviewFullScreenMode) {
             hideFullScreenStatusBar()
         }
     }
 
     private fun initBottomNavBar() {
-        bottomNarBar.setBottomNavBarStyle()
-        bottomNarBar.setSelectedChange()
-        bottomNarBar.setOnBottomNavBarListener(object : OnBottomNavBarListener() {
-            fun onEditImage() {
+        bottomNarBar?.setBottomNavBarStyle()
+        bottomNarBar?.setSelectedChange()
+        bottomNarBar?.setOnBottomNavBarListener(object : BottomNavBar.OnBottomNavBarListener() {
+            override fun onEditImage() {
                 if (PictureSelectionConfig.onEditMediaEventListener != null) {
-                    val media: LocalMedia? = mData!![viewPager2!!.currentItem]
-                    PictureSelectionConfig.onEditMediaEventListener
+                    val media: LocalMedia = mData[viewPager2!!.currentItem]
+                    PictureSelectionConfig.onEditMediaEventListener!!
                         .onStartMediaEdit(this@PictureSelectorPreviewFragment, media,
                             Crop.REQUEST_EDIT_CROP)
                 }
             }
 
-            fun onCheckOriginalChange() {
+            override fun onCheckOriginalChange() {
                 sendSelectedOriginalChangeEvent()
             }
 
-            fun onFirstCheckOriginalSelectedChange() {
+            override fun onFirstCheckOriginalSelectedChange() {
                 val currentItem = viewPager2!!.currentItem
-                if (mData!!.size > currentItem) {
-                    val media: LocalMedia? = mData!![currentItem]
-                    confirmSelect(media, false)
+                if (mData.size > currentItem) {
+                    val media: LocalMedia = mData[currentItem]
+                    media.let { confirmSelect(it, false) }
                 }
             }
         })
@@ -1000,37 +1037,38 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
      * 外部预览的样式
      */
     private fun externalPreviewStyle() {
-        titleBar.getImageDelete().setVisibility(if (isDisplayDelete) View.VISIBLE else View.GONE)
-        tvSelected!!.visibility = View.GONE
-        bottomNarBar.setVisibility(View.GONE)
-        completeSelectView.setVisibility(View.GONE)
+        titleBar?.imageDelete?.visibility = if (isDisplayDelete) View.VISIBLE else View.GONE
+        tvSelected?.visibility = View.GONE
+        bottomNarBar?.visibility = View.GONE
+        completeSelectView?.visibility = View.GONE
     }
 
-    protected fun createAdapter(): PicturePreviewAdapter {
+    private fun createAdapter(): PicturePreviewAdapter {
         return PicturePreviewAdapter()
     }
 
     val adapter: PicturePreviewAdapter?
         get() = viewPageAdapter
 
-    private fun initViewPagerData(data: ArrayList<LocalMedia?>?) {
+    private fun initViewPagerData(data: ArrayList<LocalMedia>) {
         viewPageAdapter = createAdapter()
-        viewPageAdapter.setData(data)
-        viewPageAdapter.setOnPreviewEventListener(MyOnPreviewEventListener())
+        viewPageAdapter?.setData(data)
+        viewPageAdapter?.setOnPreviewEventListener(MyOnPreviewEventListener())
         viewPager2!!.orientation = ViewPager2.ORIENTATION_HORIZONTAL
         viewPager2!!.adapter = viewPageAdapter
         SelectedManager.clearPreviewData()
-        if (data!!.size == 0 || curPosition > data.size) {
+        if (data.size == 0 || curPosition > data.size) {
             onKeyBackFragmentFinish()
             return
         }
-        val media: LocalMedia? = data[curPosition]
-        bottomNarBar.isDisplayEditor(PictureMimeType.isHasVideo(media.getMimeType())
-                || PictureMimeType.isHasAudio(media.getMimeType()))
+        val media: LocalMedia = data[curPosition]
+        bottomNarBar?.isDisplayEditor(media.mimeType?.let { PictureMimeType.isHasVideo(it) } == true
+                || PictureMimeType.isHasAudio(media.mimeType))
         tvSelected!!.isSelected =
-            SelectedManager.getSelectedResult().contains(data[viewPager2!!.currentItem])
+            SelectedManager.selectedResult.contains(data[viewPager2!!.currentItem])
         viewPager2!!.registerOnPageChangeCallback(pageChangeCallback)
-        viewPager2!!.setPageTransformer(MarginPageTransformer(DensityUtil.dip2px(getContext(), 3)))
+        viewPager2!!.setPageTransformer(MarginPageTransformer(DensityUtil.dip2px(requireContext(),
+            3f)))
         viewPager2!!.setCurrentItem(curPosition, false)
         sendChangeSubSelectPositionEvent(false)
         notifySelectNumberStyle(data[curPosition])
@@ -1040,34 +1078,35 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
     /**
      * 启动预览缩放特效
      */
-    protected fun startZoomEffect(media: LocalMedia?) {
+    private fun startZoomEffect(media: LocalMedia?) {
         if (isSaveInstanceState || isInternalBottomPreview) {
             return
         }
-        if (PictureMimeType.isHasAudio(media.getMimeType())) {
+        if (PictureMimeType.isHasAudio(media?.mimeType)) {
             return
         }
         if (config.isPreviewZoomEffect) {
-            viewPager2!!.post { viewPageAdapter.setCoverScaleType(curPosition) }
+            viewPager2!!.post { viewPageAdapter?.setCoverScaleType(curPosition) }
             val size =
-                getRealSizeFromMedia(media, !PictureMimeType.isHasHttp(media.getAvailablePath()))
-            magicalView.changeRealScreenHeight(size[0], size[1], false)
+                getRealSizeFromMedia(media,
+                    !media?.let { PictureMimeType.isHasHttp(it.availablePath) }!!)
+            magicalView?.changeRealScreenHeight(size[0], size[1], false)
             val viewParams: ViewParams =
-                BuildRecycleItemViewParams.getItemViewParams(if (isShowCamera) curPosition + 1 else curPosition)
-            if (viewParams == null || size[0] == 0 && size[1] == 0) {
-                magicalView.startNormal(size[0], size[1], false)
-                magicalView.setBackgroundAlpha(1.0f)
+                BuildRecycleItemViewParams.getItemViewParams(if (isShowCamera) curPosition + 1 else curPosition)!!
+            if (size[0] == 0 && size[1] == 0) {
+                magicalView?.startNormal(size[0], size[1], false)
+                magicalView?.setBackgroundAlpha(1.0f)
                 for (i in mAnimViews.indices) {
                     mAnimViews[i].alpha = 1.0f
                 }
             } else {
-                magicalView.setViewParams(viewParams.left,
+                magicalView?.setViewParams(viewParams.left,
                     viewParams.top,
                     viewParams.width,
                     viewParams.height,
                     size[0],
                     size[1])
-                magicalView.start(false)
+                magicalView?.start(false)
             }
             ObjectAnimator.ofFloat(viewPager2, "alpha", 0.0f, 1.0f).setDuration(50).start()
         }
@@ -1076,20 +1115,20 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
     /**
      * ViewPageAdapter回调事件处理
      */
-    private inner class MyOnPreviewEventListener : OnPreviewEventListener {
-        fun onBackPressed() {
+    inner class MyOnPreviewEventListener : BasePreviewHolder.OnPreviewEventListener {
+        override fun onBackPressed() {
             if (config.isPreviewFullScreenMode) {
                 previewFullScreenMode()
             } else {
                 if (isExternalPreview) {
                     if (config.isPreviewZoomEffect) {
-                        magicalView.backToMin()
+                        magicalView?.backToMin()
                     } else {
                         handleExternalPreviewBack()
                     }
                 } else {
                     if (!isInternalBottomPreview && config.isPreviewZoomEffect) {
-                        magicalView.backToMin()
+                        magicalView?.backToMin()
                     } else {
                         onBackCurrentFragment()
                     }
@@ -1097,20 +1136,20 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
             }
         }
 
-        fun onPreviewVideoTitle(videoName: String?) {
+        override fun onPreviewVideoTitle(videoName: String?) {
             if (TextUtils.isEmpty(videoName)) {
-                titleBar.setTitle((curPosition + 1).toString() + "/" + totalNum)
+                titleBar?.setTitle((curPosition + 1).toString() + "/" + totalNum)
             } else {
-                titleBar.setTitle(videoName)
+                titleBar?.setTitle(videoName)
             }
         }
 
-        fun onLongPressDownload(media: LocalMedia) {
+        override fun onLongPressDownload(media: LocalMedia?) {
             if (config.isHidePreviewDownload) {
                 return
             }
             if (isExternalPreview) {
-                onExternalLongPressDownload(media)
+                onExternalLongPressDownload(media!!)
             }
         }
     }
@@ -1119,17 +1158,17 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
      * 回到初始位置
      */
     private fun onKeyDownBackToMin() {
-        if (!ActivityCompatHelper.isDestroy(getActivity())) {
+        if (!ActivityCompatHelper.isDestroy(requireActivity())) {
             if (isExternalPreview) {
                 if (config.isPreviewZoomEffect) {
-                    magicalView.backToMin()
+                    magicalView?.backToMin()
                 } else {
                     onExitPictureSelector()
                 }
             } else if (isInternalBottomPreview) {
                 onBackCurrentFragment()
             } else if (config.isPreviewZoomEffect) {
-                magicalView.backToMin()
+                magicalView?.backToMin()
             } else {
                 onBackCurrentFragment()
             }
@@ -1143,10 +1182,10 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
         if (isAnimationStart) {
             return
         }
-        val isAnimInit = titleBar.getTranslationY() === 0.0f
+        val isAnimInit = titleBar?.getTranslationY() == 0.0f
         val set = AnimatorSet()
-        val titleBarForm: Float = if (isAnimInit) 0 else -titleBar.getHeight()
-        val titleBarTo: Float = if (isAnimInit) -titleBar.getHeight() else 0
+        val titleBarForm: Float = if (isAnimInit) 0f else (-titleBar?.height!!).toFloat()
+        val titleBarTo: Float = if (isAnimInit) (-titleBar?.height!!).toFloat() else 0f
         val alphaForm = if (isAnimInit) 1.0f else 0.0f
         val alphaTo = if (isAnimInit) 0.0f else 1.0f
         for (i in mAnimViews.indices) {
@@ -1181,7 +1220,7 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
         for (i in mAnimViews.indices) {
             mAnimViews[i].isEnabled = false
         }
-        bottomNarBar.getEditor().setEnabled(false)
+        bottomNarBar?.editor?.isEnabled = false
     }
 
     /**
@@ -1191,7 +1230,7 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
         for (i in mAnimViews.indices) {
             mAnimViews[i].isEnabled = true
         }
-        bottomNarBar.getEditor().setEnabled(true)
+        bottomNarBar?.editor?.isEnabled = true
     }
 
     /**
@@ -1201,51 +1240,61 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
      */
     private fun onExternalLongPressDownload(media: LocalMedia) {
         if (PictureSelectionConfig.onExternalPreviewEventListener != null) {
-            if (!PictureSelectionConfig.onExternalPreviewEventListener.onLongPressDownload(media)) {
+            if (!PictureSelectionConfig.onExternalPreviewEventListener!!.onLongPressDownload(media)) {
                 val content: String
-                if (PictureMimeType.isHasAudio(media.getMimeType())
-                    || PictureMimeType.isUrlHasAudio(media.getAvailablePath())
+                if (PictureMimeType.isHasAudio(media.mimeType)
+                    || PictureMimeType.isUrlHasAudio(media.availablePath)
                 ) {
                     content = getString(R.string.ps_prompt_audio_content)
-                } else if (PictureMimeType.isHasVideo(media.getMimeType())
-                    || PictureMimeType.isUrlHasVideo(media.getAvailablePath())
+                } else if (media.mimeType?.let { PictureMimeType.isHasVideo(it) } == true
+                    || PictureMimeType.isUrlHasVideo(media.availablePath)
                 ) {
                     content = getString(R.string.ps_prompt_video_content)
                 } else {
                     content = getString(R.string.ps_prompt_image_content)
                 }
-                val dialog: PictureCommonDialog = PictureCommonDialog.showDialog(getContext(),
+                val dialog: PictureCommonDialog = PictureCommonDialog.showDialog(context,
                     getString(R.string.ps_prompt),
                     content)
-                dialog.setOnDialogEventListener(object : OnDialogEventListener() {
-                    fun onConfirm() {
-                        val path: String = media.getAvailablePath()
+                dialog.setOnDialogEventListener(object : PictureCommonDialog.OnDialogEventListener {
+                    override fun onConfirm() {
+                        val path: String = media.availablePath
                         if (PictureMimeType.isHasHttp(path)) {
                             showLoading()
                         }
-                        DownloadFileUtils.saveLocalFile(getContext(),
-                            path,
-                            media.getMimeType(),
-                            object : OnCallbackListener<String?>() {
-                                fun onCall(realPath: String) {
-                                    dismissLoading()
-                                    if (TextUtils.isEmpty(realPath)) {
-                                        val errorMsg: String
-                                        if (PictureMimeType.isHasAudio(media.getMimeType())) {
-                                            errorMsg = getString(R.string.ps_save_audio_error)
-                                        } else if (PictureMimeType.isHasVideo(media.getMimeType())) {
-                                            errorMsg = getString(R.string.ps_save_video_error)
+                        media.mimeType?.let {
+                            DownloadFileUtils.saveLocalFile(requireContext(),
+                                path,
+                                it,
+                                object : OnCallbackListener<String?> {
+                                    override fun onCall(realPath: String?) {
+                                        dismissLoading()
+                                        if (TextUtils.isEmpty(realPath)) {
+                                            val errorMsg: String = when {
+                                                PictureMimeType.isHasAudio(media.mimeType) -> {
+                                                    getString(R.string.ps_save_audio_error)
+                                                }
+                                                PictureMimeType.isHasVideo(media.mimeType!!) -> {
+                                                    getString(R.string.ps_save_video_error)
+                                                }
+                                                else -> {
+                                                    getString(R.string.ps_save_image_error)
+                                                }
+                                            }
+                                            ToastUtils.showToast(requireContext(), errorMsg)
                                         } else {
-                                            errorMsg = getString(R.string.ps_save_image_error)
+                                            requireActivity().let { it1 ->
+                                                realPath?.let { it2 ->
+                                                    PictureMediaScannerConnection(it1,
+                                                        it2)
+                                                }
+                                            }
+                                            ToastUtils.showToast(requireContext(),
+                                                getString(R.string.ps_save_success) + "\n" + realPath)
                                         }
-                                        ToastUtils.showToast(getContext(), errorMsg)
-                                    } else {
-                                        PictureMediaScannerConnection(getActivity(), realPath)
-                                        ToastUtils.showToast(getContext(),
-                                            getString(R.string.ps_save_success).toString() + "\n" + realPath)
                                     }
-                                }
-                            })
+                                })
+                        }
                     }
                 })
             }
@@ -1258,7 +1307,7 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
             positionOffset: Float,
             positionOffsetPixels: Int,
         ) {
-            if (mData!!.size > position) {
+            if (mData.size > position) {
                 val currentMedia: LocalMedia =
                     if (positionOffsetPixels < screenWidth / 2) mData!![position] else mData!![position + 1]
                 tvSelected!!.isSelected = isSelected(currentMedia)
@@ -1269,9 +1318,9 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
 
         override fun onPageSelected(position: Int) {
             curPosition = position
-            titleBar.setTitle((curPosition + 1).toString() + "/" + totalNum)
-            if (mData!!.size > position) {
-                val currentMedia: LocalMedia? = mData!![position]
+            titleBar!!.setTitle((curPosition + 1).toString() + "/" + totalNum)
+            if (mData.size > position) {
+                val currentMedia: LocalMedia = mData[position]
                 notifySelectNumberStyle(currentMedia)
                 if (isHasMagicalEffect) {
                     changeMagicalViewParams(position)
@@ -1280,7 +1329,7 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
                     if (isInternalBottomPreview && config.isAutoVideoPlay) {
                         startAutoVideoPlay(position)
                     } else {
-                        viewPageAdapter.setVideoPlayButtonUI(position)
+                        viewPageAdapter?.setVideoPlayButtonUI(position)
                     }
                 } else {
                     if (config.isAutoVideoPlay) {
@@ -1288,13 +1337,15 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
                     }
                 }
                 notifyGallerySelectMedia(currentMedia)
-                bottomNarBar.isDisplayEditor(PictureMimeType.isHasVideo(currentMedia.getMimeType())
-                        || PictureMimeType.isHasAudio(currentMedia.getMimeType()))
+                bottomNarBar?.isDisplayEditor(currentMedia.mimeType?.let {
+                    PictureMimeType.isHasVideo(it)
+                } == true
+                        || PictureMimeType.isHasAudio(currentMedia.mimeType))
                 if (!isExternalPreview && !isInternalBottomPreview && !config.isOnlySandboxDir) {
                     if (config.isPageStrategy) {
                         if (isHasMore) {
-                            if (position == viewPageAdapter.getItemCount() - 1 - PictureConfig.MIN_PAGE_SIZE
-                                || position == viewPageAdapter.getItemCount() - 1
+                            if (position == viewPageAdapter?.itemCount!! - 1 - PictureConfig.MIN_PAGE_SIZE
+                                || position == viewPageAdapter?.itemCount!! - 1
                             ) {
                                 loadMoreData()
                             }
@@ -1311,7 +1362,7 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
      * @param position
      */
     private fun startAutoVideoPlay(position: Int) {
-        viewPager2!!.post { viewPageAdapter.startAutoVideoPlay(position) }
+        viewPager2!!.post { viewPageAdapter?.startAutoVideoPlay(position) }
     }
 
     /**
@@ -1320,7 +1371,7 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
      * @param position
      */
     private fun changeMagicalViewParams(position: Int) {
-        val media: LocalMedia? = mData!![position]
+        val media: LocalMedia = mData[position]
         val size = getRealSizeFromMedia(media)
         setMagicalViewParams(size[0], size[1], position)
     }
@@ -1333,13 +1384,13 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
      * @param position
      */
     private fun setMagicalViewParams(imageWidth: Int, imageHeight: Int, position: Int) {
-        magicalView.changeRealScreenHeight(imageWidth, imageHeight, true)
+        magicalView?.changeRealScreenHeight(imageWidth, imageHeight, true)
         val viewParams: ViewParams =
-            BuildRecycleItemViewParams.getItemViewParams(if (isShowCamera) position + 1 else position)
-        if (viewParams == null || imageWidth == 0 || imageHeight == 0) {
-            magicalView.setViewParams(0, 0, 0, 0, imageWidth, imageHeight)
+            BuildRecycleItemViewParams.getItemViewParams(if (isShowCamera) position + 1 else position)!!
+        if (imageWidth == 0 || imageHeight == 0) {
+            magicalView?.setViewParams(0, 0, 0, 0, imageWidth, imageHeight)
         } else {
-            magicalView.setViewParams(viewParams.left,
+            magicalView?.setViewParams(viewParams.left,
                 viewParams.top,
                 viewParams.width,
                 viewParams.height,
@@ -1364,57 +1415,58 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
      * @param resize
      */
     private fun getRealSizeFromMedia(media: LocalMedia?, resize: Boolean): IntArray {
-        var realWidth: Int
-        var realHeight: Int
-        if (MediaUtils.isLongImage(media.getWidth(), media.getHeight())) {
-            realWidth = screenWidth
-            realHeight = screenHeight
-        } else {
-            realWidth = media.getWidth()
-            realHeight = media.getHeight()
-            if (resize) {
-                if (realWidth <= 0 || realHeight <= 0 || realWidth > realHeight) {
-                    val extraInfo: MediaExtraInfo
-                    extraInfo = if (PictureMimeType.isHasVideo(media.getMimeType())) {
-                        MediaUtils.getVideoSize(getContext(), media.getAvailablePath())
-                    } else {
-                        MediaUtils.getImageSize(getContext(), media.getAvailablePath())
-                    }
-                    if (extraInfo.getWidth() > 0) {
-                        realWidth = extraInfo.getWidth()
-                        media.setWidth(realWidth)
-                    }
-                    if (extraInfo.getHeight() > 0) {
-                        realHeight = extraInfo.getHeight()
-                        media.setHeight(realHeight)
+        var realWidth: Int? = null
+        var realHeight: Int? = null
+        if (media != null) {
+            if (MediaUtils.isLongImage(media.width, media.height)) {
+                realWidth = screenWidth
+                realHeight = screenHeight
+            } else {
+                realWidth = media.width
+                realHeight = media.height
+                if (resize) {
+                    if (realWidth <= 0 || realHeight <= 0 || realWidth > realHeight) {
+                        val extraInfo: MediaExtraInfo =
+                            if (media.mimeType?.let { PictureMimeType.isHasVideo(it) } == true) {
+                                MediaUtils.getVideoSize(requireContext(), media.availablePath)
+                            } else {
+                                MediaUtils.getImageSize(requireContext(), media.availablePath)
+                            }
+                        if (extraInfo.width > 0) {
+                            realWidth = extraInfo.width
+                            media.width = (realWidth)
+                        }
+                        if (extraInfo.height > 0) {
+                            realHeight = extraInfo.height
+                            media.height = (realHeight)
+                        }
                     }
                 }
             }
         }
-        if (media.isCut() && media.getCropImageWidth() > 0 && media.getCropImageHeight() > 0) {
-            realWidth = media.getCropImageWidth()
-            realHeight = media.getCropImageHeight()
+        if (media != null) {
+            if (media.isCut() && media.cropImageWidth > 0 && media.cropImageHeight > 0) {
+                realWidth = media.cropImageWidth
+                realHeight = media.cropImageHeight
+            }
         }
-        return intArrayOf(realWidth, realHeight)
+        return realWidth?.let { realHeight?.let { it1 -> intArrayOf(it, it1) } }!!
     }
 
-    /**
-     * 对选择数量进行编号排序
-     */
+    // Sort selections by number
     fun notifySelectNumberStyle(currentMedia: LocalMedia?) {
-        if (PictureSelectionConfig.selectorStyle.getSelectMainStyle()
-                .isPreviewSelectNumberStyle()
+        if (PictureSelectionConfig.selectorStyle?.selectMainStyle?.isPreviewSelectNumberStyle == true
         ) {
-            if (PictureSelectionConfig.selectorStyle.getSelectMainStyle().isSelectNumberStyle()) {
+            if (PictureSelectionConfig.selectorStyle?.selectMainStyle?.isSelectNumberStyle == true) {
                 tvSelected!!.text = ""
-                for (i in 0 until SelectedManager.getSelectCount()) {
-                    val media: LocalMedia = SelectedManager.getSelectedResult().get(i)
-                    if (TextUtils.equals(media.getPath(), currentMedia.getPath())
-                        || media.getId() === currentMedia.getId()
+                for (i in 0 until SelectedManager.selectCount) {
+                    val media: LocalMedia = SelectedManager.selectedResult[i]
+                    if (TextUtils.equals(media.path, currentMedia?.path)
+                        || media.id == currentMedia?.id
                     ) {
-                        currentMedia.setNum(media.getNum())
-                        media.setPosition(currentMedia.getPosition())
-                        tvSelected.setText(ValueOf.toString(currentMedia.getNum()))
+                        currentMedia?.num = (media.num)
+                        media.position = (currentMedia?.position!!)
+                        tvSelected?.text = ValueOf.toString(currentMedia.num)
                     }
                 }
             }
@@ -1427,51 +1479,47 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
      * @param media
      * @return
      */
-    protected fun isSelected(media: LocalMedia?): Boolean {
-        return SelectedManager.getSelectedResult().contains(media)
+    private fun isSelected(media: LocalMedia?): Boolean {
+        return SelectedManager.selectedResult.contains(media)
     }
 
-    fun onEditMedia(data: Intent?) {
-        if (mData!!.size > viewPager2!!.currentItem) {
-            val currentMedia: LocalMedia? = mData!![viewPager2!!.currentItem]
-            val output: Uri = Crop.getOutput(data)
-            currentMedia.setCutPath(if (output != null) output.path else "")
-            currentMedia.setCropImageWidth(Crop.getOutputImageWidth(data))
-            currentMedia.setCropImageHeight(Crop.getOutputImageHeight(data))
-            currentMedia.setCropOffsetX(Crop.getOutputImageOffsetX(data))
-            currentMedia.setCropOffsetY(Crop.getOutputImageOffsetY(data))
-            currentMedia.setCropResultAspectRatio(Crop.getOutputCropAspectRatio(data))
-            currentMedia.setCut(!TextUtils.isEmpty(currentMedia.getCutPath()))
-            currentMedia.setCustomData(Crop.getOutputCustomExtraData(data))
+    override fun onEditMedia(data: Intent) {
+        if (mData.size > viewPager2!!.currentItem) {
+            val currentMedia: LocalMedia = mData[viewPager2!!.currentItem]
+            val output: Uri = Crop.getOutput(data)!!
+            currentMedia.cutPath = (output.path)
+            currentMedia.cropImageWidth = (Crop.getOutputImageWidth(data))
+            currentMedia.cropImageHeight = (Crop.getOutputImageHeight(data))
+            currentMedia.cropOffsetX = (Crop.getOutputImageOffsetX(data))
+            currentMedia.cropOffsetY = (Crop.getOutputImageOffsetY(data))
+            currentMedia.cropResultAspectRatio = (Crop.getOutputCropAspectRatio(data))
+            currentMedia.setCut(!TextUtils.isEmpty(currentMedia.cutPath))
+            currentMedia.customData = (Crop.getOutputCustomExtraData(data))
             currentMedia.setEditorImage(currentMedia.isCut())
-            currentMedia.setSandboxPath(currentMedia.getCutPath())
-            if (SelectedManager.getSelectedResult().contains(currentMedia)) {
-                val exitsMedia: LocalMedia = currentMedia.getCompareLocalMedia()
-                if (exitsMedia != null) {
-                    exitsMedia.setCutPath(currentMedia.getCutPath())
-                    exitsMedia.setCut(currentMedia.isCut())
-                    exitsMedia.setEditorImage(currentMedia.isEditorImage())
-                    exitsMedia.setCustomData(currentMedia.getCustomData())
-                    exitsMedia.setSandboxPath(currentMedia.getCutPath())
-                    exitsMedia.setCropImageWidth(Crop.getOutputImageWidth(data))
-                    exitsMedia.setCropImageHeight(Crop.getOutputImageHeight(data))
-                    exitsMedia.setCropOffsetX(Crop.getOutputImageOffsetX(data))
-                    exitsMedia.setCropOffsetY(Crop.getOutputImageOffsetY(data))
-                    exitsMedia.setCropResultAspectRatio(Crop.getOutputCropAspectRatio(data))
-                }
+            currentMedia.sandboxPath = (currentMedia.cutPath)
+            if (SelectedManager.selectedResult.contains(currentMedia)) {
+                val exitsMedia: LocalMedia = currentMedia.compareLocalMedia!!
+                exitsMedia.cutPath = (currentMedia.cutPath)
+                exitsMedia.setCut(currentMedia.isCut())
+                exitsMedia.setEditorImage(currentMedia.isEditorImage())
+                exitsMedia.customData = (currentMedia.customData)
+                exitsMedia.sandboxPath = (currentMedia.cutPath)
+                exitsMedia.cropImageWidth = (Crop.getOutputImageWidth(data))
+                exitsMedia.cropImageHeight = (Crop.getOutputImageHeight(data))
+                exitsMedia.cropOffsetX = (Crop.getOutputImageOffsetX(data))
+                exitsMedia.cropOffsetY = (Crop.getOutputImageOffsetY(data))
+                exitsMedia.cropResultAspectRatio = (Crop.getOutputCropAspectRatio(data))
                 sendFixedSelectedChangeEvent(currentMedia)
             } else {
                 confirmSelect(currentMedia, false)
             }
-            viewPageAdapter.notifyItemChanged(viewPager2!!.currentItem)
+            viewPageAdapter?.notifyItemChanged(viewPager2!!.currentItem)
             notifyGallerySelectMedia(currentMedia)
         }
     }
 
-    fun onDestroy() {
-        if (viewPageAdapter != null) {
-            viewPageAdapter.destroy()
-        }
+    override fun onDestroy() {
+        viewPageAdapter?.destroy()
         if (viewPager2 != null) {
             viewPager2!!.unregisterOnPageChangeCallback(pageChangeCallback)
         }
@@ -1480,11 +1528,11 @@ class PictureSelectorPreviewFragment : PictureCommonFragment() {
 
     companion object {
         val fragmentTag = PictureSelectorPreviewFragment::class.java.simpleName
-            get() = Companion.field
+            get() = field ?: " PictureSelectorPreviewFragment"
 
         fun newInstance(): PictureSelectorPreviewFragment {
             val fragment = PictureSelectorPreviewFragment()
-            fragment.setArguments(Bundle())
+            fragment.arguments = Bundle()
             return fragment
         }
     }

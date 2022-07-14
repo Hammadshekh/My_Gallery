@@ -17,10 +17,10 @@ import com.example.ucrop.model.ImageState
 import com.example.ucrop.task.BitmapCropTask
 import com.example.ucrop.utils.CubicEasing
 import com.example.ucrop.utils.RectUtils
-import java.lang.IllegalArgumentException
 import java.lang.ref.WeakReference
 import java.util.*
 import kotlin.math.abs
+import kotlin.math.max
 
 open class CropImageView(
     context: Context?,
@@ -264,7 +264,7 @@ open class CropImageView(
                 mTempMatrix.mapRect(tempCropRect)
                 val currentImageSides: FloatArray =
                     RectUtils.getRectSidesFromCorners(mCurrentImageCorners)
-                deltaScale = Math.max(tempCropRect.width() / currentImageSides[0],
+                deltaScale = max(tempCropRect.width() / currentImageSides[0],
                     tempCropRect.height() / currentImageSides[1])
                 deltaScale = deltaScale * currentScale - currentScale
             }
@@ -361,7 +361,7 @@ open class CropImageView(
     /**
      * This method checks whether current image fills the crop bounds.
      */
-    protected val isImageWrapCropBounds: Boolean
+    private val isImageWrapCropBounds: Boolean
          get() = isImageWrapCropBounds(mCurrentImageCorners)
 
     /**
@@ -390,7 +390,7 @@ open class CropImageView(
      * @param centerY    - scale center Y
      * @param durationMs - zoom animation duration
      */
-    protected fun zoomImageToPosition(
+    fun zoomImageToPosition(
         scale: Float,
         centerX: Float,
         centerY: Float,
@@ -447,7 +447,7 @@ open class CropImageView(
         mCurrentImageMatrix.reset()
         mCurrentImageMatrix.postScale(initialMinScale, initialMinScale)
         mCurrentImageMatrix.postTranslate(tw, th)
-        setImageMatrix(mCurrentImageMatrix)
+        imageMatrix = mCurrentImageMatrix
     }
 
     /**
@@ -503,8 +503,8 @@ open class CropImageView(
             val newScale: Float = CubicEasing.easeInOut(currentMs, 0F, mDeltaScale,
                 mDurationMs.toFloat())
             if (currentMs < mDurationMs) {
-                cropImageView.postTranslate(newX - (cropImageView.mCurrentImageCenter.get(0) - mOldX),
-                    newY - (cropImageView.mCurrentImageCenter.get(1) - mOldY))
+                cropImageView.postTranslate(newX - (cropImageView.mCurrentImageCenter[0] - mOldX),
+                    newY - (cropImageView.mCurrentImageCenter[1] - mOldY))
                 if (!mWillBeImageInBoundsAfterTranslate) {
                     cropImageView.zoomInImage(mOldScale + newScale,
                         cropImageView.mCropRect.centerX(),

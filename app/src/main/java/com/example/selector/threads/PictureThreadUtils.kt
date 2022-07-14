@@ -9,7 +9,6 @@ import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicLong
 
 object PictureThreadUtils {
     val mainHandler = Handler(Looper.getMainLooper())
@@ -934,7 +933,7 @@ object PictureThreadUtils {
      * @param tasks The tasks to cancel.
      */
     fun cancel(vararg tasks: Task<*>?) {
-        if (tasks == null || tasks.size == 0) return
+        if (tasks.isEmpty()) return
         for (task in tasks) {
             if (task == null) continue
             task.cancel()
@@ -947,7 +946,7 @@ object PictureThreadUtils {
      * @param tasks The tasks to cancel.
      */
     fun cancel(tasks: List<Task<*>?>?) {
-        if (tasks == null || tasks.size == 0) return
+        if (tasks == null || tasks.isEmpty()) return
         for (task in tasks) {
             if (task == null) continue
             task.cancel()
@@ -1340,7 +1339,7 @@ object PictureThreadUtils {
         }
 
         @CallSuper
-        protected fun onDone() {
+        private fun onDone() {
             TASK_POOL_MAP.remove(this)
             if (mTimer != null) {
                 mTimer!!.cancel()

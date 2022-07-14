@@ -111,10 +111,10 @@ class GridImageAdapter(context: Context?, result: List<LocalMedia>?) :
             }
             val media: LocalMedia = list[position]
             val chooseModel: Int = media.getChooseModel()
-            val path: String = media.getAvailablePath()
+            val path: String = media.availablePath
             val duration: Long = media.getDuration()
             viewHolder.tvDuration.visibility =
-                if (PictureMimeType.isHasVideo(media.getMimeType())) View.VISIBLE else View.GONE
+                if (PictureMimeType.isHasVideo(media.mimeType)) View.VISIBLE else View.GONE
             if (chooseModel == SelectMimeType.ofAudio()) {
                 viewHolder.tvDuration.visibility = View.VISIBLE
                 viewHolder.tvDuration.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ps_ic_audio,

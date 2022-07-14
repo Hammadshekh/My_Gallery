@@ -22,7 +22,8 @@ class PictureOnlyCameraFragment : PictureCommonFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        // 这里只有非内存回收状态下才走，否则当内存不足Fragment被回收后会重复执行
+        //Only go in the non-memory recovery state, otherwise the Fragment will be executed
+        // repeatedly when the memory is insufficient and the Fragment is recovered.
         if (savedInstanceState == null) {
             if (SdkVersionUtils.isQ) {
                 openSelectedCamera()

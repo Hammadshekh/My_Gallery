@@ -33,11 +33,11 @@ class PreviewBottomNavBar : BottomNavBar {
     override fun setBottomNavBarStyle() {
         super.setBottomNavBarStyle()
         val bottomBarStyle: BottomNavBarStyle =
-            PictureSelectionConfig.selectorStyle.getBottomBarStyle()
-        if (StyleUtils.checkStyleValidity(bottomBarStyle.getBottomPreviewNarBarBackgroundColor())) {
-            setBackgroundColor(bottomBarStyle.getBottomPreviewNarBarBackgroundColor())
-        } else if (StyleUtils.checkSizeValidity(bottomBarStyle.getBottomNarBarBackgroundColor())) {
-            setBackgroundColor(bottomBarStyle.getBottomNarBarBackgroundColor())
+            PictureSelectionConfig.selectorStyle!!.bottomBarStyle!!
+        if (StyleUtils.checkStyleValidity(bottomBarStyle.bottomPreviewNarBarBackgroundColor)) {
+            setBackgroundColor(bottomBarStyle.bottomPreviewNarBarBackgroundColor)
+        } else if (StyleUtils.checkSizeValidity(bottomBarStyle.bottomNarBarBackgroundColor)) {
+            setBackgroundColor(bottomBarStyle.bottomNarBarBackgroundColor)
         }
     }
 
@@ -45,7 +45,7 @@ class PreviewBottomNavBar : BottomNavBar {
         super.onClick(view)
         if (view.id == R.id.ps_tv_editor) {
             if (bottomNavBarListener != null) {
-                bottomNavBarListener.onEditImage()
+                bottomNavBarListener!!.onEditImage()
             }
         }
     }

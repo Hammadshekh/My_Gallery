@@ -13,9 +13,16 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.text.TextUtils
 import android.webkit.MimeTypeMap
+import com.example.camerax.utils.CameraUtils.CAMERA
+import com.example.selector.app.PictureAppMaster
+import com.example.selector.basic.PictureContentResolver
+import com.example.selector.config.PictureMimeType
+import com.example.selector.entity.MediaExtraInfo
+import com.example.selector.interfaces.OnCallbackListener
+import com.example.selector.threads.PictureThreadUtils
 import java.io.*
-import java.lang.Exception
 import java.net.URLConnection
+import java.util.*
 
 object MediaUtils {
     /**
@@ -25,15 +32,19 @@ object MediaUtils {
      * @return
      */
     fun getRealPathUri(id: Long, mimeType: String?): String {
-        val contentUri: Uri
-        contentUri = if (PictureMimeType.isHasImage(mimeType)) {
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-        } else if (PictureMimeType.isHasVideo(mimeType)) {
-            MediaStore.Video.Media.EXTERNAL_CONTENT_URI
-        } else if (PictureMimeType.isHasAudio(mimeType)) {
-            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
-        } else {
-            MediaStore.Files.getContentUri("external")
+        val contentUri: Uri = when {
+            PictureMimeType.isHasImage(mimeType) -> {
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+            }
+            mimeType?.let { PictureMimeType.isHasVideo(it) } == true -> {
+                MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+            }
+            PictureMimeType.isHasAudio(mimeType) -> {
+                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+            }
+            else -> {
+                MediaStore.Files.getContentUri("external")
+            }
         }
         return ContentUris.withAppendedId(contentUri, id).toString()
     }
@@ -44,10 +55,10 @@ object MediaUtils {
      * @param path
      * @return
      */
-    fun getMimeTypeFromMediaUrl(path: String?): String {
+    fun getMimeTypeFromMediaUrl(path: String): String {
         val fileExtension = MimeTypeMap.getFileExtensionFromUrl(path)
         var mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(
-            fileExtension.toLowerCase())
+            fileExtension.lowercase(Locale.getDefault()))
         if (TextUtils.isEmpty(mimeType)) {
             mimeType = getMimeType(File(path))
         }
@@ -64,19 +75,19 @@ object MediaUtils {
         if (TextUtils.isEmpty(url)) {
             return null
         }
-        if (url.toLowerCase().endsWith(".jpg") || url.toLowerCase().endsWith(".jpeg")) {
+        if (url.lowercase(Locale.getDefault()).endsWith(".jpg") || url.lowercase(Locale.getDefault()).endsWith(".jpeg")) {
             return "image/jpeg"
-        } else if (url.toLowerCase().endsWith(".png")) {
+        } else if (url.lowercase(Locale.getDefault()).endsWith(".png")) {
             return "image/png"
-        } else if (url.toLowerCase().endsWith(".gif")) {
+        } else if (url.lowercase(Locale.getDefault()).endsWith(".gif")) {
             return "image/gif"
-        } else if (url.toLowerCase().endsWith(".webp")) {
+        } else if (url.lowercase(Locale.getDefault()).endsWith(".webp")) {
             return "image/webp"
-        } else if (url.toLowerCase().endsWith(".bmp")) {
+        } else if (url.lowercase(Locale.getDefault()).endsWith(".bmp")) {
             return "image/bmp"
-        } else if (url.toLowerCase().endsWith(".mp4")) {
+        } else if (url.lowercase(Locale.getDefault()).endsWith(".mp4")) {
             return "video/mp4"
-        } else if (url.toLowerCase().endsWith(".avi")) {
+        } else if (url.lowercase(Locale.getDefault()).endsWith(".avi")) {
             return "video/avi"
         }
         return null
@@ -112,13 +123,13 @@ object MediaUtils {
      * @param absolutePath 资源路径
      * @return
      */
-    fun generateCameraFolderName(absolutePath: String?): String {
+    fun generateCameraFolderName(absolutePath: String): String {
         val folderName: String
         val cameraFile = File(absolutePath)
         folderName = if (cameraFile.parentFile != null) {
             cameraFile.parentFile.name
         } else {
-            PictureMimeType.CAMERA
+            CAMERA
         }
         return folderName
     }
@@ -139,15 +150,16 @@ object MediaUtils {
         try {
             val options = BitmapFactory.Options()
             options.inJustDecodeBounds = true
-            inputStream = if (PictureMimeType.isContent(url)) {
-                PictureContentResolver.getContentResolverOpenInputStream(PictureAppMaster.getInstance()
-                    .getAppContext(), Uri.parse(url))
+            inputStream = if (url?.let { PictureMimeType.isContent(it) } == true) {
+                PictureAppMaster.instance?.appContext.let { it?.let { it1 ->
+                    PictureContentResolver.getContentResolverOpenInputStream(it1, Uri.parse(url))
+                } }
             } else {
                 FileInputStream(url)
             }
             BitmapFactory.decodeStream(inputStream, null, options)
-            mediaExtraInfo.setWidth(options.outWidth)
-            mediaExtraInfo.setHeight(options.outHeight)
+            mediaExtraInfo.width = (options.outWidth)
+            mediaExtraInfo.height = (options.outHeight)
         } catch (e: Exception) {
             e.printStackTrace()
         } finally {
@@ -162,20 +174,20 @@ object MediaUtils {
      * @param url
      * @return
      */
-    fun getImageSize(context: Context?, url: String?): MediaExtraInfo {
+    fun getImageSize(context: Context?, url: String): MediaExtraInfo {
         val mediaExtraInfo = MediaExtraInfo()
         var inputStream: InputStream? = null
         try {
             val options = BitmapFactory.Options()
             options.inJustDecodeBounds = true
             inputStream = if (PictureMimeType.isContent(url)) {
-                PictureContentResolver.getContentResolverOpenInputStream(context, Uri.parse(url))
+                context?.let { PictureContentResolver.getContentResolverOpenInputStream(it, Uri.parse(url)) }
             } else {
                 FileInputStream(url)
             }
             BitmapFactory.decodeStream(inputStream, null, options)
-            mediaExtraInfo.setWidth(options.outWidth)
-            mediaExtraInfo.setHeight(options.outHeight)
+            mediaExtraInfo.width = (options.outWidth)
+            mediaExtraInfo.height = (options.outHeight)
         } catch (e: Exception) {
             e.printStackTrace()
         } finally {
@@ -195,7 +207,7 @@ object MediaUtils {
         val mediaExtraInfo = MediaExtraInfo()
         val retriever = MediaMetadataRetriever()
         try {
-            if (PictureMimeType.isContent(url)) {
+            if (url?.let { PictureMimeType.isContent(it) } == true) {
                 retriever.setDataSource(context, Uri.parse(url))
             } else {
                 retriever.setDataSource(url)
@@ -215,11 +227,11 @@ object MediaUtils {
                 height =
                     ValueOf.toInt(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT))
             }
-            mediaExtraInfo.setWidth(width)
-            mediaExtraInfo.setHeight(height)
-            mediaExtraInfo.setOrientation(orientation)
-            mediaExtraInfo.setDuration(ValueOf.toLong(retriever.extractMetadata(
-                MediaMetadataRetriever.METADATA_KEY_DURATION)))
+            mediaExtraInfo.width = width
+            mediaExtraInfo.height = height
+            mediaExtraInfo.orientation = orientation
+            mediaExtraInfo.duration = ValueOf.toLong(retriever.extractMetadata(
+                MediaMetadataRetriever.METADATA_KEY_DURATION))
         } catch (e: Exception) {
             e.printStackTrace()
         } finally {
@@ -235,7 +247,7 @@ object MediaUtils {
      * @param url
      * @return
      */
-    fun getAudioSize(context: Context?, url: String?): MediaExtraInfo {
+    fun getAudioSize(context: Context?, url: String): MediaExtraInfo {
         val mediaExtraInfo = MediaExtraInfo()
         val retriever = MediaMetadataRetriever()
         try {
@@ -244,7 +256,7 @@ object MediaUtils {
             } else {
                 retriever.setDataSource(url)
             }
-            mediaExtraInfo.setDuration(ValueOf.toLong(retriever.extractMetadata(
+            mediaExtraInfo.duration = (ValueOf.toLong(retriever.extractMetadata(
                 MediaMetadataRetriever.METADATA_KEY_DURATION)))
         } catch (e: Exception) {
             e.printStackTrace()
@@ -264,7 +276,7 @@ object MediaUtils {
             val cr = context.applicationContext.contentResolver
             val uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
             val selection = MediaStore.Images.Media._ID + "=?"
-            cr.delete(uri, selection, arrayOf(java.lang.Long.toString(id.toLong())))
+            cr.delete(uri, selection, arrayOf(id.toLong().toString()))
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -301,8 +313,8 @@ object MediaUtils {
                     orderBy)
             }
             if (data != null && data.count > 0 && data.moveToFirst()) {
-                val id = data.getInt(data.getColumnIndex(MediaStore.Images.Media._ID))
-                val date = data.getLong(data.getColumnIndex(MediaStore.Images.Media.DATE_ADDED))
+                val id = data.getInt(data.getColumnIndexOrThrow(MediaStore.Images.Media._ID))
+                val date = data.getLong(data.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_ADDED))
                 val duration = DateUtils.dateDiffer(date)
                 // 最近时间1s以内的图片，可以判定是最新生成的重复照片
                 if (duration <= 1) id else -1
@@ -350,8 +362,8 @@ object MediaUtils {
             }
             if (data != null && data.count > 0 && data.moveToFirst()) {
                 mediaBucketId[0] =
-                    data.getLong(data.getColumnIndex(MediaStore.Files.FileColumns._ID))
-                mediaBucketId[1] = data.getLong(data.getColumnIndex("bucket_id"))
+                    data.getLong(data.getColumnIndexOrThrow(MediaStore.Files.FileColumns._ID))
+                mediaBucketId[1] = data.getLong(data.getColumnIndexOrThrow("bucket_id"))
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -416,18 +428,16 @@ object MediaUtils {
     fun getAsyncVideoThumbnail(
         context: Context?,
         url: String?,
-        call: OnCallbackListener<MediaExtraInfo?>?,
+        call: OnCallbackListener<MediaExtraInfo>,
     ) {
-        PictureThreadUtils.executeByIo(object : SimpleTask<MediaExtraInfo?>() {
-            fun doInBackground(): MediaExtraInfo {
-                return getVideoThumbnail(context, url)
+        PictureThreadUtils.executeByIo(object : PictureThreadUtils.SimpleTask<MediaExtraInfo>() {
+            override fun doInBackground(): MediaExtraInfo {
+                return getVideoThumbnail(context, url!!)
             }
 
-            fun onSuccess(result: MediaExtraInfo?) {
+            override fun onSuccess(result: MediaExtraInfo) {
                 PictureThreadUtils.cancel(this)
-                if (call != null) {
-                    call.onCall(result)
-                }
+                call.onCall(result)
             }
         })
     }
@@ -439,7 +449,7 @@ object MediaUtils {
      * @param url
      * @return
      */
-    fun getVideoThumbnail(context: Context?, url: String?): MediaExtraInfo {
+    fun getVideoThumbnail(context: Context?, url: String): MediaExtraInfo {
         var bitmap: Bitmap? = null
         var stream: ByteArrayOutputStream? = null
         var fos: FileOutputStream? = null
@@ -455,15 +465,17 @@ object MediaUtils {
             if (bitmap != null && !bitmap.isRecycled) {
                 stream = ByteArrayOutputStream()
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 50, stream)
-                val videoThumbnailDir: String = PictureFileUtils.getVideoThumbnailDir(context)
+                val videoThumbnailDir: String = context?.let {
+                    PictureFileUtils.getVideoThumbnailDir(it)
+                }.toString()
                 val targetFile =
                     File(videoThumbnailDir, DateUtils.getCreateFileName("vid_") + "_thumb.jpg")
                 fos = FileOutputStream(targetFile)
                 fos.write(stream.toByteArray())
                 fos.flush()
-                extraInfo.setVideoThumbnail(targetFile.absolutePath)
-                extraInfo.setWidth(bitmap.width)
-                extraInfo.setHeight(bitmap.height)
+                extraInfo.videoThumbnail = (targetFile.absolutePath)
+                extraInfo.width = (bitmap.width)
+                extraInfo.height = (bitmap.height)
             }
         } catch (e: IOException) {
             e.printStackTrace()
@@ -483,7 +495,7 @@ object MediaUtils {
      * @param context Context
      * @param path    path
      */
-    fun deleteUri(context: Context, path: String?) {
+    fun deleteUri(context: Context, path: String) {
         try {
             if (PictureMimeType.isContent(path)) {
                 context.contentResolver.delete(Uri.parse(path), null, null)

@@ -106,7 +106,7 @@ open class BaseRecyclerMediaHolder : RecyclerView.ViewHolder {
         if (isSelectNumberStyle) {
             notifySelectNumberStyle(media)
         }
-        if (isHandleMask && config?.isMaxSelectEnabledMask == true) {
+        if (isHandleMask && config!!.isMaxSelectEnabledMask) {
             dispatchHandleMask(media)
         }
         var path: String = media.path!!
@@ -142,7 +142,7 @@ open class BaseRecyclerMediaHolder : RecyclerView.ViewHolder {
             }
             val isPreview =
                 (isHasImage(media.mimeType) && config!!.isEnablePreviewImage || config!!.isDirectReturnSingle
-                        || isHasVideo(media.mimeType) && (config!!.isEnablePreviewVideo
+                        || media.mimeType?.let { it1 -> isHasVideo(it1) } == true && (config!!.isEnablePreviewVideo
                         || config!!.selectionMode == SelectModeConfig.SINGLE) || isHasAudio(
                      media.mimeType) && (config!!.isEnablePreviewAudio
                         || config!!.selectionMode == SelectModeConfig.SINGLE))
@@ -158,7 +158,7 @@ open class BaseRecyclerMediaHolder : RecyclerView.ViewHolder {
     /**
      *Load resource cover
      * */
-    protected open fun loadCover(path: String?) {
+     open fun loadCover(path: String?) {
         if (PictureSelectionConfig.imageEngine != null) {
             PictureSelectionConfig.imageEngine!!.loadGridImage(ivPicture!!.context, path, ivPicture)
         }
@@ -169,18 +169,18 @@ open class BaseRecyclerMediaHolder : RecyclerView.ViewHolder {
      */
     private fun dispatchHandleMask(media: LocalMedia) {
         var isEnabledMask = false
-        if (SelectedManager.selectCount > 0 && !SelectedManager.getSelectedResult()
+        if (SelectedManager.selectCount > 0 && !SelectedManager.selectedResult
                 .contains(media)
         ) {
-            if (config?.isWithVideoImage == true) {
-                isEnabledMask = if (config?.selectionMode == SelectModeConfig.SINGLE) {
+            if (config!!.isWithVideoImage) {
+                isEnabledMask = if (config!!.selectionMode == SelectModeConfig.SINGLE) {
                     SelectedManager.selectCount == Int.MAX_VALUE
                 } else {
-                    SelectedManager.selectCount == config?.maxSelectNum
+                    SelectedManager.selectCount == config!!.maxSelectNum
                 }
             } else {
                 if (isHasVideo(SelectedManager.topResultMimeType)) {
-                    val maxSelectNum: Int = if (config?.selectionMode == SelectModeConfig.SINGLE) {
+                    val maxSelectNum: Int = if (config!!.selectionMode == SelectModeConfig.SINGLE) {
                         Int.MAX_VALUE
                     } else {
                         if (config!!.maxVideoSelectNum > 0) config!!.maxVideoSelectNum else config!!.maxSelectNum
@@ -194,7 +194,7 @@ open class BaseRecyclerMediaHolder : RecyclerView.ViewHolder {
                         config!!.maxSelectNum
                     }
                     isEnabledMask = (SelectedManager.selectCount == maxSelectNum
-                            || isHasVideo(media.mimeType))
+                            || media.mimeType?.let { isHasVideo(it) } == true)
                 }
             }
         }
@@ -230,7 +230,7 @@ open class BaseRecyclerMediaHolder : RecyclerView.ViewHolder {
      * @return
      */
     private fun isSelected(currentMedia: LocalMedia): Boolean {
-        val selectedResult: List<LocalMedia> = SelectedManager.getSelectedResult()
+        val selectedResult: List<LocalMedia> = SelectedManager.selectedResult
         val isSelected = selectedResult.contains(currentMedia)
         if (isSelected) {
             val compare: LocalMedia = currentMedia.compareLocalMedia!!
@@ -249,8 +249,8 @@ open class BaseRecyclerMediaHolder : RecyclerView.ViewHolder {
     private fun notifySelectNumberStyle(currentMedia: LocalMedia) {
         tvCheck!!.text = ""
         for (i in 0 until SelectedManager.selectCount) {
-            val media: LocalMedia = SelectedManager.getSelectedResult()[i]
-            if (TextUtils.equals(media.getPath(), currentMedia.getPath())
+            val media: LocalMedia = SelectedManager.selectedResult[i]
+            if (TextUtils.equals(media.path, currentMedia.path)
                 || media.id == currentMedia.id
             ) {
                 currentMedia.num = (media.num)
@@ -270,7 +270,7 @@ open class BaseRecyclerMediaHolder : RecyclerView.ViewHolder {
             parent: ViewGroup,
             viewType: Int,
             resource: Int,
-            config: PictureSelectionConfig?,
+            config: PictureSelectionConfig,
         ): BaseRecyclerMediaHolder {
             val itemView = LayoutInflater.from(parent.context).inflate(resource, parent, false)
             return when (viewType) {

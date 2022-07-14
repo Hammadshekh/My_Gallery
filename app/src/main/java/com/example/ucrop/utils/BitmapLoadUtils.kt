@@ -12,7 +12,6 @@ import com.example.ucrop.callback.BitmapLoadCallback
 import com.example.ucrop.task.BitmapLoadTask
 import java.io.Closeable
 import java.io.IOException
-import java.lang.Exception
 
 object BitmapLoadUtils {
     private const val MAX_BITMAP_SIZE = 100 * 1024 * 1024 // 100 MB
@@ -24,8 +23,10 @@ object BitmapLoadUtils {
         requiredWidth: Int, requiredHeight: Int,
         loadCallback: BitmapLoadCallback?,
     ) {
-        BitmapLoadTask(context, uri, outputUri, requiredWidth, requiredHeight, loadCallback)
-            .executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR)
+        loadCallback?.let {
+            BitmapLoadTask(context, uri, outputUri, requiredWidth, requiredHeight, it)
+                .executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR)
+        }
     }
 
     fun transformBitmap(bitmap: Bitmap, transformMatrix: Matrix): Bitmap {

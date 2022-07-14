@@ -11,23 +11,21 @@ object CameraUtils {
     const val TYPE_VIDEO = 2
     const val CAMERA = "Camera"
     const val MIME_TYPE_PREFIX_IMAGE = "image"
-    const val MIME_TYPE_PREFIX_VIDEO = "video"
+    private const val MIME_TYPE_PREFIX_VIDEO = "video"
     const val MIME_TYPE_IMAGE = "image/jpeg"
     const val MIME_TYPE_VIDEO = "video/mp4"
-    const val DCIM_CAMERA = "DCIM/Camera"
+    private const val DCIM_CAMERA = "DCIM/Camera"
     const val JPEG = ".jpeg"
     const val MP4 = ".mp4"
 
-    /**
-     * 构建图片的ContentValues,用于保存拍照后的照片
-     *
-     * @param cameraFileName 资源名称
-     * @param mimeType       资源类型
-     * @return
-     */
+    // Construct the ContentValues ​​ of the image, which is used to save the photo after taking the photo
+    // cameraFileName Resource Name
+    // mimeType       Resource Type
+    //return
+
     fun buildImageContentValues(cameraFileName: String, mimeType: String): ContentValues {
         val time = System.currentTimeMillis().toString()
-        // ContentValues是我们希望这条记录被创建时包含的数据信息
+        //ContentValues ​​ is the data information we want this record to contain when it is created
         val values = ContentValues(3)
         if (TextUtils.isEmpty(cameraFileName)) {
             values.put(MediaStore.Images.Media.DISPLAY_NAME, DateUtils.getCreateFileName("IMG_"))
@@ -52,16 +50,14 @@ object CameraUtils {
         return values
     }
 
-    /**
-     * 构建视频的ContentValues,用于保存拍照后的照片
-     *
-     * @param cameraFileName 资源名称
-     * @param mimeType       资源类型
-     * @return
-     */
+    //Build the ContentValues ​​of the video to save the photo after taking the photo
+    // cameraFileName Resource Name
+    //mimeType       Resource Type
+    //return
+
     fun buildVideoContentValues(cameraFileName: String, mimeType: String): ContentValues {
         val time = System.currentTimeMillis().toString()
-        // ContentValues是我们希望这条记录被创建时包含的数据信息
+        // ContentValues ​​is the data information we want this record to contain when it is created
         val values = ContentValues(3)
         if (TextUtils.isEmpty(cameraFileName)) {
             values.put(MediaStore.Video.Media.DISPLAY_NAME, DateUtils.getCreateFileName("VID_"))

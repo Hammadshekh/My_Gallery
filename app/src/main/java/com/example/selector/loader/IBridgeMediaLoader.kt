@@ -16,7 +16,7 @@ import java.util.*
 import kotlin.math.max
 
 abstract class IBridgeMediaLoader {
-    protected var context: Context? = null
+    private var context: Context? = null
         private set
     private var mConfig: PictureSelectionConfig? = null
 
@@ -26,13 +26,13 @@ abstract class IBridgeMediaLoader {
      * @param context
      * @param config  [PictureSelectionConfig]
      */
-    fun initConfig(context: Context?, config: PictureSelectionConfig?) {
+    fun initConfig(context: Context?, config: PictureSelectionConfig) {
         this.context = context
         mConfig = config
     }
 
-     val config: PictureSelectionConfig?
-         get() = mConfig
+     val config: PictureSelectionConfig
+         get() = mConfig!!
 
     /**
      * query album cover
@@ -63,26 +63,26 @@ abstract class IBridgeMediaLoader {
     /**
      * query specified contents
      */
-    abstract fun loadOnlyInAppDirAllMedia(query: OnQueryAlbumListener<LocalMediaFolder?>?)
+    abstract fun loadOnlyInAppDirAllMedia(query: OnQueryAlbumListener<LocalMediaFolder>)
 
     /**
      * A filter declaring which rows to return,
      * formatted as an SQL WHERE clause (excluding the WHERE itself).
      * Passing null will return all rows for the given URI.
      */
-    protected abstract val selection: String?
+    private  val selection: String? = null
 
     /**
      * You may include ?s in selection, which will be replaced by the values from selectionArgs,
      * in the order that they appear in the selection. The values will be bound as Strings.
      */
-    protected abstract val selectionArgs: Array<String>?
+    private val selectionArgs: Array<String>? = null
 
     /**
      * How to order the rows, formatted as an SQL ORDER BY clause (excluding the ORDER BY itself).
      * Passing null will use the default sort order, which may be unordered.
      */
-    protected abstract val sortOrder: String?
+    private  val sortOrder: String? = null
 
     /**
      * parse LocalMedia
@@ -90,20 +90,20 @@ abstract class IBridgeMediaLoader {
      * @param data      Cursor
      * @param isUsePool object pool
      */
-    protected abstract fun parseLocalMedia(data: Cursor?, isUsePool: Boolean): LocalMedia?
+     abstract fun parseLocalMedia(data: Cursor?, isUsePool: Boolean): LocalMedia?
 
     /**
      * Get video (maximum or minimum time)
      *
      * @return
      */
-    protected val durationCondition: String
+    private val durationCondition: String
          get() {
             val maxS =
-                if (config!!.filterVideoMaxSecond == 0) Long.MAX_VALUE else config!!.filterVideoMaxSecond
+                if (config.filterVideoMaxSecond == 0) Long.MAX_VALUE else config.filterVideoMaxSecond
             return java.lang.String.format(Locale.CHINA,
-                "%d <%s " + COLUMN_DURATION + " and " + COLUMN_DURATION + " <= %d",
-                config?.filterVideoMinSecond?.let { max(0 , it) },
+                "%d <%s $COLUMN_DURATION and $COLUMN_DURATION <= %d",
+                config.filterVideoMinSecond?.let { max(0 , it) },
                 "=",
                 maxS)
         }
@@ -113,13 +113,13 @@ abstract class IBridgeMediaLoader {
      *
      * @return
      */
-    protected val fileSizeCondition: String
+    private val fileSizeCondition: String
          get() {
             val maxS =
-                if (config?.filterMaxFileSize!!.equals(0)) Long.MAX_VALUE else config!!.filterMaxFileSize
+                if (config.filterMaxFileSize.equals(0)) Long.MAX_VALUE else config.filterMaxFileSize
             return java.lang.String.format(Locale.CHINA,
                 "%d <%s " + MediaStore.MediaColumns.SIZE + " and " + MediaStore.MediaColumns.SIZE + " <= %d",
-                Math.max(0, config!!.filterMinFileSize),
+                Math.max(0, config.filterMinFileSize),
                 "=",
                 maxS)
         }
@@ -129,9 +129,9 @@ abstract class IBridgeMediaLoader {
      *
      * @return
      */
-    protected val queryMimeCondition: String
+    private val queryMimeCondition: String
          get() {
-            val filters: List<String> = config?.queryOnlyList!!
+            val filters: List<String> = config.queryOnlyList!!
             val filterSet = HashSet(filters)
             val iterator: Iterator<String> = filterSet.iterator()
             val stringBuilder = StringBuilder()
@@ -141,19 +141,19 @@ abstract class IBridgeMediaLoader {
                 if (TextUtils.isEmpty(value)) {
                     continue
                 }
-                if (config?.chooseMode == SelectMimeType.ofVideo()) {
+                if (config.chooseMode == SelectMimeType.ofVideo()) {
                     if (value.startsWith(PictureMimeType.MIME_TYPE_PREFIX_IMAGE) || value.startsWith(
                             PictureMimeType.MIME_TYPE_PREFIX_AUDIO)
                     ) {
                         continue
                     }
-                } else if (config?.chooseMode == SelectMimeType.ofImage()) {
+                } else if (config.chooseMode == SelectMimeType.ofImage()) {
                     if (value.startsWith(PictureMimeType.MIME_TYPE_PREFIX_AUDIO) || value.startsWith(
                             PictureMimeType.MIME_TYPE_PREFIX_VIDEO)
                     ) {
                         continue
                     }
-                } else if (config?.chooseMode == SelectMimeType.ofAudio()) {
+                } else if (config.chooseMode == SelectMimeType.ofAudio()) {
                     if (value.startsWith(PictureMimeType.MIME_TYPE_PREFIX_VIDEO) || value.startsWith(
                             PictureMimeType.MIME_TYPE_PREFIX_IMAGE)
                     ) {
@@ -165,8 +165,8 @@ abstract class IBridgeMediaLoader {
                     .append(MediaStore.MediaColumns.MIME_TYPE).append("='").append(value)
                     .append("'")
             }
-            if (config?.chooseMode != SelectMimeType.ofVideo()) {
-                if (config?.isGif == true && !filterSet.contains(PictureMimeType.ofGIF())) {
+            if (config.chooseMode != SelectMimeType.ofVideo()) {
+                if (config.isGif == true && !filterSet.contains(PictureMimeType.ofGIF())) {
                     stringBuilder.append(NOT_GIF)
                 }
             }

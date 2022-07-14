@@ -1,24 +1,13 @@
 package com.example.camerax.listener
 
 interface CameraListener {
-    /**
-     * 拍照成功返回
-     *
-     * @param url
-     */
+
+    // The photo was returned successfully
     fun onPictureSuccess(url: String)
 
-    /**
-     * 录像成功返回
-     *
-     * @param url
-     */
+    // Recording successfully returned
     fun onRecordSuccess(url: String)
 
-    /**
-     * 使用相机出错
-     *
-     * @param file
-     */
+    // Error using camera
     fun onError(videoCaptureError: Int, message: String?, cause: Throwable?)
 }

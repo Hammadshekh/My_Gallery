@@ -289,7 +289,7 @@ object PictureMimeType {
     const val MIME_TYPE_PREFIX_AUDIO = "audio"
 
     private const val MIME_TYPE_PNG = "image/png"
-    private const val MIME_TYPE_JPEG = "image/jpeg"
+    const val MIME_TYPE_JPEG = "image/jpeg"
     private const val MIME_TYPE_JPG = "image/jpg"
     private const val MIME_TYPE_BMP = "image/bmp"
     private const val MIME_TYPE_XMS_BMP = "image/x-ms-bmp"

@@ -16,7 +16,6 @@ import android.view.animation.Interpolator
 import android.widget.ImageView
 import android.widget.ImageView.ScaleType
 import android.widget.OverScroller
-import java.lang.IllegalArgumentException
 
 class PhotoViewAttacher(private val mImageView: ImageView) : OnTouchListener,
     OnLayoutChangeListener {
@@ -30,7 +29,7 @@ class PhotoViewAttacher(private val mImageView: ImageView) : OnTouchListener,
 
     // Gesture Detectors
     private val mGestureDetector: GestureDetector?
-    private val mScaleDragDetector: CustomGestureDetector?
+    private var mScaleDragDetector: CustomGestureDetector? = null
 
     // These are set so we don't keep allocating them on the heap
     private val mBaseMatrix: Matrix = Matrix()
@@ -58,9 +57,9 @@ class PhotoViewAttacher(private val mImageView: ImageView) : OnTouchListener,
     var isZoomEnabled: Boolean = true
         private set
     private var mScaleType: ScaleType = ScaleType.FIT_CENTER
-    private val onGestureListener: OnGestureListener = object : OnGestureListener() {
+    private val onGestureListener: OnGestureListener = object : OnGestureListener {
         override fun onDrag(dx: Float, dy: Float) {
-            if (mScaleDragDetector!!.isScaling()) {
+            if (mScaleDragDetector!!.isScaling) {
                 return  // Do not drag if we are already scaling
             }
             if (mOnViewDragListener != null) {
@@ -79,7 +78,7 @@ class PhotoViewAttacher(private val mImageView: ImageView) : OnTouchListener,
              * the edge, aka 'overscrolling', let the parent take over).
              */
             val parent: ViewParent? = mImageView.parent
-            if (mAllowParentInterceptOnEdge && !mScaleDragDetector.isScaling() && !mBlockParentIntercept) {
+            if (mAllowParentInterceptOnEdge && !mScaleDragDetector!!.isScaling && !mBlockParentIntercept) {
                 if (((mHorizontalScrollEdge == HORIZONTAL_EDGE_BOTH
                             ) || (mHorizontalScrollEdge == HORIZONTAL_EDGE_LEFT && dx >= 1f)
                             || (mHorizontalScrollEdge == HORIZONTAL_EDGE_RIGHT && dx <= -1f)
@@ -261,11 +260,11 @@ class PhotoViewAttacher(private val mImageView: ImageView) : OnTouchListener,
             }
             // Try the Scale/Drag detector
             if (mScaleDragDetector != null) {
-                val wasScaling: Boolean = mScaleDragDetector.isScaling()
-                val wasDragging: Boolean = mScaleDragDetector.isDragging()
-                handled = mScaleDragDetector.onTouchEvent(ev)
-                val didntScale: Boolean = !wasScaling && !mScaleDragDetector.isScaling()
-                val didntDrag: Boolean = !wasDragging && !mScaleDragDetector.isDragging()
+                val wasScaling: Boolean = mScaleDragDetector!!.isScaling
+                val wasDragging: Boolean = mScaleDragDetector!!.isDragging
+                handled = mScaleDragDetector!!.onTouchEvent(ev)
+                val didntScale: Boolean = !wasScaling && !mScaleDragDetector!!.isScaling
+                val didntDrag: Boolean = !wasDragging && !mScaleDragDetector!!.isDragging
                 mBlockParentIntercept = didntScale && didntDrag
             }
             // Check to see if the user double tapped
@@ -442,7 +441,7 @@ class PhotoViewAttacher(private val mImageView: ImageView) : OnTouchListener,
      * @param matrix - Matrix to map Drawable against
      * @return RectF - Displayed Rectangle
      */
-    private fun getDisplayRect(matrix: Matrix): RectF? {
+    fun getDisplayRect(matrix: Matrix): RectF? {
         val d: Drawable? = mImageView.drawable
         if (d != null) {
             mDisplayRect.set(0f, 0f, d.intrinsicWidth.toFloat(),
@@ -483,10 +482,10 @@ class PhotoViewAttacher(private val mImageView: ImageView) : OnTouchListener,
             mBaseMatrix.postTranslate((viewWidth - drawableWidth * scale) / 2f,
                 (viewHeight - drawableHeight * scale) / 2f)
         } else {
-            var mTempSrc: RectF? = RectF(0, 0, drawableWidth.toFloat(), drawableHeight.toFloat())
-            val mTempDst: RectF = RectF(0, 0, viewWidth, viewHeight)
+            var mTempSrc: RectF? = RectF(0f, 0f, drawableWidth.toFloat(), drawableHeight.toFloat())
+            val mTempDst: RectF = RectF(0f, 0f, viewWidth, viewHeight)
             if (mBaseRotation.toInt() % 180 != 0) {
-                mTempSrc = RectF(0, 0, drawableHeight.toFloat(), drawableWidth.toFloat())
+                mTempSrc = RectF(0f, 0f, drawableHeight.toFloat(), drawableWidth.toFloat())
             }
             when (mScaleType) {
                 ScaleType.FIT_CENTER -> mBaseMatrix.setRectToRect(mTempSrc,
@@ -686,7 +685,7 @@ class PhotoViewAttacher(private val mImageView: ImageView) : OnTouchListener,
         mImageView.setOnTouchListener(this)
         mImageView.addOnLayoutChangeListener(this)
         if (mImageView.isInEditMode) {
-            return
+
         }
         mBaseRotation = 0.0f
         // Create Gesture Detectors...

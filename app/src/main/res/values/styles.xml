@@ -20,6 +20,17 @@
         <item name="android:windowIsTranslucent">true</item>
     </style>
 
+    <style name="ucrop_TextViewWidgetText">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_centerHorizontal">true</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/ucrop_color_widget_text</item>
+        <item name="android:layout_marginTop">@dimen/ucrop_margin_top_widget_text</item>
+        <item name="android:textSize">@dimen/ucrop_text_size_widget_text</item>
+    </style>
+
+
     <style name="PictureThemeWindowStyle">
         <item name="android:windowEnterAnimation">@anim/ps_anim_album_show</item>
         <item name="android:windowExitAnimation">@anim/ps_anim_album_dismiss</item>

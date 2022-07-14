@@ -4,6 +4,7 @@ import android.os.Parcel
 import android.os.Parcelable
 import android.os.Parcelable.Creator
 import androidx.annotation.AnimRes
+import com.example.mygallery.R
 
 class PictureWindowAnimationStyle : Parcelable {
     /**
@@ -41,7 +42,7 @@ class PictureWindowAnimationStyle : Parcelable {
         activityPreviewExitAnimation = activityExitAnimation
     }
 
-    protected constructor(`in`: Parcel) {
+    private constructor(`in`: Parcel) {
         activityEnterAnimation = `in`.readInt()
         activityExitAnimation = `in`.readInt()
         activityPreviewEnterAnimation = `in`.readInt()
@@ -70,8 +71,8 @@ class PictureWindowAnimationStyle : Parcelable {
         }
 
         val CREATOR: Creator<PictureWindowAnimationStyle> =
-            object : Creator<PictureWindowAnimationStyle?> {
-                override fun createFromParcel(`in`: Parcel): PictureWindowAnimationStyle? {
+            object : Creator<PictureWindowAnimationStyle> {
+                override fun createFromParcel(`in`: Parcel): PictureWindowAnimationStyle {
                     return PictureWindowAnimationStyle(`in`)
                 }
 
@@ -79,5 +80,15 @@ class PictureWindowAnimationStyle : Parcelable {
                     return arrayOfNulls(size)
                 }
             }
+    }
+
+     object CREATOR : Creator<PictureWindowAnimationStyle> {
+        override fun createFromParcel(parcel: Parcel): PictureWindowAnimationStyle {
+            return PictureWindowAnimationStyle(parcel)
+        }
+
+        override fun newArray(size: Int): Array<PictureWindowAnimationStyle?> {
+            return arrayOfNulls(size)
+        }
     }
 }

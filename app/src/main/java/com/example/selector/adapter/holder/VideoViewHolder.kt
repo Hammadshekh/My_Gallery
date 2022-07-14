@@ -10,8 +10,8 @@ import com.example.selector.utils.DateUtils
 import com.example.selector.utils.StyleUtils
 import com.luck.picture.lib.entity.LocalMedia
 
-class VideoViewHolder(itemView: View, config: PictureSelectionConfig?) :
-    BaseRecyclerMediaHolder(itemView, config!!) {
+class VideoViewHolder(itemView: View, config: PictureSelectionconfig) :
+    BaseRecyclerMediaHolder(itemView, config) {
     private val tvDuration: TextView = itemView.findViewById(R.id.tv_duration)
     override fun bindData(media: LocalMedia, position: Int) {
         super.bindData(media, position)

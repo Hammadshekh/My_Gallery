@@ -2,6 +2,7 @@ package com.example.camerax.utils
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.example.camerax.CustomCameraConfig
 
 object SimpleXSpUtils {
     private var pictureSpUtils: SharedPreferences? = null

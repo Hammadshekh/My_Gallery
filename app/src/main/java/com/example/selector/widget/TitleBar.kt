@@ -5,22 +5,28 @@ import android.text.TextUtils
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import com.example.mygallery.R
+import com.example.selector.config.PictureSelectionConfig
+import com.example.selector.config.SelectMimeType
+import com.example.selector.style.PictureSelectorStyle
+import com.example.selector.style.TitleBarStyle
+import com.example.selector.utils.DensityUtil
+import com.example.selector.utils.StyleUtils
 
-class TitleBar : RelativeLayout, View.OnClickListener {
-    protected var rlAlbumBg: RelativeLayout? = null
-    protected var ivLeftBack: ImageView? = null
+open class TitleBar : RelativeLayout, View.OnClickListener {
+    var rlAlbumBg: RelativeLayout? = null
+    var ivLeftBack: ImageView? = null
     var imageArrow: ImageView? = null
-        protected set
+        private set
     var imageDelete: ImageView? = null
-        protected set
-    protected var tvTitle: MarqueeTextView? = null
+        private set
+    private var tvTitle: MarqueeTextView? = null
     var titleCancelView: TextView? = null
-        protected set
+        private set
 
     /**
      * title bar line
@@ -28,11 +34,11 @@ class TitleBar : RelativeLayout, View.OnClickListener {
      * @return
      */
     var titleBarLine: View? = null
-        protected set
-    protected var viewAlbumClickArea: View? = null
-    protected var config: PictureSelectionConfig? = null
-    protected var viewTopStatusBar: View? = null
-    protected var titleBarLayout: RelativeLayout? = null
+        private set
+    var viewAlbumClickArea: View? = null
+    private var config: PictureSelectionConfig? = null
+    private var viewTopStatusBar: View? = null
+    private var titleBarLayout: RelativeLayout? = null
 
     constructor(context: Context?) : super(context) {
         init()
@@ -48,11 +54,11 @@ class TitleBar : RelativeLayout, View.OnClickListener {
         init()
     }
 
-    protected fun init() {
+    private fun init() {
         inflateLayout()
         isClickable = true
         isFocusable = true
-        config = PictureSelectionConfig.getInstance()
+        config = PictureSelectionConfig.instance!!
         viewTopStatusBar = findViewById(R.id.top_status_bar)
         titleBarLayout = findViewById(R.id.rl_title_bar)
         ivLeftBack = findViewById(R.id.ps_iv_left_back)
@@ -63,26 +69,26 @@ class TitleBar : RelativeLayout, View.OnClickListener {
         imageArrow = findViewById(R.id.ps_iv_arrow)
         titleCancelView = findViewById(R.id.ps_tv_cancel)
         titleBarLine = findViewById(R.id.title_bar_line)
-        ivLeftBack.setOnClickListener(this)
-        titleCancelView.setOnClickListener(this)
-        rlAlbumBg.setOnClickListener(this)
-        titleBarLayout.setOnClickListener(this)
-        viewAlbumClickArea.setOnClickListener(this)
+        ivLeftBack!!.setOnClickListener(this)
+        titleCancelView!!.setOnClickListener(this)
+        rlAlbumBg!!.setOnClickListener(this)
+        titleBarLayout!!.setOnClickListener(this)
+        viewAlbumClickArea!!.setOnClickListener(this)
         setBackgroundColor(ContextCompat.getColor(context, R.color.ps_color_grey))
         handleLayoutUI()
         if (TextUtils.isEmpty(config.defaultAlbumName)) {
-            setTitle(if (config.chooseMode === SelectMimeType.ofAudio()) context.getString(R.string.ps_all_audio) else context.getString(
+            setTitle(if (config.chooseMode == SelectMimeType.ofAudio()) context.getString(R.string.ps_all_audio) else context.getString(
                 R.string.ps_camera_roll))
         } else {
             setTitle(config.defaultAlbumName)
         }
     }
 
-    protected fun inflateLayout() {
+    private fun inflateLayout() {
         LayoutInflater.from(context).inflate(R.layout.ps_title_bar, this)
     }
 
-    protected fun handleLayoutUI() {}
+    private fun handleLayoutUI() {}
 
     /**
      * Set title
@@ -99,84 +105,84 @@ class TitleBar : RelativeLayout, View.OnClickListener {
     val titleText: String
         get() = tvTitle!!.text.toString()
 
-    fun setTitleBarStyle() {
+    open fun setTitleBarStyle() {
         if (config.isPreviewFullScreenMode) {
             val layoutParams = viewTopStatusBar!!.layoutParams
             layoutParams.height = DensityUtil.getStatusBarHeight(context)
         }
-        val selectorStyle: PictureSelectorStyle = PictureSelectionConfig.selectorStyle
-        val titleBarStyle: TitleBarStyle = selectorStyle.getTitleBarStyle()
-        val titleBarHeight: Int = titleBarStyle.getTitleBarHeight()
+        val selectorStyle: PictureSelectorStyle = PictureSelectionConfig.selectorStyle!!
+        val titleBarStyle: TitleBarStyle = selectorStyle.titleBarStyle!!
+        val titleBarHeight: Int = titleBarStyle.titleBarHeight
         if (StyleUtils.checkSizeValidity(titleBarHeight)) {
             titleBarLayout!!.layoutParams.height = titleBarHeight
         } else {
-            titleBarLayout!!.layoutParams.height = DensityUtil.dip2px(context, 48)
+            titleBarLayout!!.layoutParams.height = DensityUtil.dip2px(context, 48f)
         }
         if (titleBarLine != null) {
-            if (titleBarStyle.isDisplayTitleBarLine()) {
+            if (titleBarStyle.isDisplayTitleBarLine) {
                 titleBarLine!!.visibility = VISIBLE
-                if (StyleUtils.checkStyleValidity(titleBarStyle.getTitleBarLineColor())) {
-                    titleBarLine!!.setBackgroundColor(titleBarStyle.getTitleBarLineColor())
+                if (StyleUtils.checkStyleValidity(titleBarStyle.titleBarLineColor)) {
+                    titleBarLine!!.setBackgroundColor(titleBarStyle.titleBarLineColor)
                 }
             } else {
                 titleBarLine!!.visibility = GONE
             }
         }
-        val backgroundColor: Int = titleBarStyle.getTitleBackgroundColor()
+        val backgroundColor: Int = titleBarStyle.titleBackgroundColor
         if (StyleUtils.checkStyleValidity(backgroundColor)) {
             setBackgroundColor(backgroundColor)
         }
-        val backResId: Int = titleBarStyle.getTitleLeftBackResource()
+        val backResId: Int = titleBarStyle.titleLeftBackResource
         if (StyleUtils.checkStyleValidity(backResId)) {
             ivLeftBack!!.setImageResource(backResId)
         }
-        val titleDefaultText: String = titleBarStyle.getTitleDefaultText()
+        val titleDefaultText: String = titleBarStyle.titleDefaultText.toString()
         if (StyleUtils.checkTextValidity(titleDefaultText)) {
             tvTitle!!.text = titleDefaultText
         }
-        val titleTextSize: Int = titleBarStyle.getTitleTextSize()
+        val titleTextSize: Int = titleBarStyle.titleTextSize
         if (StyleUtils.checkSizeValidity(titleTextSize)) {
             tvTitle!!.textSize = titleTextSize.toFloat()
         }
-        val titleTextColor: Int = titleBarStyle.getTitleTextColor()
+        val titleTextColor: Int = titleBarStyle.titleTextColor
         if (StyleUtils.checkStyleValidity(titleTextColor)) {
             tvTitle!!.setTextColor(titleTextColor)
         }
         if (config.isOnlySandboxDir) {
             imageArrow!!.setImageResource(R.drawable.ps_ic_trans_1px)
         } else {
-            val arrowResId: Int = titleBarStyle.getTitleDrawableRightResource()
+            val arrowResId: Int = titleBarStyle.titleDrawableRightResource
             if (StyleUtils.checkStyleValidity(arrowResId)) {
                 imageArrow!!.setImageResource(arrowResId)
             }
         }
-        val albumBackgroundRes: Int = titleBarStyle.getTitleAlbumBackgroundResource()
+        val albumBackgroundRes: Int = titleBarStyle.titleAlbumBackgroundResource
         if (StyleUtils.checkStyleValidity(albumBackgroundRes)) {
             rlAlbumBg!!.setBackgroundResource(albumBackgroundRes)
         }
-        if (titleBarStyle.isHideCancelButton()) {
+        if (titleBarStyle.isHideCancelButton) {
             titleCancelView!!.visibility = GONE
         } else {
             titleCancelView!!.visibility = VISIBLE
             val titleCancelBackgroundResource: Int =
-                titleBarStyle.getTitleCancelBackgroundResource()
+                titleBarStyle.titleCancelBackgroundResource
             if (StyleUtils.checkStyleValidity(titleCancelBackgroundResource)) {
                 titleCancelView!!.setBackgroundResource(titleCancelBackgroundResource)
             }
-            val titleCancelText: String = titleBarStyle.getTitleCancelText()
+            val titleCancelText: String = titleBarStyle.titleCancelText.toString()
             if (StyleUtils.checkTextValidity(titleCancelText)) {
                 titleCancelView!!.text = titleCancelText
             }
-            val titleCancelTextColor: Int = titleBarStyle.getTitleCancelTextColor()
+            val titleCancelTextColor: Int = titleBarStyle.titleCancelTextColor
             if (StyleUtils.checkStyleValidity(titleCancelTextColor)) {
                 titleCancelView!!.setTextColor(titleCancelTextColor)
             }
-            val titleCancelTextSize: Int = titleBarStyle.getTitleCancelTextSize()
+            val titleCancelTextSize: Int = titleBarStyle.titleCancelTextSize
             if (StyleUtils.checkSizeValidity(titleCancelTextSize)) {
                 titleCancelView!!.textSize = titleCancelTextSize.toFloat()
             }
         }
-        val deleteBackgroundResource: Int = titleBarStyle.getPreviewDeleteBackgroundResource()
+        val deleteBackgroundResource: Int = titleBarStyle.previewDeleteBackgroundResource
         if (StyleUtils.checkStyleValidity(deleteBackgroundResource)) {
             imageDelete!!.setBackgroundResource(deleteBackgroundResource)
         } else {
@@ -201,7 +207,7 @@ class TitleBar : RelativeLayout, View.OnClickListener {
         }
     }
 
-    protected var titleBarListener: OnTitleBarListener? = null
+    private var titleBarListener: OnTitleBarListener? = null
 
     /**
      * TitleBar的功能事件回调

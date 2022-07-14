@@ -5,9 +5,9 @@ import android.content.Context
 import android.util.DisplayMetrics
 
 object DensityUtil {
-    /**
-     * dp2px
-     */
+
+     // dp2px
+
     fun dip2px(context: Context, dpValue: Float): Int {
         val scale = context.applicationContext.resources.displayMetrics.density
         return (dpValue * scale + 0.5f).toInt()

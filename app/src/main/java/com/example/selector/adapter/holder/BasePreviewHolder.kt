@@ -18,13 +18,13 @@ import com.example.selector.utils.MediaUtils
 import com.luck.picture.lib.entity.LocalMedia
 
 open class BasePreviewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-    protected val screenWidth: Int = DensityUtil.getRealScreenWidth(itemView.context)
-    protected val screenHeight: Int = DensityUtil.getScreenHeight(itemView.context)
-    protected val screenAppInHeight: Int = DensityUtil.getRealScreenHeight(itemView.context)
-    protected var media: LocalMedia? = null
-    protected val config: PictureSelectionConfig = PictureSelectionConfig.instance!!
+    val screenWidth: Int = DensityUtil.getRealScreenWidth(itemView.context)
+    val screenHeight: Int = DensityUtil.getScreenHeight(itemView.context)
+    val screenAppInHeight: Int = DensityUtil.getRealScreenHeight(itemView.context)
+    var media: LocalMedia? = null
+    val config: PictureSelectionConfig = PictureSelectionConfig.instance!!
     var coverImageView: PhotoView? = null
-    private fun findViews(itemView: View) {
+    open fun findViews(itemView: View) {
         coverImageView = itemView.findViewById(R.id.preview_image)
     }
 
@@ -52,7 +52,7 @@ open class BasePreviewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
      * @param maxWidth
      * @param maxHeight
      */
-    protected fun loadImage(media: LocalMedia, maxWidth: Int, maxHeight: Int) {
+    private fun loadImage(media: LocalMedia, maxWidth: Int, maxHeight: Int) {
         if (PictureSelectionConfig.imageEngine != null) {
             val availablePath: String = media.availablePath!!
             if (maxWidth == PictureConfig.UNSET && maxHeight == PictureConfig.UNSET) {
@@ -124,7 +124,7 @@ open class BasePreviewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
      * onViewDetachedFromWindow
      */
     open fun onViewDetachedFromWindow() {}
-    protected var mPreviewEventListener: OnPreviewEventListener? = null
+    var mPreviewEventListener: OnPreviewEventListener? = null
     fun setOnPreviewEventListener(listener: OnPreviewEventListener?) {
         mPreviewEventListener = listener
     }
@@ -144,12 +144,12 @@ open class BasePreviewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
         /**
          * video
          */
-        private const val ADAPTER_TYPE_VIDEO = 2
+        const val ADAPTER_TYPE_VIDEO = 2
 
         /**
          * Audio
          */
-        private const val ADAPTER_TYPE_AUDIO = 3
+        const val ADAPTER_TYPE_AUDIO = 3
         fun generate(parent: ViewGroup, viewType: Int, resource: Int): BasePreviewHolder {
             val itemView = LayoutInflater.from(parent.context).inflate(resource, parent, false)
             return when (viewType) {

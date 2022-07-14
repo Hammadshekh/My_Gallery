@@ -6,6 +6,9 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
 import android.text.TextUtils
+import com.example.selector.config.PictureMimeType
+import com.example.selector.config.PictureSelectionConfig
+import com.example.selector.config.SelectMimeType
 import java.io.File
 
 object MediaStoreUtils {
@@ -18,20 +21,24 @@ object MediaStoreUtils {
      */
     fun createCameraOutImageUri(context: Context, config: PictureSelectionConfig): Uri? {
         val imageUri: Uri?
-        val cameraFileName: String
-        cameraFileName = if (TextUtils.isEmpty(config.outPutCameraImageFileName)) {
+        val cameraFileName: String = if (TextUtils.isEmpty(config.outPutCameraImageFileName)) {
             ""
-        } else {
+        } else ({
             if (config.isOnlyCamera) config.outPutCameraImageFileName else System.currentTimeMillis()
                 .toString() + "_" + config.outPutCameraImageFileName
-        }
-        if (SdkVersionUtils.isQ() && TextUtils.isEmpty(config.outPutCameraDir)) {
-            imageUri = createImageUri(context, cameraFileName, config.cameraImageFormatForQ)
+        }).toString()
+        if (SdkVersionUtils.isQ && TextUtils.isEmpty(config.outPutCameraDir)) {
+            imageUri =
+                config.cameraImageFormatForQ?.let { createImageUri(context, cameraFileName, it) }
             config.cameraPath = imageUri?.toString()
         } else {
             val cameraFile: File =
-                PictureFileUtils.createCameraFile(context, SelectMimeType.TYPE_IMAGE,
-                    cameraFileName, config.cameraImageFormat, config.outPutCameraDir)
+                config.cameraImageFormat?.let {
+                    config.outPutCameraDir?.let { it1 ->
+                        PictureFileUtils.createCameraFile(context, SelectMimeType.TYPE_IMAGE,
+                            cameraFileName, it, it1)
+                    }
+                }!!
             config.cameraPath = cameraFile.absolutePath
             imageUri = PictureFileUtils.parUri(context, cameraFile)
         }
@@ -50,17 +57,22 @@ object MediaStoreUtils {
         val cameraFileName: String
         cameraFileName = if (TextUtils.isEmpty(config.outPutCameraVideoFileName)) {
             ""
-        } else {
+        } else ({
             if (config.isOnlyCamera) config.outPutCameraVideoFileName else System.currentTimeMillis()
                 .toString() + "_" + config.outPutCameraVideoFileName
-        }
-        if (SdkVersionUtils.isQ() && TextUtils.isEmpty(config.outPutCameraDir)) {
-            videoUri = createVideoUri(context, cameraFileName, config.cameraVideoFormatForQ)
+        }).toString()
+        if (SdkVersionUtils.isQ && TextUtils.isEmpty(config.outPutCameraDir)) {
+            videoUri =
+                config.cameraVideoFormatForQ?.let { createVideoUri(context, cameraFileName, it) }
             config.cameraPath = videoUri?.toString() ?: ""
         } else {
             val cameraFile: File =
-                PictureFileUtils.createCameraFile(context, SelectMimeType.TYPE_VIDEO,
-                    cameraFileName, config.cameraVideoFormat, config.outPutCameraDir)
+                config.cameraVideoFormat?.let {
+                    config.outPutCameraDir?.let { it1 ->
+                        PictureFileUtils.createCameraFile(context, SelectMimeType.TYPE_VIDEO,
+                            cameraFileName, it, it1)
+                    }
+                }!!
             config.cameraPath = cameraFile.absolutePath
             videoUri = PictureFileUtils.parUri(context, cameraFile)
         }
@@ -116,7 +128,7 @@ object MediaStoreUtils {
         }
         values.put(MediaStore.Images.Media.MIME_TYPE,
             if (TextUtils.isEmpty(mimeType) || mimeType.startsWith(PictureMimeType.MIME_TYPE_PREFIX_VIDEO)) PictureMimeType.MIME_TYPE_IMAGE else mimeType)
-        if (SdkVersionUtils.isQ()) {
+        if (SdkVersionUtils.isQ) {
             values.put(MediaStore.Images.Media.DATE_TAKEN, time)
             values.put(MediaStore.Images.Media.RELATIVE_PATH, PictureMimeType.DCIM)
         }
@@ -172,7 +184,7 @@ object MediaStoreUtils {
         }
         values.put(MediaStore.Video.Media.MIME_TYPE,
             if (TextUtils.isEmpty(mimeType) || mimeType.startsWith(PictureMimeType.MIME_TYPE_PREFIX_IMAGE)) PictureMimeType.MIME_TYPE_VIDEO else mimeType)
-        if (SdkVersionUtils.isQ()) {
+        if (SdkVersionUtils.isQ) {
             values.put(MediaStore.Video.Media.DATE_TAKEN, time)
             values.put(MediaStore.Video.Media.RELATIVE_PATH, Environment.DIRECTORY_MOVIES)
         }

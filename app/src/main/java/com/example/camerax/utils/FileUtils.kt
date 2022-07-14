@@ -9,7 +9,6 @@ import android.os.Environment
 import android.text.TextUtils
 import androidx.core.content.FileProvider
 import java.io.*
-import java.lang.Exception
 import java.util.*
 
 object FileUtils {
@@ -53,16 +52,13 @@ object FileUtils {
         return createOutFile(context, chooseMode, fileName, format, outCameraDirectory)
     }
 
-    /**
-     * 创建文件
-     *
-     * @param ctx                上下文
-     * @param chooseMode         选择模式
-     * @param fileName           文件名
-     * @param format             文件格式
-     * @param outCameraDirectory 输出目录
-     * @return
-     */
+    //Create a file
+    // ctx context
+    // chooseMode select mode
+    // fileName file name
+    // format file format
+    // outCameraDirectory output directory
+    //return
     private fun createOutFile(
         ctx: Context,
         chooseMode: Int,
@@ -73,7 +69,7 @@ object FileUtils {
         val context = ctx.applicationContext
         val folderDir: File
         if (TextUtils.isEmpty(outCameraDirectory)) {
-            // 外部没有自定义拍照存储路径使用默认
+            // There is no custom photo storage path outside, use the default
             val rootDir: File?
             if (TextUtils.equals(Environment.MEDIA_MOUNTED,
                     Environment.getExternalStorageState())
@@ -89,7 +85,7 @@ object FileUtils {
                 rootDir.mkdirs()
             }
         } else {
-            // 自定义存储路径
+            // custom storage path
             folderDir = File(outCameraDirectory)
             if (!Objects.requireNonNull(folderDir.parentFile).exists()) {
                 folderDir.parentFile.mkdirs()
@@ -110,25 +106,21 @@ object FileUtils {
         return File(folderDir, newFileImageName)
     }
 
-    /**
-     * 文件根目录
-     *
-     * @param context
-     * @param type
-     * @return
-     */
+    // file root directory
+    // context
+    // type
+    // return
+
     private fun getRootDirFile(context: Context, type: Int): File? {
         return if (type == CameraUtils.TYPE_VIDEO) {
             context.getExternalFilesDir(Environment.DIRECTORY_MOVIES)
         } else context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
     }
 
-    /**
-     * 创建一个临时路径，主要是解决华为手机放弃拍照后会弹出相册图片被删除的提示
-     *
-     * @param isVideo
-     * @return
-     */
+    // Create a temporary path, mainly to solve the prompt that the album picture is deleted after the Huawei mobile phone gives up taking pictures
+    // isVideo
+    //return
+
     fun createTempFile(context: Context, isVideo: Boolean): File {
         val externalFilesDir = context.getExternalFilesDir("")
         val tempCameraFile = File(externalFilesDir!!.absolutePath, ".TemporaryCamera")
@@ -136,7 +128,7 @@ object FileUtils {
             tempCameraFile.mkdirs()
         }
         val fileName: String =
-            System.currentTimeMillis() + if (isVideo) CameraUtils.MP4 else CameraUtils.JPEG
+            System.currentTimeMillis().toString() + if (isVideo) CameraUtils.MP4 else CameraUtils.JPEG
         return File(tempCameraFile.absolutePath, fileName)
     }
 

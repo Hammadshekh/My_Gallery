@@ -30,8 +30,8 @@ open class OverlayView(
     View(context, attrs, defStyle) {
     val cropViewRect = RectF()
     private val mTempRect = RectF()
-    protected var mThisWidth = 0
-    protected var mThisHeight = 0
+    private var mThisWidth = 0
+    private var mThisHeight = 0
     private lateinit var mCropGridCorners: FloatArray
     private lateinit var mCropGridCenter: FloatArray
     private var mCropGridRowCount = 0

@@ -2,14 +2,10 @@ package com.example.camerax.utils
 
 import android.graphics.Bitmap
 import android.graphics.Matrix
+import kotlin.math.ceil
 
 object BitmapUtils {
-    /**
-     * 水平镜像
-     *
-     * @param bmp
-     * @return
-     */
+    //Horizontal mirror
     fun toHorizontalMirror(bmp: Bitmap): Bitmap {
         val w = bmp.width
         val h = bmp.height
@@ -31,7 +27,7 @@ object BitmapUtils {
                 1
             } else if (longSide < 4990) {
                 2
-            } else if (longSide > 4990 && longSide < 10240) {
+            } else if (longSide in 4991..10239) {
                 4
             } else {
                 longSide / 1280
@@ -39,7 +35,7 @@ object BitmapUtils {
         } else if (scale <= 0.5625 && scale > 0.5) {
             if (longSide / 1280 == 0) 1 else longSide / 1280
         } else {
-            Math.ceil(longSide / (1280.0 / scale)).toInt()
+            ceil(longSide / (1280.0 / scale)).toInt()
         }
     }
 }

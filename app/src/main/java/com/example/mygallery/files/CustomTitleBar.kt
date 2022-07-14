@@ -16,8 +16,8 @@ class CustomTitleBar : TitleBar, View.OnClickListener {
         defStyleAttr) {
     }
 
-    protected fun inflateLayout() {
-        inflate(getContext(), R.layout.ps_custom_title_bar, this)
+    private fun inflateLayout() {
+        inflate(requireContext(), R.layout.ps_custom_title_bar, this)
     }
 
     fun setTitleBarStyle() {

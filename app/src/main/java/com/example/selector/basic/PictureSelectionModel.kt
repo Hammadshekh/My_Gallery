@@ -1,6 +1,6 @@
 package com.example.selector.basic
 
-import PictureSelectorFragment
+import com.example.selector.PictureSelectorFragment
 import android.app.Activity
 import android.content.Intent
 import android.text.TextUtils
@@ -1296,7 +1296,7 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
     }
 
     /**
-     * build PictureSelectorFragment
+     * build com.example.selector.PictureSelectorFragment
      *
      *
      * The [IBridgePictureBehavior] interface needs to be
@@ -1307,7 +1307,7 @@ class PictureSelectionModel(selector: PictureSelector, chooseMode: Int) {
         val activity: Activity = selector.activity
             ?: throw NullPointerException("Activity cannot be null")
         if (activity !is IBridgePictureBehavior) {
-            throw NullPointerException("Use only build PictureSelectorFragment," +
+            throw NullPointerException("Use only build com.example.selector.PictureSelectorFragment," +
                     "Activity or Fragment interface needs to be implemented " + IBridgePictureBehavior::class.java)
         }
         // 绑定回调监听

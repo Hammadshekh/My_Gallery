@@ -4,11 +4,9 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Matrix
 import android.graphics.RectF
-import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.util.AttributeSet
 import android.util.Log
-import android.widget.ImageView.ScaleType
 import androidx.annotation.IntRange
 import androidx.appcompat.widget.AppCompatImageView
 import com.example.ucrop.UCropDevelopConfig
@@ -19,7 +17,6 @@ import com.example.ucrop.utils.BitmapLoadUtils
 import com.example.ucrop.utils.FastBitmapDrawable
 import com.example.ucrop.utils.FileUtils
 import com.example.ucrop.utils.RectUtils
-import java.lang.Exception
 import kotlin.math.atan2
 
 open class TransformImageView @JvmOverloads constructor(
@@ -28,17 +25,17 @@ open class TransformImageView @JvmOverloads constructor(
     defStyle: Int = 0,
 ) :
     AppCompatImageView(context!!, attrs, defStyle) {
-    protected val mCurrentImageCorners = FloatArray(RECT_CORNER_POINTS_COORDS)
-    protected val mCurrentImageCenter = FloatArray(RECT_CENTER_POINT_COORDS)
+    val mCurrentImageCorners = FloatArray(RECT_CORNER_POINTS_COORDS)
+    val mCurrentImageCenter = FloatArray(RECT_CENTER_POINT_COORDS)
     private val mMatrixValues = FloatArray(MATRIX_VALUES_COUNT)
-    protected var mCurrentImageMatrix = Matrix()
-    protected var mThisWidth = 0
-    protected var mThisHeight = 0
-    protected var mTransformImageListener: TransformImageListener? = null
+    var mCurrentImageMatrix = Matrix()
+    var mThisWidth = 0
+    var mThisHeight = 0
+    var mTransformImageListener: TransformImageListener? = null
     private lateinit var mInitialImageCorners: FloatArray
     private lateinit var mInitialImageCenter: FloatArray
-    protected var mBitmapDecoded = false
-    protected var mBitmapLaidOut = false
+    private var mBitmapDecoded = false
+    var mBitmapLaidOut = false
     var mMaxBitmapSize = 0
     var imageInputPath: String? = null
         private set
@@ -326,7 +323,7 @@ open class TransformImageView @JvmOverloads constructor(
         }
     }
 
-    protected open fun init() {
+    open fun init() {
         scaleType = ScaleType.MATRIX
     }
 
@@ -351,7 +348,7 @@ open class TransformImageView @JvmOverloads constructor(
      * When image is laid out [.mInitialImageCenter] and [.mInitialImageCenter]
      * must be set.
      */
-    protected open fun onImageLaidOut() {
+     open fun onImageLaidOut() {
         val drawable = drawable ?: return
         val w = drawable.intrinsicWidth.toFloat()
         val h = drawable.intrinsicHeight.toFloat()
@@ -373,7 +370,7 @@ open class TransformImageView @JvmOverloads constructor(
      * @param valueIndex - index of needed value. See [Matrix.MSCALE_X] and others.
      * @return - matrix value for index
      */
-    protected fun getMatrixValue(
+    private fun getMatrixValue(
         matrix: Matrix,
         @IntRange(from = 0,
             to = MATRIX_VALUES_COUNT.toLong()) valueIndex: Int,
@@ -386,7 +383,7 @@ open class TransformImageView @JvmOverloads constructor(
      * This method logs given matrix X, Y, scale, and angle values.
      * Can be used for debug.
      */
-    protected fun printMatrix(logPrefix: String, matrix: Matrix) {
+    private fun printMatrix(logPrefix: String, matrix: Matrix) {
         val x = getMatrixValue(matrix, Matrix.MTRANS_X)
         val y = getMatrixValue(matrix, Matrix.MTRANS_Y)
         val rScale = getMatrixScale(matrix)

@@ -87,7 +87,7 @@ open class LocalMediaFolder : Parcelable {
         return 0
     }
 
-/*    fun getFolderName(): String {
+/*    fun folderName: String {
         return if (TextUtils.isEmpty(folderName)) "unknown" else folderName!!
     }
 

@@ -2,6 +2,10 @@ package com.example.selector.manager
 
 import android.content.Context
 import android.os.Environment
+import com.example.selector.basic.PictureMediaScannerConnection
+import com.example.selector.config.SelectMimeType
+import com.example.selector.interfaces.OnCallbackListener
+import com.example.selector.threads.PictureThreadUtils
 import java.io.File
 
 object PictureCacheManager {
@@ -20,9 +24,7 @@ object PictureCacheManager {
                 if (file.isFile) {
                     val isResult = file.delete()
                     if (isResult) {
-                        if (listener != null) {
-                            listener.onCall(file.absolutePath)
-                        }
+                        listener?.onCall(file.absolutePath)
                     }
                 }
             }
@@ -86,9 +88,7 @@ object PictureCacheManager {
                                         file.absolutePath)
                                 })
                             } else {
-                                if (listener != null) {
-                                    listener.onCall(file.absolutePath)
-                                }
+                                listener?.onCall(file.absolutePath)
                             }
                         }
                     }
@@ -148,9 +148,7 @@ object PictureCacheManager {
                                         file.absolutePath)
                                 })
                             } else {
-                                if (listener != null) {
-                                    listener.onCall(file.absolutePath)
-                                }
+                                listener?.onCall(file.absolutePath)
                             }
                         }
                     }
@@ -171,9 +169,7 @@ object PictureCacheManager {
                                         file.absolutePath)
                                 })
                             } else {
-                                if (listener != null) {
-                                    listener.onCall(file.absolutePath)
-                                }
+                                listener?.onCall(file.absolutePath)
                             }
                         }
                     }
@@ -194,9 +190,7 @@ object PictureCacheManager {
                                         file.absolutePath)
                                 })
                             } else {
-                                if (listener != null) {
-                                    listener.onCall(file.absolutePath)
-                                }
+                                listener?.onCall(file.absolutePath)
                             }
                         }
                     }

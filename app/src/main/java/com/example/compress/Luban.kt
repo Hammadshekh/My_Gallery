@@ -5,13 +5,13 @@ import android.net.Uri
 import android.os.*
 import android.text.TextUtils
 import android.util.Log
+import com.example.compress.adapter.InputStreamAdapter
+import com.example.compress.adapter.InputStreamProvider
+import com.example.compress.io.ArrayPoolProvide
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
-import java.lang.Exception
-import java.lang.IllegalArgumentException
-import java.lang.NullPointerException
-import java.util.ArrayList
+import java.util.*
 
 class Luban private constructor(builder: Builder) : Handler.Callback {
     private var mTargetDir: String?
@@ -81,17 +81,17 @@ class Luban private constructor(builder: Builder) : Handler.Callback {
                     mHandler.sendMessage(mHandler.obtainMessage(MSG_COMPRESS_START))
                     val result = compress(context, path)
                     val message = mHandler.obtainMessage(MSG_COMPRESS_SUCCESS)
-                    message.arg1 = path.getIndex()
+                    message.arg1 = path.index
                     message.obj = result
                     val bundle = Bundle()
-                    bundle.putString(KEY_SOURCE, path.getPath())
+                    bundle.putString(KEY_SOURCE, path.path)
                     message.data = bundle
                     mHandler.sendMessage(message)
                 } catch (e: Exception) {
                     val message = mHandler.obtainMessage(MSG_COMPRESS_ERROR)
-                    message.arg1 = path.getIndex()
+                    message.arg1 = path.index
                     val bundle = Bundle()
-                    bundle.putString(KEY_SOURCE, path.getPath())
+                    bundle.putString(KEY_SOURCE, path.path)
                     message.data = bundle
                     mHandler.sendMessage(message)
                 }
@@ -138,11 +138,12 @@ class Luban private constructor(builder: Builder) : Handler.Callback {
     private fun compressReal(context: Context, path: InputStreamProvider): File {
         val result: File
         var outFile = getImageCacheFile(context, Checker.SINGLE.extSuffix(path))
-        val source: String = if (Checker.isContent(path.getPath())) LubanUtils.getPath(context,
-            Uri.parse(path.getPath())) else path.getPath()
+        val source: String? =
+            if (path.path?.let { Checker.isContent(it) } == true) LubanUtils.getPath(context,
+                Uri.parse(path.path)) else path.path
         if (mRenameListener != null) {
-            val filename: String = mRenameListener.rename(source)
-            outFile = getImageCustomFile(context, filename)
+            val filename: String? = mRenameListener.rename(source)
+            outFile = getImageCustomFile(context, filename!!)
         }
         result = if (mCompressionPredicate != null) {
             if (mCompressionPredicate.apply(source)
@@ -163,44 +164,32 @@ class Luban private constructor(builder: Builder) : Handler.Callback {
     override fun handleMessage(msg: Message): Boolean {
         when (msg.what) {
             MSG_COMPRESS_START -> {
-                if (mCompressListener != null) {
-                    mCompressListener.onStart()
-                }
-                if (mNewCompressListener != null) {
-                    mNewCompressListener.onStart()
-                }
+                mCompressListener?.onStart()
+                mNewCompressListener?.onStart()
             }
             MSG_COMPRESS_SUCCESS -> {
-                if (mCompressListener != null) {
-                    mCompressListener.onSuccess(msg.arg1, msg.obj as File)
-                }
-                if (mNewCompressListener != null) {
-                    mNewCompressListener.onSuccess(msg.data.getString(KEY_SOURCE), msg.obj as File)
-                }
+                val onSuccess = mCompressListener?.onSuccess(msg.arg1, msg.obj as File)
+                mNewCompressListener?.onSuccess(msg.data.getString(KEY_SOURCE), msg.obj as File)
             }
             MSG_COMPRESS_ERROR -> {
-                if (mCompressListener != null) {
-                    mCompressListener.onError(msg.arg1, msg.obj as Throwable)
-                }
-                if (mNewCompressListener != null) {
-                    mNewCompressListener.onError(msg.data.getString(KEY_SOURCE),
-                        msg.obj as Throwable)
-                }
+                mCompressListener?.onError(msg.arg1, msg.obj as Throwable)
+                mNewCompressListener?.onError(msg.data.getString(KEY_SOURCE),
+                    msg.obj as Throwable)
             }
         }
         return false
     }
 
-    class Builder internal constructor(private val context: Context) {
+    class Builder(private val context: Context) {
         var mTargetDir: String? = null
         var focusAlpha = false
-        private var isUseBufferPool = true
-        private var mLeastCompressSize = 100
-        private var mRenameListener: OnRenameListener? = null
-        private var mCompressListener: OnCompressListener? = null
-        private var mNewCompressListener: OnNewCompressListener? = null
-        private var mCompressionPredicate: CompressionPredicate? = null
-        private val mStreamProviders: MutableList<InputStreamProvider>
+        var isUseBufferPool = true
+        var mLeastCompressSize = 100
+        var mRenameListener: OnRenameListener? = null
+        var mCompressListener: OnCompressListener? = null
+        var mNewCompressListener: OnNewCompressListener? = null
+        var mCompressionPredicate: CompressionPredicate? = null
+        val mStreamProviders: MutableList<InputStreamProvider>
         private fun build(): Luban {
             return Luban(this)
         }
@@ -214,14 +203,19 @@ class Luban private constructor(builder: Builder) : Handler.Callback {
             var index = -1
             for (src in list) {
                 index++
-                if (src is String) {
-                    load(src as String, index)
-                } else if (src is File) {
-                    load(src as File, index)
-                } else if (src is Uri) {
-                    load(src as Uri, index)
-                } else {
-                    throw IllegalArgumentException("Incoming data type exception, it must be String, File, Uri or Bitmap")
+                when (src) {
+                    is String -> {
+                        load(src as String, index)
+                    }
+                    is File -> {
+                        load(src as File, index)
+                    }
+                    is Uri -> {
+                        load(src as Uri, index)
+                    }
+                    else -> {
+                        throw IllegalArgumentException("Incoming data type exception, it must be String, File, Uri or Bitmap")
+                    }
                 }
             }
             return this
@@ -234,13 +228,13 @@ class Luban private constructor(builder: Builder) : Handler.Callback {
 
         private fun load(file: File, index: Int): Builder {
             mStreamProviders.add(object : InputStreamAdapter() {
-                fun openInternal(): InputStream {
-                    return ArrayPoolProvide.getInstance().openInputStream(file.absolutePath)
+                override fun openInternal(): () -> InputStream? {
+                    return { ArrayPoolProvide.instance?.openInputStream(file.absolutePath) }!!
                 }
 
-                val index: Int
+                override val index: Int
                     get() = index
-                val path: String
+                override val path: String
                     get() = file.absolutePath
             })
             return this
@@ -253,13 +247,13 @@ class Luban private constructor(builder: Builder) : Handler.Callback {
 
         private fun load(string: String, index: Int): Builder {
             mStreamProviders.add(object : InputStreamAdapter() {
-                fun openInternal(): InputStream {
-                    return ArrayPoolProvide.getInstance().openInputStream(string)
+                override fun openInternal(): () -> InputStream? {
+                    return { ArrayPoolProvide.instance!!.openInputStream(string) }!!
                 }
 
-                val index: Int
+                override val index: Int
                     get() = index
-                val path: String
+                override val path: String
                     get() = string
             })
             return this
@@ -273,21 +267,23 @@ class Luban private constructor(builder: Builder) : Handler.Callback {
         private fun load(uri: Uri, index: Int): Builder {
             mStreamProviders.add(object : InputStreamAdapter() {
                 @Throws(IOException::class)
-                fun openInternal(): InputStream? {
+                override fun openInternal(): () -> InputStream? {
                     return if (isUseBufferPool) {
-                        ArrayPoolProvide.getInstance().openInputStream(context.contentResolver, uri)
-                    } else context.contentResolver.openInputStream(uri)
+                        ({
+                            ArrayPoolProvide.instance?.openInputStream(context.contentResolver, uri)
+                        })!!
+                    } else { { context.contentResolver.openInputStream(uri)!! } }
                 }
 
-                val index: Int
+                override val index: Int
                     get() = index
-                val path: String
+                override val path: String
                     get() = if (Checker.isContent(uri.toString())) uri.toString() else uri.path!!
             })
             return this
         }
 
-        @Deprecated("")
+        @Deprecated("", ReplaceWith("this", "com.example.compress.Luban.Builder"))
         fun putGear(gear: Int): Builder {
             return this
         }
@@ -369,13 +365,13 @@ class Luban private constructor(builder: Builder) : Handler.Callback {
         @Throws(IOException::class)
         operator fun get(path: String, index: Int = 0): File {
             return build()[object : InputStreamAdapter() {
-                fun openInternal(): InputStream {
-                    return ArrayPoolProvide.getInstance().openInputStream(path)
+                override fun openInternal(): () -> InputStream? {
+                    return { ArrayPoolProvide.instance?.openInputStream(path) }!!
                 }
 
-                val index: Int
+                override val index: Int
                     get() = index
-                val path: String
+                override val path: String
                     get() = path
             }, context]
         }

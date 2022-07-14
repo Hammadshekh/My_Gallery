@@ -344,12 +344,11 @@ class LocalMedia : Parcelable {
     fun setCut(cut: Boolean) {
         isCut = cut
     }
-    @JvmName("getPath1")
-    fun getPath(): String? {
+    fun path () : String? {
         return path
     }
 
-    fun isCompressed(): Boolean {
+    private fun isCompressed(): Boolean {
         return compressed && !TextUtils.isEmpty(compressPath)
     }
 
@@ -357,7 +356,7 @@ class LocalMedia : Parcelable {
         this.compressed = compressed
     }
 
-    fun isOriginal(): Boolean {
+    private fun isOriginal(): Boolean {
         return isOriginal && !TextUtils.isEmpty(originalPath)
     }
 

@@ -9,7 +9,7 @@ interface ArrayPool {
      *
      */
     @Deprecated("Use {@link #put(Object)}")
-    fun <T> put(array: T, arrayClass: Class<T>?)
+    fun <T> put(array: T, arrayClass: Class<T>)
 
     /**
      * Optionally adds the given array of the given type to the pool.
@@ -30,7 +30,7 @@ interface ArrayPool {
      *
      * @see .getExact
      */
-    operator fun <T> get(size: Int, arrayClass: Class<T>?): T
+    operator fun <T> get(size: Int, arrayClass: Class<T>): T
 
     /** Clears all arrays from the pool.  */
     fun clearMemory()

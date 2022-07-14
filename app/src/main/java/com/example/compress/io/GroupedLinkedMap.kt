@@ -1,8 +1,6 @@
 package com.example.compress.io
 
-import java.lang.StringBuilder
-import java.util.ArrayList
-import java.util.HashMap
+import java.util.*
 
 internal class GroupedLinkedMap<K : PoolAble?, V> {
     private val head = LinkedEntry<K, V>()
@@ -14,7 +12,7 @@ internal class GroupedLinkedMap<K : PoolAble?, V> {
             makeTail(entry)
             keyToEntry[key] = entry
         } else {
-            key.offer()
+            key!!.offer()
         }
         entry.add(value)
     }
@@ -25,10 +23,10 @@ internal class GroupedLinkedMap<K : PoolAble?, V> {
             entry = LinkedEntry(key)
             keyToEntry[key] = entry
         } else {
-            key.offer()
+            key?.offer()
         }
         makeHead(entry)
-        return entry.removeLast()
+        return entry.removeLast()!!
     }
 
     fun removeLast(): V? {
@@ -47,7 +45,7 @@ internal class GroupedLinkedMap<K : PoolAble?, V> {
                 // sizes.
                 removeEntry(last)
                 keyToEntry.remove(last.key)
-                last.key.offer()
+                last.key!!.offer()
             }
             last = last.prev
         }
@@ -111,7 +109,7 @@ internal class GroupedLinkedMap<K : PoolAble?, V> {
         init {
             prev = this
             next = prev
-            this.key = key
+            this.key = key!!
         }
     }
 

@@ -6,18 +6,15 @@ import android.app.Activity
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Point
 import android.graphics.SurfaceTexture
 import android.hardware.display.DisplayManager
-import android.hardware.display.DisplayManager.DisplayListener
 import android.media.AudioManager
 import android.media.MediaPlayer
-import android.media.MediaPlayer.OnPreparedListener
-import android.media.MediaPlayer.OnVideoSizeChangedListener
 import android.net.Uri
 import android.os.Build
-import android.os.Bundle
 import android.provider.MediaStore
 import android.text.TextUtils
 import android.util.AttributeSet
@@ -25,30 +22,47 @@ import android.view.Surface
 import android.view.TextureView
 import android.view.TextureView.SurfaceTextureListener
 import android.view.View
+import android.view.View.OnClickListener
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
-import androidx.camera.core.ImageCapture
+import androidx.camera.core.*
+import androidx.camera.core.VideoCapture.ERROR_MUXER
+import androidx.camera.core.VideoCapture.ERROR_RECORDING_TOO_SHORT
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.video.VideoCapture
+import androidx.camera.view.LifecycleCameraController
+import androidx.camera.view.PreviewView
+import androidx.camera.view.video.ExperimentalVideo
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
-import com.example.camerax.listener.CameraXOrientationEventListener
+import com.example.camerax.listener.*
+import com.example.camerax.permissions.PermissionChecker
+import com.example.camerax.permissions.PermissionResultCallback
+import com.example.camerax.permissions.SimpleXPermissionUtil
+import com.example.camerax.utils.CameraUtils
+import com.example.camerax.utils.DensityUtil
+import com.example.camerax.utils.FileUtils
+import com.example.camerax.utils.SimpleXSpUtils
+import com.example.camerax.widget.CaptureLayout
+import com.example.camerax.widget.FocusImageView
+import com.example.mygallery.R
+import com.google.common.util.concurrent.ListenableFuture
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
-import java.lang.Exception
 import java.lang.ref.WeakReference
 import java.util.*
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
+import kotlin.math.abs
 
 
 /**
  * @author：luck
  * @date：2020-01-04 13:41
- * @describe：自定义相机View
+ * @describe：Custom Camera View
  */
 class CustomCameraView : RelativeLayout,
     CameraXOrientationEventListener.OnOrientationChangedListener {
@@ -57,6 +71,8 @@ class CustomCameraView : RelativeLayout,
     private var mCameraProvider: ProcessCameraProvider? = null
     private var mImageCapture: ImageCapture? = null
     private var mImageAnalyzer: ImageAnalysis? = null
+    // private var mVideoCapture: androidx.camera.core.VideoCapture? = null
+
     private var mVideoCapture: VideoCapture? = null
     private var displayId = -1
 
@@ -148,7 +164,7 @@ class CustomCameraView : RelativeLayout,
     private var mMediaPlayer: MediaPlayer? = null
     private var mTextureView: TextureView? = null
     private var displayManager: DisplayManager? = null
-    private var displayListener: DisplayListener? = null
+    private lateinit var displayListener: DisplayListener
     private var orientationEventListener: CameraXOrientationEventListener? = null
     private var mCameraInfo: CameraInfo? = null
     private var mCameraControl: CameraControl? = null
@@ -156,13 +172,16 @@ class CustomCameraView : RelativeLayout,
     private var mainExecutor: Executor? = null
     private var activity: Activity? = null
     private val isImageCaptureEnabled: Boolean
-        private get() = useCameraCases == LifecycleCameraController.IMAGE_CAPTURE
+        get() = useCameraCases == LifecycleCameraController.IMAGE_CAPTURE
 
     constructor(context: Context?) : super(context) {
         initView()
+        this.mVideoCapture = mVideoCapture
     }
 
-    constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs) {
+    constructor(context: Context?, attrs: AttributeSet?, mVideoCapture: VideoCapture) : super(
+        context,
+        attrs) {
         initView()
     }
 
@@ -185,92 +204,108 @@ class CustomCameraView : RelativeLayout,
         mFlashLamp = findViewById(R.id.image_flash)
         mCaptureLayout = findViewById(R.id.capture_layout)
         tvCurrentTime = findViewById(R.id.tv_current_time)
-        mSwitchCamera.setImageResource(R.drawable.picture_ic_camera)
+        mSwitchCamera!!.setImageResource(R.drawable.picture_ic_camera)
         displayManager = context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
         displayListener = DisplayListener()
         displayManager!!.registerDisplayListener(displayListener, null)
         mainExecutor = ContextCompat.getMainExecutor(context)
-        mCameraPreviewView.post(Runnable {
-            displayId = mCameraPreviewView.getDisplay().getDisplayId()
+        mCameraPreviewView!!.post(Runnable {
+            displayId = mCameraPreviewView!!.getDisplay().displayId
         })
-        mFlashLamp.setOnClickListener(OnClickListener { v: View? ->
+        mFlashLamp!!.setOnClickListener(OnClickListener { v: View? ->
             typeFlash++
             if (typeFlash > 0x023) {
                 typeFlash = TYPE_FLASH_AUTO
             }
             setFlashMode()
         })
-        mSwitchCamera.setOnClickListener(OnClickListener { toggleCamera() })
-        mCaptureLayout.setCaptureListener(object : CaptureListener() {
-            fun takePictures() {
-                if (!mCameraProvider.isBound(mImageCapture)) {
+        mSwitchCamera!!.setOnClickListener(OnClickListener { toggleCamera() })
+        mCaptureLayout!!.setCaptureListener(object : CaptureListener {
+            override fun takePictures() {
+                if (!mCameraProvider!!.isBound(mImageCapture!!)) {
                     bindCameraImageUseCases()
                 }
                 useCameraCases = LifecycleCameraController.IMAGE_CAPTURE
-                mCaptureLayout.setButtonCaptureEnabled(false)
-                mSwitchCamera.setVisibility(INVISIBLE)
-                mFlashLamp.setVisibility(INVISIBLE)
-                tvCurrentTime.setVisibility(GONE)
-                val metadata: ImageCapture.Metadata = Metadata()
-                metadata.setReversedHorizontal(isReversedHorizontal)
+                mCaptureLayout!!.setButtonCaptureEnabled(false)
+                mSwitchCamera!!.visibility = INVISIBLE
+                mFlashLamp!!.visibility = INVISIBLE
+                tvCurrentTime!!.visibility = GONE
+                val metadata = ImageCapture.Metadata()
+                metadata.isReversedHorizontal = isReversedHorizontal
                 val fileOptions: ImageCapture.OutputFileOptions
                 val cameraFile: File
                 cameraFile = if (isSaveExternal) {
                     FileUtils.createTempFile(context, false)
                 } else {
                     FileUtils.createCameraFile(context, CameraUtils.TYPE_IMAGE,
-                        outPutCameraFileName, imageFormat, outPutCameraDir)
+                        outPutCameraFileName!!, imageFormat!!, outPutCameraDir!!)
                 }
-                fileOptions = Builder(cameraFile)
+                fileOptions = ImageCapture.OutputFileOptions.Builder(cameraFile)
                     .setMetadata(metadata).build()
-                mImageCapture.takePicture(fileOptions, mainExecutor,
-                    com.luck.lib.camerax.CustomCameraView.MyImageResultCallback(this@CustomCameraView,
-                        mImagePreview,
-                        mImagePreviewBg,
-                        mCaptureLayout,
-                        mImageCallbackListener,
-                        mCameraListener))
+                mImageCapture!!.takePicture(fileOptions, mainExecutor!!,
+                    MyImageResultCallback(this@CustomCameraView, mImagePreview!!, mImagePreviewBg!!,
+                        mCaptureLayout, mImageCallbackListener!!, mCameraListener))
             }
 
-            fun recordStart() {
-                if (!mCameraProvider.isBound(mVideoCapture)) {
+            @SuppressLint("RestrictedApi")
+            override fun recordStart() {
+                if (!mVideoCapture?.let { mCameraProvider?.isBound(it) }!!) {
                     bindCameraVideoUseCases()
                 }
+                @ExperimentalVideo
                 useCameraCases = LifecycleCameraController.VIDEO_CAPTURE
-                mSwitchCamera.setVisibility(INVISIBLE)
-                mFlashLamp.setVisibility(INVISIBLE)
-                tvCurrentTime.setVisibility(if (isDisplayRecordTime) VISIBLE else GONE)
-                val fileOptions: VideoCapture.OutputFileOptions
-                val cameraFile: File
-                cameraFile = if (isSaveExternal) {
+                mSwitchCamera!!.visibility = INVISIBLE
+                mFlashLamp!!.visibility = INVISIBLE
+                tvCurrentTime!!.visibility = if (isDisplayRecordTime) VISIBLE else GONE
+                val fileOptions: androidx.camera.core.VideoCapture.OutputFileOptions
+                val cameraFile: File? = if (isSaveExternal) {
                     FileUtils.createTempFile(context, true)
                 } else {
-                    FileUtils.createCameraFile(context, CameraUtils.TYPE_VIDEO,
-                        outPutCameraFileName, videoFormat, outPutCameraDir)
+                    outPutCameraFileName?.let {
+                        videoFormat?.let { it1 ->
+                            outPutCameraDir?.let { it2 ->
+                                FileUtils.createCameraFile(context, CameraUtils.TYPE_VIDEO,
+                                    it, it1, it2)
+                            }
+                        }
+                    }
                 }
-                fileOptions = Builder(cameraFile).build()
-                mVideoCapture.startRecording(fileOptions, mainExecutor,
-                    object : OnVideoSavedCallback() {
-                        fun onVideoSaved(outputFileResults: VideoCapture.OutputFileResults) {
+                fileOptions = VideoCapture.OutputFileOptions.Builder(cameraFile!!)
+                    .build()
+                if (ActivityCompat.checkSelfPermission(context,
+                        Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    return
+                }
+                mVideoCapture!!.startRecording(fileOptions, mainExecutor!!,
+                    object : VideoCapture.OnVideoSavedCallback {
+                        override fun onVideoSaved(outputFileResults: VideoCapture.OutputFileResults) {
                             val minSecond =
                                 if (recordVideoMinSecond <= 0) CustomCameraConfig.DEFAULT_MIN_RECORD_VIDEO.toLong() else recordVideoMinSecond.toLong()
-                            if (recordTime < minSecond || outputFileResults.getSavedUri() == null) {
+                            if (recordTime < minSecond || outputFileResults.savedUri == null) {
                                 return
                             }
-                            val savedUri: Uri = outputFileResults.getSavedUri()
+                            val savedUri: Uri = outputFileResults.savedUri!!
                             SimpleCameraX.putOutputUri(activity!!.intent, savedUri)
                             val outPutPath =
                                 if (FileUtils.isContent(savedUri.toString())) savedUri.toString() else savedUri.path!!
-                            mTextureView.setVisibility(VISIBLE)
-                            tvCurrentTime.setVisibility(GONE)
-                            if (mTextureView.isAvailable()) {
+                            mTextureView!!.visibility = VISIBLE
+                            tvCurrentTime!!.visibility = GONE
+                            if (mTextureView!!.isAvailable) {
                                 startVideoPlay(outPutPath)
                             } else {
-                                mTextureView.setSurfaceTextureListener(surfaceTextureListener)
+                                mTextureView!!.surfaceTextureListener = surfaceTextureListener
                             }
                         }
 
-                        fun onError(
+                        override fun onError(
                             videoCaptureError: Int, message: String,
                             cause: Throwable?,
                         ) {
@@ -278,62 +313,62 @@ class CustomCameraView : RelativeLayout,
                                 if (videoCaptureError == ERROR_RECORDING_TOO_SHORT || videoCaptureError == ERROR_MUXER) {
                                     recordShort(0)
                                 } else {
-                                    mCameraListener.onError(videoCaptureError, message, cause)
+                                    mCameraListener!!.onError(videoCaptureError, message, cause)
                                 }
                             }
                         }
                     })
             }
 
-            fun changeTime(duration: Long) {
-                if (isDisplayRecordTime && tvCurrentTime.getVisibility() == VISIBLE) {
+            override fun changeTime(duration: Long) {
+                if (isDisplayRecordTime && tvCurrentTime!!.visibility == VISIBLE) {
                     val format = String.format(Locale.getDefault(),
                         "%02d:%02d",
                         TimeUnit.MILLISECONDS.toMinutes(duration),
                         TimeUnit.MILLISECONDS.toSeconds(duration)
                                 - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(
                             duration)))
-                    if (!TextUtils.equals(format, tvCurrentTime.getText())) {
-                        tvCurrentTime.setText(format)
+                    if (!TextUtils.equals(format, tvCurrentTime!!.text)) {
+                        tvCurrentTime!!.text = format
                     }
-                    if (TextUtils.equals("00:00", tvCurrentTime.getText())) {
-                        tvCurrentTime.setVisibility(GONE)
+                    if (TextUtils.equals("00:00", tvCurrentTime!!.text)) {
+                        tvCurrentTime!!.visibility = GONE
                     }
                 }
             }
 
-            fun recordShort(time: Long) {
+            @SuppressLint("RestrictedApi")
+            override fun recordShort(time: Long) {
                 recordTime = time
-                mSwitchCamera.setVisibility(VISIBLE)
-                mFlashLamp.setVisibility(VISIBLE)
-                tvCurrentTime.setVisibility(GONE)
-                mCaptureLayout.resetCaptureLayout()
-                mCaptureLayout.setTextWithAnimation(context.getString(R.string.picture_recording_time_is_short))
-                mVideoCapture.stopRecording()
+                mSwitchCamera!!.visibility = VISIBLE
+                mFlashLamp!!.visibility = VISIBLE
+                tvCurrentTime!!.visibility = GONE
+                mCaptureLayout!!.resetCaptureLayout()
+                mCaptureLayout!!.setTextWithAnimation(context.getString(R.string.picture_recording_time_is_short))
+                mVideoCapture?.stopRecording()
             }
 
-            fun recordEnd(time: Long) {
+            @SuppressLint("RestrictedApi")
+            override fun recordEnd(time: Long) {
                 recordTime = time
                 try {
-                    mVideoCapture.stopRecording()
+                    mVideoCapture!!.stopRecording()
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
             }
 
-            fun recordZoom(zoom: Float) {}
-            fun recordError() {
-                if (mCameraListener != null) {
-                    mCameraListener.onError(0, "An unknown error", null)
-                }
+            override fun recordZoom(zoom: Float) {}
+            override fun recordError() {
+                mCameraListener?.onError(0, "An unknown error", null)
             }
         })
-        mCaptureLayout.setTypeListener(object : TypeListener() {
-            fun cancel() {
+        mCaptureLayout!!.setTypeListener(object : TypeListener {
+            override fun cancel() {
                 onCancelMedia()
             }
 
-            fun confirm() {
+            override fun confirm() {
                 var outputPath: String = SimpleCameraX.getOutputPath(activity!!.intent)
                 if (isSaveExternal) {
                     outputPath = isMergeExternalStorageState(activity, outputPath)
@@ -341,32 +376,32 @@ class CustomCameraView : RelativeLayout,
                     // 对前置镜头导致的镜像进行一个纠正
                     if (isImageCaptureEnabled && isReversedHorizontal) {
                         val cameraFile: File =
-                            FileUtils.createCameraFile(context, CameraUtils.TYPE_IMAGE,
-                                outPutCameraFileName, imageFormat, outPutCameraDir)
-                        if (FileUtils.copyPath(activity, outputPath, cameraFile.absolutePath)) {
+                            outPutCameraFileName?.let {
+                                outPutCameraDir?.let { it1 ->
+                                    imageFormat?.let { it2 ->
+                                        FileUtils.createCameraFile(context, CameraUtils.TYPE_IMAGE,
+                                            it, it2, it1)
+                                    }
+                                }
+                            }!!
+                        if (FileUtils.copyPath(activity!!, outputPath, cameraFile.absolutePath)) {
                             outputPath = cameraFile.absolutePath
                         }
                     }
                 }
                 if (isImageCaptureEnabled) {
-                    mImagePreview.setVisibility(INVISIBLE)
-                    mImagePreviewBg.setAlpha(0f)
-                    if (mCameraListener != null) {
-                        mCameraListener.onPictureSuccess(outputPath)
-                    }
+                    mImagePreview!!.visibility = INVISIBLE
+                    mImagePreviewBg!!.alpha = 0f
+                    mCameraListener?.onPictureSuccess(outputPath)
                 } else {
                     stopVideoPlay()
-                    if (mCameraListener != null) {
-                        mCameraListener.onRecordSuccess(outputPath)
-                    }
+                    mCameraListener?.onRecordSuccess(outputPath)
                 }
             }
         })
-        mCaptureLayout.setLeftClickListener(object : ClickListener() {
-            fun onClick() {
-                if (mOnClickListener != null) {
-                    mOnClickListener.onClick()
-                }
+        mCaptureLayout!!.setLeftClickListener(object : ClickListener {
+            override fun onClick() {
+                mOnClickListener?.onClick()
             }
         })
     }
@@ -376,21 +411,30 @@ class CustomCameraView : RelativeLayout,
         try {
             // 对前置镜头导致的镜像进行一个纠正
             if (isImageCaptureEnabled && isReversedHorizontal) {
-                val tempFile: File = FileUtils.createTempFile(activity, false)
-                if (FileUtils.copyPath(activity, outputPath, tempFile.absolutePath)) {
+                val tempFile: File = activity?.let { FileUtils.createTempFile(it, false) }!!
+                if (activity.let { FileUtils.copyPath(it, outputPath, tempFile.absolutePath) }) {
                     outputPath = tempFile.absolutePath
                 }
             }
             // 当用户未设置存储路径时，相片默认是存在外部公共目录下
-            val externalSavedUri: Uri?
-            externalSavedUri = if (isImageCaptureEnabled) {
+            val externalSavedUri: Uri? = if (isImageCaptureEnabled) {
                 val contentValues: ContentValues =
-                    CameraUtils.buildImageContentValues(outPutCameraFileName, imageFormatForQ)
+                    outPutCameraFileName?.let {
+                        imageFormatForQ?.let { it1 ->
+                            CameraUtils.buildImageContentValues(it,
+                                it1)
+                        }
+                    }!!
                 context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                     contentValues)
             } else {
                 val contentValues: ContentValues =
-                    CameraUtils.buildVideoContentValues(outPutCameraFileName, videoFormatForQ)
+                    outPutCameraFileName?.let {
+                        videoFormatForQ?.let { it1 ->
+                            CameraUtils.buildVideoContentValues(it,
+                                it1)
+                        }
+                    }!!
                 context.contentResolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
                     contentValues)
             }
@@ -399,7 +443,10 @@ class CustomCameraView : RelativeLayout,
             }
             val outputStream = context.contentResolver.openOutputStream(externalSavedUri)
             val isWriteFileSuccess: Boolean =
-                FileUtils.writeFileFromIS(FileInputStream(outputPath), outputStream)
+                outputStream?.let {
+                    FileUtils.writeFileFromIS(FileInputStream(outputPath),
+                        it)
+                } == true
             if (isWriteFileSuccess) {
                 FileUtils.deleteFile(context, outputPath)
                 SimpleCameraX.putOutputUri(activity!!.intent, externalSavedUri)
@@ -451,7 +498,7 @@ class CustomCameraView : RelativeLayout,
             extras.getInt(SimpleCameraX.EXTRA_CAPTURE_LOADING_COLOR, -0x828201)
         isDisplayRecordTime =
             extras.getBoolean(SimpleCameraX.EXTRA_DISPLAY_RECORD_CHANGE_TIME, false)
-        mCaptureLayout.setButtonFeatures(buttonFeatures)
+        mCaptureLayout!!.setButtonFeatures(buttonFeatures)
         if (recordVideoMaxSecond > 0) {
             setRecordVideoMaxTime(recordVideoMaxSecond)
         }
@@ -478,35 +525,35 @@ class CustomCameraView : RelativeLayout,
         } else {
             if (CustomCameraConfig.explainListener != null) {
                 if (!SimpleXSpUtils.getBoolean(context, Manifest.permission.CAMERA, false)) {
-                    CustomCameraConfig.explainListener
+                    CustomCameraConfig.explainListener!!
                         .onPermissionDescription(context, this, Manifest.permission.CAMERA)
                 }
             }
-            PermissionChecker.getInstance()
-                .requestPermissions(activity, arrayOf(Manifest.permission.CAMERA),
-                    object : PermissionResultCallback() {
-                        fun onGranted() {
-                            buildUseCameraCases()
-                            if (CustomCameraConfig.explainListener != null) {
-                                CustomCameraConfig.explainListener.onDismiss(this@CustomCameraView)
-                            }
+            PermissionChecker.getInstance()!!.requestPermissions(activity!!,
+                arrayOf(Manifest.permission.CAMERA),
+                object : PermissionResultCallback {
+                    override fun onGranted() {
+                        buildUseCameraCases()
+                        if (CustomCameraConfig.explainListener != null) {
+                            CustomCameraConfig.explainListener!!.onDismiss(this@CustomCameraView)
                         }
+                    }
 
-                        fun onDenied() {
-                            if (CustomCameraConfig.deniedListener != null) {
-                                SimpleXSpUtils.putBoolean(context, Manifest.permission.CAMERA, true)
-                                CustomCameraConfig.deniedListener.onDenied(context,
-                                    Manifest.permission.CAMERA,
-                                    PermissionChecker.PERMISSION_SETTING_CODE)
-                                if (CustomCameraConfig.explainListener != null) {
-                                    CustomCameraConfig.explainListener.onDismiss(this@CustomCameraView)
-                                }
-                            } else {
-                                SimpleXPermissionUtil.goIntentSetting(activity,
-                                    PermissionChecker.PERMISSION_SETTING_CODE)
+                    override fun onDenied() {
+                        if (CustomCameraConfig.deniedListener != null) {
+                            SimpleXSpUtils.putBoolean(context, Manifest.permission.CAMERA, true)
+                            CustomCameraConfig.deniedListener!!.onDenied(context,
+                                Manifest.permission.CAMERA,
+                                PermissionChecker.PERMISSION_SETTING_CODE)
+                            if (CustomCameraConfig.explainListener != null) {
+                                CustomCameraConfig.explainListener!!.onDismiss(this@CustomCameraView)
                             }
+                        } else {
+                            SimpleXPermissionUtil.goIntentSetting(activity!!,
+                                PermissionChecker.PERMISSION_SETTING_CODE)
                         }
-                    })
+                    }
+                })
         }
     }
 
@@ -514,30 +561,22 @@ class CustomCameraView : RelativeLayout,
      * 检测手机方向
      */
     private fun startCheckOrientation() {
-        if (orientationEventListener != null) {
-            orientationEventListener.star()
-        }
+        orientationEventListener?.star()
     }
 
     /**
      * 停止检测手机方向
      */
     fun stopCheckOrientation() {
-        if (orientationEventListener != null) {
-            orientationEventListener.stop()
-        }
+        orientationEventListener?.stop()
     }
 
     private val targetRotation: Int
-        private get() = mImageCapture.getTargetRotation()
+        get() = mImageCapture!!.getTargetRotation()
 
-    fun onOrientationChanged(orientation: Int) {
-        if (mImageCapture != null) {
-            mImageCapture.setTargetRotation(orientation)
-        }
-        if (mImageAnalyzer != null) {
-            mImageAnalyzer.setTargetRotation(orientation)
-        }
+    override fun onOrientationChanged(orientation: Int) {
+        mImageCapture?.setTargetRotation(orientation)
+        mImageAnalyzer?.setTargetRotation(orientation)
     }
 
     /**
@@ -545,17 +584,13 @@ class CustomCameraView : RelativeLayout,
      * change, for example if we choose to override config change in manifest or for 180-degree
      * orientation changes.
      */
-    private inner class DisplayListener : DisplayListener {
+    private inner class DisplayListener : DisplayManager.DisplayListener {
         override fun onDisplayAdded(displayId: Int) {}
         override fun onDisplayRemoved(displayId: Int) {}
         override fun onDisplayChanged(displayId: Int) {
             if (displayId == this@CustomCameraView.displayId) {
-                if (mImageCapture != null) {
-                    mImageCapture.setTargetRotation(mCameraPreviewView.getDisplay().getRotation())
-                }
-                if (mImageAnalyzer != null) {
-                    mImageAnalyzer.setTargetRotation(mCameraPreviewView.getDisplay().getRotation())
-                }
+                mImageCapture?.targetRotation = mCameraPreviewView!!.display.rotation
+                mImageAnalyzer?.targetRotation = mCameraPreviewView!!.display.rotation
             }
         }
     }
@@ -593,33 +628,34 @@ class CustomCameraView : RelativeLayout,
      */
     private fun bindCameraWithUserCases() {
         try {
-            val cameraSelector: CameraSelector = Builder().requireLensFacing(lensFacing).build()
+            val cameraSelector: CameraSelector =
+                CameraSelector.Builder().requireLensFacing(lensFacing).build()
             // Preview
-            val preview: Preview = Builder()
-                .setTargetRotation(mCameraPreviewView.getDisplay().getRotation())
+            val preview: Preview = Preview.Builder()
+                .setTargetRotation(mCameraPreviewView!!.display.rotation)
                 .build()
             // ImageCapture
             buildImageCapture()
             // VideoCapture
             buildVideoCapture()
-            val useCase: UseCaseGroup.Builder = Builder()
+            val useCase: UseCaseGroup.Builder = UseCaseGroup.Builder()
             useCase.addUseCase(preview)
-            useCase.addUseCase(mImageCapture)
-            useCase.addUseCase(mVideoCapture)
+            mImageCapture?.let { useCase.addUseCase(it) }
+            mVideoCapture?.let { useCase.addUseCase(it) }
             val useCaseGroup: UseCaseGroup = useCase.build()
             // Must unbind the use-cases before rebinding them
-            mCameraProvider.unbindAll()
+            mCameraProvider?.unbindAll()
             // A variable number of use-cases can be passed here -
             // camera provides access to CameraControl & CameraInfo
-            val camera: Camera = mCameraProvider.bindToLifecycle(context as LifecycleOwner,
+            val camera: Camera = (mCameraProvider!!.bindToLifecycle(context as LifecycleOwner,
                 cameraSelector,
-                useCaseGroup)
+                useCaseGroup) ?:
             // Attach the viewfinder's surface provider to preview use case
-            preview.setSurfaceProvider(mCameraPreviewView.getSurfaceProvider())
+            preview.setSurfaceProvider(mCameraPreviewView!!.getSurfaceProvider())) as Camera
             // setFlashMode
             setFlashMode()
-            mCameraInfo = camera.getCameraInfo()
-            mCameraControl = camera.getCameraControl()
+            mCameraInfo = camera.cameraInfo
+            mCameraControl = camera.cameraControl
             initCameraPreviewListener()
         } catch (e: Exception) {
             e.printStackTrace()
@@ -634,10 +670,11 @@ class CustomCameraView : RelativeLayout,
             val screenAspectRatio =
                 aspectRatio(DensityUtil.getScreenWidth(context), DensityUtil.getScreenHeight(
                     context))
-            val rotation: Int = mCameraPreviewView.getDisplay().getRotation()
-            val cameraSelector: CameraSelector = Builder().requireLensFacing(lensFacing).build()
+            val rotation: Int = mCameraPreviewView!!.getDisplay().rotation
+            val cameraSelector: CameraSelector =
+                CameraSelector.Builder().requireLensFacing(lensFacing).build()
             // Preview
-            val preview: Preview = Builder()
+            val preview: Preview = Preview.Builder()
                 .setTargetAspectRatio(screenAspectRatio)
                 .setTargetRotation(rotation)
                 .build()
@@ -646,26 +683,26 @@ class CustomCameraView : RelativeLayout,
             buildImageCapture()
 
             // ImageAnalysis
-            mImageAnalyzer = Builder()
+            mImageAnalyzer = ImageAnalysis.Builder()
                 .setTargetAspectRatio(screenAspectRatio)
                 .setTargetRotation(rotation)
                 .build()
 
             // Must unbind the use-cases before rebinding them
-            mCameraProvider.unbindAll()
+            mCameraProvider!!.unbindAll()
             // A variable number of use-cases can be passed here -
             // camera provides access to CameraControl & CameraInfo
-            val camera: Camera = mCameraProvider.bindToLifecycle(context as LifecycleOwner,
+            val camera: Camera = mCameraProvider!!.bindToLifecycle(context as LifecycleOwner,
                 cameraSelector,
                 preview,
                 mImageCapture,
                 mImageAnalyzer)
             // Attach the viewfinder's surface provider to preview use case
-            preview.setSurfaceProvider(mCameraPreviewView.getSurfaceProvider())
+            preview.setSurfaceProvider(mCameraPreviewView!!.getSurfaceProvider())
             // setFlashMode
             setFlashMode()
-            mCameraInfo = camera.getCameraInfo()
-            mCameraControl = camera.getCameraControl()
+            mCameraInfo = camera.cameraInfo
+            mCameraControl = camera.cameraControl
             initCameraPreviewListener()
         } catch (e: Exception) {
             e.printStackTrace()
@@ -677,24 +714,25 @@ class CustomCameraView : RelativeLayout,
      */
     private fun bindCameraVideoUseCases() {
         try {
-            val cameraSelector: CameraSelector = Builder().requireLensFacing(lensFacing).build()
+            val cameraSelector: CameraSelector =
+                CameraSelector.Builder().requireLensFacing(lensFacing).build()
             // Preview
-            val preview: Preview = Builder()
-                .setTargetRotation(mCameraPreviewView.getDisplay().getRotation())
+            val preview: Preview = Preview.Builder()
+                .setTargetRotation(mCameraPreviewView!!.display.rotation)
                 .build()
             buildVideoCapture()
             // Must unbind the use-cases before rebinding them
-            mCameraProvider.unbindAll()
+            mCameraProvider?.unbindAll()
             // A variable number of use-cases can be passed here -
             // camera provides access to CameraControl & CameraInfo
-            val camera: Camera = mCameraProvider.bindToLifecycle(context as LifecycleOwner,
+            val camera: Camera = mCameraProvider!!.bindToLifecycle(context as LifecycleOwner,
                 cameraSelector,
                 preview,
                 mVideoCapture)
             // Attach the viewfinder's surface provider to preview use case
-            preview.setSurfaceProvider(mCameraPreviewView.getSurfaceProvider())
-            mCameraInfo = camera.getCameraInfo()
-            mCameraControl = camera.getCameraControl()
+            preview.setSurfaceProvider(mCameraPreviewView!!.surfaceProvider)
+            mCameraInfo = camera.cameraInfo
+            mCameraControl = camera.cameraControl
             initCameraPreviewListener()
         } catch (e: Exception) {
             e.printStackTrace()
@@ -705,17 +743,17 @@ class CustomCameraView : RelativeLayout,
         val screenAspectRatio =
             aspectRatio(DensityUtil.getScreenWidth(context), DensityUtil.getScreenHeight(
                 context))
-        mImageCapture = Builder()
+        mImageCapture = ImageCapture.Builder()
             .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
             .setTargetAspectRatio(screenAspectRatio)
-            .setTargetRotation(mCameraPreviewView.getDisplay().getRotation())
+            .setTargetRotation(mCameraPreviewView!!.display.rotation)
             .build()
     }
 
     @SuppressLint("RestrictedApi")
     private fun buildVideoCapture() {
-        val videoBuilder: VideoCapture.Builder = Builder()
-        videoBuilder.setTargetRotation(mCameraPreviewView.getDisplay().getRotation())
+        val videoBuilder = androidx.camera.core.VideoCapture.Builder()
+        videoBuilder.setTargetRotation(mCameraPreviewView!!.display.rotation)
         if (videoFrameRate > 0) {
             videoBuilder.setVideoFrameRate(videoFrameRate)
         }
@@ -726,40 +764,42 @@ class CustomCameraView : RelativeLayout,
     }
 
     private fun initCameraPreviewListener() {
-        val zoomState: LiveData<ZoomState?> = mCameraInfo.getZoomState()
+        val zoomState: LiveData<ZoomState?> = mCameraInfo!!.zoomState
         val cameraXPreviewViewTouchListener = CameraXPreviewViewTouchListener(
             context)
-        cameraXPreviewViewTouchListener.setCustomTouchListener(object : CustomTouchListener() {
-            fun zoom(delta: Float) {
+        cameraXPreviewViewTouchListener.setCustomTouchListener(object :
+            CameraXPreviewViewTouchListener.CustomTouchListener {
+            override fun zoom(delta: Float) {
                 if (isZoomPreview) {
-                    if (zoomState.getValue() != null) {
-                        val currentZoomRatio: Float = zoomState.getValue().getZoomRatio()
-                        mCameraControl.setZoomRatio(currentZoomRatio * delta)
+                    if (zoomState.value != null) {
+                        val currentZoomRatio: Float = zoomState.value!!.zoomRatio
+                        mCameraControl!!.setZoomRatio(currentZoomRatio * delta)
                     }
                 }
             }
 
-            fun click(x: Float, y: Float) {
+            override fun click(x: Float, y: Float) {
                 if (isManualFocus) {
-                    val factory: MeteringPointFactory = mCameraPreviewView.getMeteringPointFactory()
+                    val factory: MeteringPointFactory = mCameraPreviewView!!.meteringPointFactory
                     val point: MeteringPoint = factory.createPoint(x, y)
-                    val action: FocusMeteringAction = Builder(point, FocusMeteringAction.FLAG_AF)
-                        .setAutoCancelDuration(3, TimeUnit.SECONDS)
-                        .build()
-                    if (mCameraInfo.isFocusMeteringSupported(action)) {
-                        mCameraControl.cancelFocusAndMetering()
-                        focusImageView.setDisappear(false)
-                        focusImageView.startFocus(Point(x.toInt(), y.toInt()))
+                    val action: FocusMeteringAction =
+                        FocusMeteringAction.Builder(point, FocusMeteringAction.FLAG_AF)
+                            .setAutoCancelDuration(3, TimeUnit.SECONDS)
+                            .build()
+                    if (mCameraInfo!!.isFocusMeteringSupported(action)) {
+                        mCameraControl!!.cancelFocusAndMetering()
+                        focusImageView!!.setDisappear(false)
+                        focusImageView!!.startFocus(Point(x.toInt(), y.toInt()))
                         val future: ListenableFuture<FocusMeteringResult> =
-                            mCameraControl.startFocusAndMetering(action)
+                            mCameraControl!!.startFocusAndMetering(action)
                         future.addListener(Runnable {
                             try {
                                 val result: FocusMeteringResult = future.get()
-                                focusImageView.setDisappear(true)
-                                if (result.isFocusSuccessful()) {
-                                    focusImageView.onFocusSuccess()
+                                focusImageView!!.setDisappear(true)
+                                if (result.isFocusSuccessful) {
+                                    focusImageView!!.onFocusSuccess()
                                 } else {
-                                    focusImageView.onFocusFailed()
+                                    focusImageView!!.onFocusFailed()
                                 }
                             } catch (ignored: Exception) {
                             }
@@ -768,21 +808,21 @@ class CustomCameraView : RelativeLayout,
                 }
             }
 
-            fun doubleClick(x: Float, y: Float) {
+            override fun doubleClick(x: Float, y: Float) {
                 if (isZoomPreview) {
-                    if (zoomState.getValue() != null) {
-                        val currentZoomRatio: Float = zoomState.getValue().getZoomRatio()
-                        val minZoomRatio: Float = zoomState.getValue().getMinZoomRatio()
+                    if (zoomState.value != null) {
+                        val currentZoomRatio: Float = zoomState.value!!.zoomRatio
+                        val minZoomRatio: Float = zoomState.value!!.minZoomRatio
                         if (currentZoomRatio > minZoomRatio) {
-                            mCameraControl.setLinearZoom(0f)
+                            mCameraControl!!.setLinearZoom(0f)
                         } else {
-                            mCameraControl.setLinearZoom(0.5f)
+                            mCameraControl!!.setLinearZoom(0.5f)
                         }
                     }
                 }
             }
         })
-        mCameraPreviewView.setOnTouchListener(cameraXPreviewViewTouchListener)
+        mCameraPreviewView!!.setOnTouchListener(cameraXPreviewViewTouchListener)
     }
 
     /**
@@ -798,9 +838,9 @@ class CustomCameraView : RelativeLayout,
      * @return suitable aspect ratio
      */
     private fun aspectRatio(width: Int, height: Int): Int {
-        val aspect = Math.max(width, height).toDouble()
-        val previewRatio = aspect / Math.min(width, height)
-        return if (Math.abs(previewRatio - RATIO_4_3_VALUE) <= Math.abs(previewRatio - RATIO_16_9_VALUE)) {
+        val aspect = width.coerceAtLeast(height).toDouble()
+        val previewRatio = aspect / width.coerceAtMost(height)
+        return if (abs(previewRatio - RATIO_4_3_VALUE) <= abs(previewRatio - RATIO_16_9_VALUE)) {
             AspectRatio.RATIO_4_3
         } else AspectRatio.RATIO_16_9
     }
@@ -822,57 +862,56 @@ class CustomCameraView : RelativeLayout,
         private val mCaptureLayoutReference: WeakReference<CaptureLayout?>
         private val mImageCallbackListenerReference: WeakReference<ImageCallbackListener>
         private val mCameraListenerReference: WeakReference<CameraListener?>
-        private val mCameraViewLayoutReference: WeakReference<CustomCameraView>
-        fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-            val savedUri: Uri = outputFileResults.getSavedUri()
-            if (savedUri != null) {
-                val customCameraView = mCameraViewLayoutReference.get()
-                customCameraView?.stopCheckOrientation()
-                val mImagePreview = mImagePreviewReference.get()
-                if (mImagePreview != null) {
-                    val context = mImagePreview.context
-                    SimpleCameraX.putOutputUri((context as Activity).intent, savedUri)
-                    mImagePreview.visibility = VISIBLE
-                    if (customCameraView != null && customCameraView.isAutoRotation) {
-                        val targetRotation = customCameraView.targetRotation
-                        // 这种角度拍出来的图片宽比高大，所以使用ScaleType.FIT_CENTER缩放模式
-                        if (targetRotation == Surface.ROTATION_90 || targetRotation == Surface.ROTATION_270) {
-                            mImagePreview.adjustViewBounds = true
-                            val mImagePreviewBackground = mImagePreviewBgReference.get()
-                            mImagePreviewBackground?.animate()?.alpha(1f)?.setDuration(220)?.start()
-                        } else {
-                            mImagePreview.adjustViewBounds = false
-                            mImagePreview.scaleType = ImageView.ScaleType.CENTER_CROP
-                        }
-                    }
-                    val imageCallbackListener: ImageCallbackListener? =
-                        mImageCallbackListenerReference.get()
-                    if (imageCallbackListener != null) {
-                        val outPutCameraPath =
-                            if (FileUtils.isContent(savedUri.toString())) savedUri.toString() else savedUri.path!!
-                        imageCallbackListener.onLoadImage(outPutCameraPath, mImagePreview)
+        private val mCameraViewLayoutReference: WeakReference<CustomCameraView> =
+            WeakReference(cameraView)
+
+        override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+            val savedUri: Uri = outputFileResults.savedUri!!
+            val customCameraView = mCameraViewLayoutReference.get()
+            customCameraView?.stopCheckOrientation()
+            val mImagePreview = mImagePreviewReference.get()
+            if (mImagePreview != null) {
+                val context = mImagePreview.context
+                SimpleCameraX.putOutputUri((context as Activity).intent, savedUri)
+                mImagePreview.visibility = VISIBLE
+                if (customCameraView != null && customCameraView.isAutoRotation) {
+                    val targetRotation = customCameraView.targetRotation
+                    // The aspect ratio of the picture taken from this angle is taller, so use the ScaleType.FIT_CENTER zoom mode
+                    if (targetRotation == Surface.ROTATION_90 || targetRotation == Surface.ROTATION_270) {
+                        mImagePreview.adjustViewBounds = true
+                        val mImagePreviewBackground = mImagePreviewBgReference.get()
+                        mImagePreviewBackground?.animate()?.alpha(1f)?.setDuration(220)?.start()
+                    } else {
+                        mImagePreview.adjustViewBounds = false
+                        mImagePreview.scaleType = ImageView.ScaleType.CENTER_CROP
                     }
                 }
-                val captureLayout: CaptureLayout? = mCaptureLayoutReference.get()
-                if (captureLayout != null) {
-                    captureLayout.setButtonCaptureEnabled(true)
-                    captureLayout.startTypeBtnAnimator()
+                val imageCallbackListener: ImageCallbackListener? =
+                    mImageCallbackListenerReference.get()
+                if (imageCallbackListener != null) {
+                    val outPutCameraPath =
+                        if (FileUtils.isContent(savedUri.toString())) savedUri.toString() else savedUri.path!!
+                    imageCallbackListener.onLoadImage(outPutCameraPath, mImagePreview)
                 }
+            }
+            val captureLayout: CaptureLayout? = mCaptureLayoutReference.get()
+            if (captureLayout != null) {
+                captureLayout.setButtonCaptureEnabled(true)
+                captureLayout.startTypeBtnAnimator()
             }
         }
 
-        fun onError(exception: ImageCaptureException) {
+        override fun onError(exception: ImageCaptureException) {
             if (mCaptureLayoutReference.get() != null) {
-                mCaptureLayoutReference.get().setButtonCaptureEnabled(true)
+                mCaptureLayoutReference.get()!!.setButtonCaptureEnabled(true)
             }
             if (mCameraListenerReference.get() != null) {
-                mCameraListenerReference.get().onError(exception.getImageCaptureError(),
-                    exception.getMessage(), exception.getCause())
+                mCameraListenerReference.get()!!.onError(exception.getImageCaptureError(),
+                    exception.message, exception.cause)
             }
         }
 
         init {
-            mCameraViewLayoutReference = WeakReference(cameraView)
             mImagePreviewReference = WeakReference(imagePreview)
             mImagePreviewBgReference = WeakReference(imagePreviewBg)
             mCaptureLayoutReference = WeakReference<CaptureLayout?>(captureLayout)
@@ -906,18 +945,16 @@ class CustomCameraView : RelativeLayout,
         mCameraListener = cameraListener
     }
 
-    /**
-     * 设置录制视频最大时长 秒
-     */
+    // Set the maximum duration of recorded video in seconds
     fun setRecordVideoMaxTime(maxDurationTime: Int) {
-        mCaptureLayout.setDuration(maxDurationTime)
+        mCaptureLayout!!.setDuration(maxDurationTime)
     }
 
     /**
      * 设置录制视频最小时长 秒
      */
     fun setRecordVideoMinTime(minDurationTime: Int) {
-        mCaptureLayout.setMinDuration(minDurationTime)
+        mCaptureLayout!!.setMinDuration(minDurationTime)
     }
 
     /**
@@ -926,7 +963,7 @@ class CustomCameraView : RelativeLayout,
      * @param color
      */
     fun setCaptureLoadingColor(color: Int) {
-        mCaptureLayout.setCaptureLoadingColor(color)
+        mCaptureLayout!!.setCaptureLoadingColor(color)
     }
 
     /**
@@ -935,7 +972,7 @@ class CustomCameraView : RelativeLayout,
      * @param color
      */
     fun setProgressColor(color: Int) {
-        mCaptureLayout.setProgressColor(color)
+        mCaptureLayout!!.setProgressColor(color)
     }
 
     /**
@@ -943,7 +980,7 @@ class CustomCameraView : RelativeLayout,
      */
     fun toggleCamera() {
         lensFacing =
-            if (CameraSelector.LENS_FACING_FRONT === lensFacing) CameraSelector.LENS_FACING_BACK else CameraSelector.LENS_FACING_FRONT
+            if (CameraSelector.LENS_FACING_FRONT == lensFacing) CameraSelector.LENS_FACING_BACK else CameraSelector.LENS_FACING_FRONT
         bindCameraUseCases()
     }
 
@@ -957,15 +994,15 @@ class CustomCameraView : RelativeLayout,
         when (typeFlash) {
             TYPE_FLASH_AUTO -> {
                 mFlashLamp!!.setImageResource(R.drawable.picture_ic_flash_auto)
-                mImageCapture.setFlashMode(ImageCapture.FLASH_MODE_AUTO)
+                mImageCapture!!.setFlashMode(ImageCapture.FLASH_MODE_AUTO)
             }
             TYPE_FLASH_ON -> {
                 mFlashLamp!!.setImageResource(R.drawable.picture_ic_flash_on)
-                mImageCapture.setFlashMode(ImageCapture.FLASH_MODE_ON)
+                mImageCapture!!.setFlashMode(ImageCapture.FLASH_MODE_ON)
             }
             TYPE_FLASH_OFF -> {
                 mFlashLamp!!.setImageResource(R.drawable.picture_ic_flash_off)
-                mImageCapture.setFlashMode(ImageCapture.FLASH_MODE_OFF)
+                mImageCapture!!.setFlashMode(ImageCapture.FLASH_MODE_OFF)
             }
         }
     }
@@ -986,20 +1023,21 @@ class CustomCameraView : RelativeLayout,
     /**
      * 重置状态
      */
+    @SuppressLint("RestrictedApi")
     private fun resetState() {
         if (isImageCaptureEnabled) {
             mImagePreview!!.visibility = INVISIBLE
             mImagePreviewBg!!.alpha = 0f
         } else {
             try {
-                mVideoCapture.stopRecording()
+                mVideoCapture?.stopRecording()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
         mSwitchCamera!!.visibility = VISIBLE
         mFlashLamp!!.visibility = VISIBLE
-        mCaptureLayout.resetCaptureLayout()
+        mCaptureLayout!!.resetCaptureLayout()
     }
 
     /**
@@ -1049,9 +1087,7 @@ class CustomCameraView : RelativeLayout,
         }
     }
 
-    /**
-     * 取消拍摄相关
-     */
+    //Cancel shooting related
     fun onCancelMedia() {
         val outputPath: String = SimpleCameraX.getOutputPath(activity!!.intent)
         FileUtils.deleteFile(context, outputPath)
@@ -1060,9 +1096,7 @@ class CustomCameraView : RelativeLayout,
         startCheckOrientation()
     }
 
-    /**
-     * 停止视频播放
-     */
+    // stop video playback
     private fun stopVideoPlay() {
         if (mMediaPlayer != null && mMediaPlayer!!.isPlaying) {
             mMediaPlayer!!.stop()
@@ -1087,7 +1121,7 @@ class CustomCameraView : RelativeLayout,
     fun onDestroy() {
         displayManager!!.unregisterDisplayListener(displayListener)
         stopCheckOrientation()
-        focusImageView.destroy()
+        focusImageView!!.destroy()
     }
 
     companion object {

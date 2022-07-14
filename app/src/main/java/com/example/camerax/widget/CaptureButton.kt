@@ -5,7 +5,6 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.AnimatorSet
 import android.animation.ValueAnimator
-import android.animation.ValueAnimator.AnimatorUpdateListener
 import android.app.Activity
 import android.content.Context
 import android.graphics.Canvas
@@ -15,92 +14,69 @@ import android.os.CountDownTimer
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import com.example.camerax.CustomCameraConfig
+import com.example.camerax.listener.CaptureListener
+import com.example.camerax.listener.IObtainCameraView
+import com.example.camerax.permissions.PermissionChecker
+import com.example.camerax.permissions.PermissionResultCallback
+import com.example.camerax.permissions.SimpleXPermissionUtil
+import com.example.camerax.utils.DoubleUtils
+import com.example.camerax.utils.SimpleXSpUtils
 
 class CaptureButton : View {
-    /**
-     * 当前按钮状态
-     */
+    // current button state
     private var state = 0
 
-    /**
-     * 按钮可执行的功能状态（拍照,录制,两者）
-     */
+    // The status of the function that the button can perform (photograph, record, both)
     var buttonFeatures = 0
 
-    /**
-     * 录制进度外圈色值
-     */
+    // Recording progress outer ring color value
     private var progressColor = -0x11e951ea
     private var event_Y = 0f
     private var mPaint: Paint? = null
 
-    /**
-     * 进度条宽度
-     */
+
+     // progress bar width
+
     private var strokeWidth = 0f
 
-    /**
-     * 长按外圆半径变大的Size
-     */
+    //Long press the Size whose outer circle radius becomes larger
     private var outside_add_size = 0
 
-    /**
-     * 长安内圆缩小的Size
-     */
+    //The size of the inner circle of Chang'an reduced
     private var inside_reduce_size = 0
     private var center_X = 0f
     private var center_Y = 0f
-
-    /**
-     * 按钮半径
-     */
+// button radius
     private var button_radius = 0f
 
-    /**
-     * 外圆半径
-     */
+  // Outer circle radius
     private var button_outside_radius = 0f
 
-    /**
-     * 内圆半径
-     */
+    // Inner circle radius
     private var button_inside_radius = 0f
 
-    /**
-     * 按钮大小
-     */
+   //button size
     private var button_size = 0
 
-    /**
-     * 录制视频的进度
-     */
+    //Progress of recording video
     private var progress = 0f
 
-    /**
-     * 录制视频最大时间长度
-     */
+   // Maximum length of time to record video
     private var maxDuration = 0
 
-    /**
-     * 最短录制时间限制
-     */
+  //Minimum recording time limit
     private var minDuration = 0
 
-    /**
-     * 记录当前录制的时间
-     */
+  //Record the current recording time
     private var currentRecordedTime = 0
     private var rectF: RectF? = null
     private var longPressRunnable: LongPressRunnable? = null
 
-    /**
-     * 按钮回调接口
-     */
+   // button callback interface
     private var captureListener: CaptureListener? = null
 
-    /**
-     * 计时器
-     */
+    //timer
     private var timer: RecordCountDownTimer? = null
     private var isTakeCamera = true
     private val activity: Activity
@@ -133,7 +109,7 @@ class CaptureButton : View {
             center_Y - (button_radius + outside_add_size - strokeWidth / 2),
             center_X + (button_radius + outside_add_size - strokeWidth / 2),
             center_Y + (button_radius + outside_add_size - strokeWidth / 2))
-        timer = RecordCountDownTimer(maxDuration, maxDuration / 360)
+        timer = RecordCountDownTimer(maxDuration.toLong(), (maxDuration / 360).toLong())
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -162,7 +138,7 @@ class CaptureButton : View {
         if (isTakeCamera) {
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    if (event.pointerCount > 1 || state != STATE_IDLE) break
+                    if (event.pointerCount > 1 || state != STATE_IDLE)
                     event_Y = event.y
                     state = STATE_PRESS
                     if (buttonFeatures != CustomCameraConfig.BUTTON_STATE_ONLY_CAPTURE) {
@@ -172,7 +148,7 @@ class CaptureButton : View {
                 MotionEvent.ACTION_MOVE -> if (captureListener != null && state == STATE_RECORDER_ING && (buttonFeatures == CustomCameraConfig.BUTTON_STATE_ONLY_RECORDER
                             || buttonFeatures == CustomCameraConfig.BUTTON_STATE_BOTH)
                 ) {
-                    captureListener.recordZoom(event_Y - event.y)
+                    captureListener!!.recordZoom(event_Y - event.y)
                 }
                 MotionEvent.ACTION_UP -> handlerPressByState()
             }
@@ -184,7 +160,7 @@ class CaptureButton : View {
         private get() {
             if (activity is IObtainCameraView) {
                 val cameraView: IObtainCameraView = activity as IObtainCameraView
-                return cameraView.getCustomCameraView()
+                return cameraView.customCameraView
             }
             return null
         }
@@ -212,9 +188,9 @@ class CaptureButton : View {
     fun recordEnd() {
         if (captureListener != null) {
             if (currentRecordedTime < minDuration) {
-                captureListener.recordShort(currentRecordedTime)
+                captureListener!!.recordShort(currentRecordedTime.toLong())
             } else {
-                captureListener.recordEnd(currentRecordedTime)
+                captureListener!!.recordEnd(currentRecordedTime.toLong())
             }
         }
         resetRecordAnim()
@@ -246,7 +222,7 @@ class CaptureButton : View {
             override fun onAnimationStart(animation: Animator) {
                 super.onAnimationStart(animation)
                 if (captureListener != null) {
-                    captureListener.takePictures()
+                    captureListener!!.takePictures()
                 }
                 state = STATE_BAN
             }
@@ -276,12 +252,12 @@ class CaptureButton : View {
         set.addListener(object : AnimatorListenerAdapter() {
             override fun onAnimationEnd(animation: Animator) {
                 super.onAnimationEnd(animation)
-                if (DoubleUtils.isFastDoubleClick()) {
+                if (DoubleUtils.isFastDoubleClick) {
                     return
                 }
                 //设置为录制状态
                 if (state == STATE_LONG_PRESS) {
-                    if (captureListener != null) captureListener.recordStart()
+                    if (captureListener != null) captureListener!!.recordStart()
                     state = STATE_RECORDER_ING
                     timer!!.start()
                 } else {
@@ -307,9 +283,7 @@ class CaptureButton : View {
         CountDownTimer(millisInFuture, countDownInterval) {
         override fun onTick(millisUntilFinished: Long) {
             updateProgress(millisUntilFinished)
-            if (captureListener != null) {
-                captureListener.changeTime(millisUntilFinished)
-            }
+            captureListener?.changeTime(millisUntilFinished)
         }
 
         override fun onFinish() {
@@ -330,28 +304,28 @@ class CaptureButton : View {
             } else {
                 onExplainCallback()
                 handlerPressByState()
-                PermissionChecker.getInstance().requestPermissions(activity,
+                PermissionChecker.getInstance()!!.requestPermissions(activity,
                     arrayOf(Manifest.permission.RECORD_AUDIO),
-                    object : PermissionResultCallback() {
-                        fun onGranted() {
+                    object : PermissionResultCallback {
+                        override fun onGranted() {
                             postDelayed(longPressRunnable, 500)
                             val customCameraView = customCameraView
                             if (customCameraView != null && CustomCameraConfig.explainListener != null) {
-                                CustomCameraConfig.explainListener.onDismiss(customCameraView)
+                                CustomCameraConfig.explainListener!!.onDismiss(customCameraView)
                             }
                         }
 
-                        fun onDenied() {
+                        override fun onDenied() {
                             if (CustomCameraConfig.deniedListener != null) {
                                 SimpleXSpUtils.putBoolean(context,
                                     Manifest.permission.RECORD_AUDIO,
                                     true)
-                                CustomCameraConfig.deniedListener.onDenied(context,
+                                CustomCameraConfig.deniedListener!!.onDenied(context,
                                     Manifest.permission.RECORD_AUDIO,
                                     PermissionChecker.PERMISSION_RECORD_AUDIO_SETTING_CODE)
                                 val customCameraView = customCameraView
                                 if (customCameraView != null && CustomCameraConfig.explainListener != null) {
-                                    CustomCameraConfig.explainListener.onDismiss(customCameraView)
+                                    CustomCameraConfig.explainListener!!.onDismiss(customCameraView)
                                 }
                             } else {
                                 SimpleXPermissionUtil.goIntentSetting(activity,
@@ -368,7 +342,7 @@ class CaptureButton : View {
             if (!SimpleXSpUtils.getBoolean(context, Manifest.permission.RECORD_AUDIO, false)) {
                 val customCameraView = customCameraView
                 if (customCameraView != null) {
-                    CustomCameraConfig.explainListener.onPermissionDescription(context,
+                    CustomCameraConfig.explainListener!!.onPermissionDescription(context,
                         customCameraView,
                         Manifest.permission.RECORD_AUDIO)
                 }
@@ -378,7 +352,7 @@ class CaptureButton : View {
 
     fun setMaxDuration(duration: Int) {
         maxDuration = duration
-        timer = RecordCountDownTimer(maxDuration, maxDuration / 360)
+        timer = RecordCountDownTimer(maxDuration.toLong(), (maxDuration / 360).toLong())
     }
 
     fun setMinDuration(duration: Int) {
@@ -405,29 +379,19 @@ class CaptureButton : View {
     }
 
     companion object {
-        /**
-         * 空闲状态
-         */
+        // idle state
         const val STATE_IDLE = 0x001
 
-        /**
-         * 按下状态
-         */
+      // pressed state
         const val STATE_PRESS = 0x002
 
-        /**
-         * 长按状态
-         */
+        // long press
         const val STATE_LONG_PRESS = 0x003
 
-        /**
-         * 录制状态
-         */
+        // recording status
         const val STATE_RECORDER_ING = 0x004
 
-        /**
-         * 禁止状态
-         */
+       // forbidden state
         const val STATE_BAN = 0x005
     }
 }

@@ -1,7 +1,5 @@
 package com.example.selector.utils
 
-import java.lang.Exception
-
 object ValueOf {
     fun toString(o: Any): String {
         var value = ""
@@ -12,13 +10,11 @@ object ValueOf {
         return value
     }
 
-    @JvmOverloads
     fun toDouble(o: Any?, defaultValue: Int = 0): Double {
         if (o == null) {
             return defaultValue.toDouble()
         }
-        val value: Double
-        value = try {
+        val value: Double = try {
             o.toString().trim { it <= ' ' }.toDouble()
         } catch (e: Exception) {
             defaultValue.toDouble()
@@ -26,7 +22,6 @@ object ValueOf {
         return value
     }
 
-    @JvmOverloads
     fun toLong(o: Any?, defaultValue: Long = 0): Long {
         if (o == null) {
             return defaultValue
@@ -45,7 +40,6 @@ object ValueOf {
         return value
     }
 
-    @JvmOverloads
     fun toFloat(o: Any?, defaultValue: Long = 0): Float {
         if (o == null) {
             return defaultValue.toFloat()
@@ -60,13 +54,11 @@ object ValueOf {
         return value
     }
 
-    @JvmOverloads
     fun toInt(o: Any?, defaultValue: Int = 0): Int {
         if (o == null) {
             return defaultValue
         }
-        val value: Int
-        value = try {
+        val value: Int = try {
             val s = o.toString().trim { it <= ' ' }
             if (s.contains(".")) {
                 s.substring(0, s.lastIndexOf(".")).toInt()
@@ -79,30 +71,23 @@ object ValueOf {
         return value
     }
 
-    @JvmOverloads
     fun toBoolean(o: Any?, defaultValue: Boolean = false): Boolean {
         if (o == null) {
             return false
         }
-        val value: Boolean
-        value = try {
+        val value: Boolean = try {
             val s = o.toString().trim { it <= ' ' }
-            if ("false" == s.trim { it <= ' ' }) {
-                false
-            } else {
-                true
-            }
+            "false" != s.trim { it <= ' ' }
         } catch (e: Exception) {
             defaultValue
         }
         return value
     }
 
-    fun <T> to(o: Any?, defaultValue: T): T {
+    fun <T> to(o: T, defaultValue: T): T {
         if (o == null) {
             return defaultValue
         }
-        val value = o as T
-        return value
+        return o
     }
 }

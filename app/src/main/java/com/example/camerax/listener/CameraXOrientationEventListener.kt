@@ -14,15 +14,19 @@ class CameraXOrientationEventListener(
         if (orientation == ORIENTATION_UNKNOWN) {
             return
         }
-        val currentRotation: Int
-        currentRotation = if (orientation > 80 && orientation < 100) {
-            Surface.ROTATION_270
-        } else if (orientation > 170 && orientation < 190) {
-            Surface.ROTATION_180
-        } else if (orientation > 260 && orientation < 280) {
-            Surface.ROTATION_90
-        } else {
-            Surface.ROTATION_0
+        val currentRotation: Int = when (orientation) {
+            in 81..99 -> {
+                Surface.ROTATION_270
+            }
+            in 171..189 -> {
+                Surface.ROTATION_180
+            }
+            in 261..279 -> {
+                Surface.ROTATION_90
+            }
+            else -> {
+                Surface.ROTATION_0
+            }
         }
         if (mRotation != currentRotation) {
             mRotation = currentRotation

@@ -13,11 +13,14 @@ import android.provider.MediaStore
 import android.text.TextUtils
 import android.util.Log
 import androidx.core.content.FileProvider
+import com.example.camerax.utils.CameraUtils.CAMERA
+import com.example.selector.config.FileSizeUnit
+import com.example.selector.config.PictureMimeType
+import com.example.selector.config.SelectMimeType
 import java.io.*
-import java.lang.Exception
-import java.lang.IllegalArgumentException
 import java.nio.channels.FileChannel
 import java.util.*
+import kotlin.math.roundToInt
 
 object PictureFileUtils {
     private const val BYTE_SIZE = 1024
@@ -89,7 +92,7 @@ object PictureFileUtils {
             ) {
                 rootDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)
                 folderDir =
-                    File(rootDir.absolutePath + File.separator + PictureMimeType.CAMERA + File.separator)
+                    File(rootDir.absolutePath + File.separator + CAMERA + File.separator)
             } else {
                 rootDir = getRootDirFile(context, chooseMode)
                 folderDir = File(rootDir!!.absolutePath + File.separator)
@@ -243,7 +246,7 @@ object PictureFileUtils {
                 val split = docId.split(":").toTypedArray()
                 val type = split[0]
                 if ("primary".equals(type, ignoreCase = true)) {
-                    return if (SdkVersionUtils.isQ()) {
+                    return if (SdkVersionUtils.isQ) {
                         context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
                             .toString() + "/" + split[1]
                     } else {
@@ -314,11 +317,11 @@ object PictureFileUtils {
     /**
      * 复制文件
      *
-     * @param is 文件输入流
+     * @param `is` 文件输入流
      * @param os 文件输出流
      * @return
      */
-    fun writeFileFromIS(`is`: InputStream?, os: OutputStream): Boolean {
+    fun writeFileFromIS(`is`: () -> InputStream?, os: OutputStream): Boolean {
         var osBuffer: OutputStream? = null
         var isBuffer: BufferedInputStream? = null
         return try {
@@ -479,20 +482,20 @@ object PictureFileUtils {
     fun createFilePath(
         context: Context,
         md5: String,
-        mineType: String?,
-        customFileName: String?,
+        mineType: String,
+        customFileName: String,
     ): String {
-        val suffix: String = PictureMimeType.getLastImgSuffix(mineType)
+        val suffix: String = PictureMimeType.getLastImgSuffix(mineType).toString()
         return if (PictureMimeType.isHasVideo(mineType)) {
             // 视频
             val filesDir = getVideoDiskCacheDir(context) + File.separator
             if (TextUtils.isEmpty(md5)) {
                 val fileName =
-                    if (TextUtils.isEmpty(customFileName)) DateUtils.getCreateFileName("VID_") + suffix else customFileName!!
+                    if (TextUtils.isEmpty(customFileName)) DateUtils.getCreateFileName("VID_") + suffix else customFileName
                 filesDir + fileName
             } else {
                 val fileName =
-                    if (TextUtils.isEmpty(customFileName)) "VID_" + md5.toUpperCase() + suffix else customFileName!!
+                    if (TextUtils.isEmpty(customFileName)) "VID_" + md5.uppercase(Locale.getDefault()) + suffix else customFileName
                 filesDir + fileName
             }
         } else if (PictureMimeType.isHasAudio(mineType)) {
@@ -500,11 +503,11 @@ object PictureFileUtils {
             val filesDir = getAudioDiskCacheDir(context) + File.separator
             if (TextUtils.isEmpty(md5)) {
                 val fileName =
-                    if (TextUtils.isEmpty(customFileName)) DateUtils.getCreateFileName("AUD_") + suffix else customFileName!!
+                    if (TextUtils.isEmpty(customFileName)) DateUtils.getCreateFileName("AUD_") + suffix else customFileName
                 filesDir + fileName
             } else {
                 val fileName =
-                    if (TextUtils.isEmpty(customFileName)) "AUD_" + md5.toUpperCase() + suffix else customFileName!!
+                    if (TextUtils.isEmpty(customFileName)) "AUD_" + md5.uppercase(Locale.getDefault()) + suffix else customFileName
                 filesDir + fileName
             }
         } else {
@@ -512,11 +515,11 @@ object PictureFileUtils {
             val filesDir = getDiskCacheDir(context) + File.separator
             if (TextUtils.isEmpty(md5)) {
                 val fileName =
-                    if (TextUtils.isEmpty(customFileName)) DateUtils.getCreateFileName("IMG_") + suffix else customFileName!!
+                    if (TextUtils.isEmpty(customFileName)) DateUtils.getCreateFileName("IMG_") + suffix else customFileName
                 filesDir + fileName
             } else {
                 val fileName =
-                    if (TextUtils.isEmpty(customFileName)) "IMG_" + md5.toUpperCase() + suffix else customFileName!!
+                    if (TextUtils.isEmpty(customFileName)) "IMG_" + md5.uppercase(Locale.getDefault()) + suffix else customFileName
                 filesDir + fileName
             }
         }
@@ -542,7 +545,7 @@ object PictureFileUtils {
      * @param path
      * @return
      */
-    fun isFileExists(path: String?): Boolean {
+    fun isFileExists(path: String): Boolean {
         return !TextUtils.isEmpty(path) && File(path).exists()
     }
 
@@ -562,25 +565,25 @@ object PictureFileUtils {
         } else if (byteSize < FileSizeUnit.KB) {
             val format = String.format("%." + 2 + "f", byteSize.toDouble())
             val num: Double = ValueOf.toDouble(format)
-            val round = Math.round(num)
+            val round = num.roundToInt()
             (if (round - num == 0.0) round else format).toString() + "B"
         } else if (byteSize < FileSizeUnit.MB) {
             val format =
                 java.lang.String.format("%." + 2 + "f", byteSize.toDouble() / FileSizeUnit.KB)
             val num: Double = ValueOf.toDouble(format)
-            val round = Math.round(num)
+            val round = num.roundToInt()
             (if (round - num == 0.0) round else format).toString() + "KB"
         } else if (byteSize < FileSizeUnit.GB) {
             val format =
                 java.lang.String.format("%." + 2 + "f", byteSize.toDouble() / FileSizeUnit.MB)
             val num: Double = ValueOf.toDouble(format)
-            val round = Math.round(num)
+            val round = num.roundToInt()
             (if (round - num == 0.0) round else format).toString() + "MB"
         } else {
             val format =
                 java.lang.String.format("%." + 2 + "f", byteSize.toDouble() / FileSizeUnit.GB)
             val num: Double = ValueOf.toDouble(format)
-            val round = Math.round(num)
+            val round = num.roundToInt()
             (if (round - num == 0.0) round else format).toString() + "GB"
         }
     }
@@ -601,25 +604,25 @@ object PictureFileUtils {
         } else if (byteSize < FileSizeUnit.ACCURATE_KB) {
             val format = String.format("%." + 2 + "f", byteSize.toDouble())
             val num: Double = ValueOf.toDouble(format)
-            val round = Math.round(num)
+            val round = num.roundToInt()
             (if (round - num == 0.0) round else format).toString() + "B"
         } else if (byteSize < FileSizeUnit.ACCURATE_MB) {
             val format = java.lang.String.format("%." + 2 + "f",
                 byteSize.toDouble() / FileSizeUnit.ACCURATE_KB)
             val num: Double = ValueOf.toDouble(format)
-            val round = Math.round(num)
+            val round = num.roundToInt()
             (if (round - num == 0.0) round else format).toString() + "KB"
         } else if (byteSize < FileSizeUnit.ACCURATE_GB) {
             val format = java.lang.String.format("%." + 2 + "f",
                 byteSize.toDouble() / FileSizeUnit.ACCURATE_MB)
             val num: Double = ValueOf.toDouble(format)
-            val round = Math.round(num)
+            val round = num.roundToInt()
             (if (round - num == 0.0) round else format).toString() + "MB"
         } else {
             val format = java.lang.String.format("%." + 2 + "f",
                 byteSize.toDouble() / FileSizeUnit.ACCURATE_GB)
             val num: Double = ValueOf.toDouble(format)
-            val round = Math.round(num)
+            val round = num.roundToInt()
             (if (round - num == 0.0) round else format).toString() + "GB"
         }
     }

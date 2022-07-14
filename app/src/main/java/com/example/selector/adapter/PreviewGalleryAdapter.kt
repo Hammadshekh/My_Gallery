@@ -108,7 +108,7 @@ class PreviewGalleryAdapter(private val isBottomPreview: Boolean, list: List<Loc
      *
      * @return
      */
-    private val lastCheckPosition: Int
+    val lastCheckPosition: Int
         get() {
             for (i in mData.indices) {
                 val media: LocalMedia = mData[i]
@@ -129,7 +129,7 @@ class PreviewGalleryAdapter(private val isBottomPreview: Boolean, list: List<Loc
     private fun getCurrentPosition(currentMedia: LocalMedia): Int {
         for (i in mData.indices) {
             val media: LocalMedia = mData[i]
-            if (TextUtils.equals(media.getPath(), currentMedia.getPath())
+            if (TextUtils.equals(media.path, currentMedia.path)
                 || media.id == currentMedia.id
             ) {
                 return i

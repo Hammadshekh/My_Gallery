@@ -271,7 +271,7 @@ class SelectMainStyle : Parcelable {
     var adapterPreviewGalleryItemSize = 0
 
     constructor() {}
-    protected constructor(`in`: Parcel) {
+    private constructor(`in`: Parcel) {
         statusBarColor = `in`.readInt()
         navigationBarColor = `in`.readInt()
         isDarkStatusBarBlack = `in`.readByte().toInt() != 0

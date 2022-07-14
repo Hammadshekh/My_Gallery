@@ -17,7 +17,7 @@ import com.example.selector.threads.PictureThreadUtils
 import com.example.selector.utils.SdkVersionUtils
 import com.luck.picture.lib.entity.LocalMedia
 
-class PictureSelectionConfig() : Parcelable {
+open class PictureSelectionConfig() : Parcelable {
     var chooseMode = 0
     var isOnlyCamera = false
     var isDirectReturnSingle = false
@@ -406,8 +406,8 @@ class PictureSelectionConfig() : Parcelable {
         var interpolatorFactory: InterpolatorFactory? = null
         private var onItemSelectAnimListener: OnGridItemSelectAnimListener? = null
         var onSelectAnimListener: OnSelectAnimListener? = null
-        @JvmField
-        val CREATOR: Creator<PictureSelectionConfig?> = object : Creator<PictureSelectionConfig?> {
+
+        val CREATOR: Creator<PictureSelectionConfig> = object : Creator<PictureSelectionConfig> {
             override fun createFromParcel(`in`: Parcel): PictureSelectionConfig {
                 return PictureSelectionConfig(`in`)
             }
@@ -424,22 +424,15 @@ class PictureSelectionConfig() : Parcelable {
             }
 
         @Volatile
-        private var mInstance: PictureSelectionConfig? = null
-        val instance: PictureSelectionConfig?
+        private lateinit var mInstance: PictureSelectionConfig
+        val instance: PictureSelectionConfig
             get() {
-                if (mInstance == null) {
-                    synchronized(PictureSelectionConfig::class.java) {
-                        if (mInstance == null) {
-                            mInstance = PictureSelectionConfig()
-                            mInstance!!.initDefaultValue()
-                        }
-                    }
-                }
                 return mInstance
             }
 
         /**
-         * 释放监听器
+         *
+        release listener
          */
         fun destroy() {
             imageEngine = null
@@ -479,6 +472,17 @@ class PictureSelectionConfig() : Parcelable {
             SelectedManager.currentLocalMediaFolder = (null)
         }
     }
+
+     object CREATOR : Creator<PictureSelectionConfig> {
+        override fun createFromParcel(parcel: Parcel): PictureSelectionConfig {
+            return PictureSelectionConfig(parcel)
+        }
+
+        override fun newArray(size: Int): Array<PictureSelectionConfig?> {
+            return arrayOfNulls(size)
+        }
+    }
 }
+
 
 

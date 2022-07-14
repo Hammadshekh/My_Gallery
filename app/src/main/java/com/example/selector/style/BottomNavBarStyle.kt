@@ -105,7 +105,7 @@ class BottomNavBarStyle : Parcelable {
     var isCompleteCountTips = true
 
     constructor() {}
-    protected constructor(`in`: Parcel) {
+    private constructor(`in`: Parcel) {
         bottomNarBarBackgroundColor = `in`.readInt()
         bottomPreviewNarBarBackgroundColor = `in`.readInt()
         bottomNarBarHeight = `in`.readInt()
@@ -154,14 +154,24 @@ class BottomNavBarStyle : Parcelable {
     }
 
     companion object {
-        val CREATOR: Creator<BottomNavBarStyle> = object : Creator<BottomNavBarStyle?> {
-            override fun createFromParcel(`in`: Parcel): BottomNavBarStyle? {
+        val CREATOR: Creator<BottomNavBarStyle> = object : Creator<BottomNavBarStyle> {
+            override fun createFromParcel(`in`: Parcel): BottomNavBarStyle {
                 return BottomNavBarStyle(`in`)
             }
 
             override fun newArray(size: Int): Array<BottomNavBarStyle?> {
                 return arrayOfNulls(size)
             }
+        }
+    }
+
+     object CREATOR : Creator<BottomNavBarStyle> {
+        override fun createFromParcel(parcel: Parcel): BottomNavBarStyle {
+            return BottomNavBarStyle(parcel)
+        }
+
+        override fun newArray(size: Int): Array<BottomNavBarStyle?> {
+            return arrayOfNulls(size)
         }
     }
 }

@@ -2,6 +2,7 @@ package com.example.selector.utils
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.example.selector.config.PictureConfig
 
 object SpUtils {
     private var pictureSpUtils: SharedPreferences? = null

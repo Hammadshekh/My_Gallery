@@ -25,9 +25,8 @@ object ActivityCompatHelper {
         if (context is Activity) {
             return !isDestroy(context)
         } else if (context is ContextWrapper) {
-            val contextWrapper = context
-            if (contextWrapper.baseContext is Activity) {
-                val activity = contextWrapper.baseContext as Activity
+            if (context.baseContext is Activity) {
+                val activity = context.baseContext as Activity
                 return !isDestroy(activity)
             }
         }

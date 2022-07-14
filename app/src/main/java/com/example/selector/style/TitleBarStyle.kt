@@ -110,7 +110,7 @@ class TitleBarStyle : Parcelable {
     var isDisplayTitleBarLine = false
 
     constructor() {}
-    protected constructor(`in`: Parcel) {
+    private constructor(`in`: Parcel) {
         isHideTitleBar = `in`.readByte().toInt() != 0
         titleLeftBackResource = `in`.readInt()
         previewTitleLeftBackResource = `in`.readInt()
@@ -161,14 +161,24 @@ class TitleBarStyle : Parcelable {
     }
 
     companion object {
-        val CREATOR: Creator<TitleBarStyle> = object : Creator<TitleBarStyle?> {
-            override fun createFromParcel(`in`: Parcel): TitleBarStyle? {
+        val CREATOR: Creator<TitleBarStyle> = object : Creator<TitleBarStyle> {
+            override fun createFromParcel(`in`: Parcel): TitleBarStyle {
                 return TitleBarStyle(`in`)
             }
 
             override fun newArray(size: Int): Array<TitleBarStyle?> {
                 return arrayOfNulls(size)
             }
+        }
+    }
+
+     object CREATOR : Creator<TitleBarStyle> {
+        override fun createFromParcel(parcel: Parcel): TitleBarStyle {
+            return TitleBarStyle(parcel)
+        }
+
+        override fun newArray(size: Int): Array<TitleBarStyle?> {
+            return arrayOfNulls(size)
         }
     }
 }

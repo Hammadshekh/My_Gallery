@@ -32,7 +32,7 @@ class PreviewVideoHolder(itemView: View) : BasePreviewHolder(itemView) {
         }
     }
 
-    private fun startPlay() {
+    fun startPlay() {
         val player: Player = mPlayerView.player!!
         val path: String = media?.availablePath!!
         progress?.visibility = View.VISIBLE
@@ -53,6 +53,14 @@ class PreviewVideoHolder(itemView: View) : BasePreviewHolder(itemView) {
         player.setMediaItem(mediaItem)
         player.prepare()
         player.play()
+    }
+
+    /**
+     * 是否正在播放中
+     */
+    fun isPlaying(): Boolean {
+        return (PictureSelectionConfig.videoPlayerEngine != null
+                && PictureSelectionConfig.videoPlayerEngine!!.isPlaying(videoPlayer as Nothing))
     }
 
     override fun setScaleDisplaySize(media: LocalMedia) {

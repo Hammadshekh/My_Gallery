@@ -13,8 +13,8 @@ class CustomCompleteSelectView : CompleteSelectView {
         defStyleAttr) {
     }
 
-    protected fun inflateLayout() {
-        LayoutInflater.from(getContext()).inflate(R.layout.ps_custom_complete_selected_layout, this)
+    private fun inflateLayout() {
+        LayoutInflater.from(requireContext()).inflate(R.layout.ps_custom_complete_selected_layout, this)
     }
 
     fun setCompleteSelectViewStyle() {

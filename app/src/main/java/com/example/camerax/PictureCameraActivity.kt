@@ -1,7 +1,6 @@
 package com.example.camerax
 
 import android.Manifest
-import android.app.Activity
 import android.content.Intent
 import android.content.res.Configuration
 import android.net.Uri
@@ -15,6 +14,13 @@ import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.camerax.listener.CameraListener
+import com.example.camerax.listener.ClickListener
+import com.example.camerax.listener.IObtainCameraView
+import com.example.camerax.listener.ImageCallbackListener
+import com.example.camerax.permissions.PermissionChecker
+import com.example.camerax.permissions.PermissionResultCallback
+import com.example.camerax.utils.SimpleXSpUtils
 
 class PictureCameraActivity : AppCompatActivity(), IObtainCameraView {
     /**
@@ -43,32 +49,29 @@ class PictureCameraActivity : AppCompatActivity(), IObtainCameraView {
         mCameraView!!.layoutParams = layoutParams
         setContentView(mCameraView)
         mCameraView!!.post { mCameraView!!.setCameraConfig(intent) }
-        mCameraView!!.setImageCallbackListener(object : ImageCallbackListener() {
-            fun onLoadImage(url: String?, imageView: ImageView) {
+        mCameraView!!.setImageCallbackListener(object : ImageCallbackListener {
+            override fun onLoadImage(url: String?, imageView: ImageView?) {
                 if (CustomCameraConfig.imageEngine != null) {
-                    CustomCameraConfig.imageEngine!!.loadImage(imageView.context, url, imageView)
+                    CustomCameraConfig.imageEngine!!.loadImage(imageView!!.context, url, imageView)
                 }
             }
         })
-        mCameraView!!.setCameraListener(object : CameraListener() {
-            fun onPictureSuccess(url: String) {
+        mCameraView!!.setCameraListener(object : CameraListener {
+            override fun onPictureSuccess(url: String) {
                 handleCameraSuccess()
             }
 
-            fun onRecordSuccess(url: String) {
+            override fun onRecordSuccess(url: String) {
                 handleCameraSuccess()
             }
 
-            fun onError(
-                videoCaptureError: Int, message: String,
-                cause: Throwable?,
-            ) {
+            override fun onError(videoCaptureError: Int, message: String?, cause: Throwable?) {
                 Toast.makeText(this@PictureCameraActivity.applicationContext,
                     message, Toast.LENGTH_LONG).show()
             }
         })
-        mCameraView!!.setOnCancelClickListener(object : ClickListener() {
-            fun onClick() {
+        mCameraView!!.setOnCancelClickListener(object : ClickListener {
+            override fun onClick() {
                 handleCameraCancel()
             }
         })
@@ -111,7 +114,7 @@ class PictureCameraActivity : AppCompatActivity(), IObtainCameraView {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (CustomCameraConfig.explainListener != null) {
-            CustomCameraConfig.explainListener.onDismiss(mCameraView)
+            CustomCameraConfig!!.explainListener!!.onDismiss(mCameraView)
         }
         if (requestCode == PermissionChecker.PERMISSION_SETTING_CODE) {
             if (PermissionChecker.checkSelfPermission(this, arrayOf(Manifest.permission.CAMERA))) {
@@ -153,12 +156,12 @@ class PictureCameraActivity : AppCompatActivity(), IObtainCameraView {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (mPermissionResultCallback != null) {
-            PermissionChecker.getInstance()
-                .onRequestPermissionsResult(grantResults, mPermissionResultCallback)
+            PermissionChecker.getInstance()?.onRequestPermissionsResult(grantResults,
+                mPermissionResultCallback!!)
             mPermissionResultCallback = null
         }
     }
 
-    val customCameraView: ViewGroup?
+    override val customCameraView: ViewGroup?
         get() = mCameraView
 }

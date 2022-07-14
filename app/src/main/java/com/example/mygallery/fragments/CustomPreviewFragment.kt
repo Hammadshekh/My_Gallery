@@ -8,11 +8,11 @@ class CustomPreviewFragment : PictureSelectorPreviewFragment() {
     val fragmentTag: String
         get() = CustomPreviewFragment::class.java.simpleName
 
-    protected fun createAdapter(): PicturePreviewAdapter {
+    private fun createAdapter(): PicturePreviewAdapter {
         return CustomPreviewAdapter()
     }
 
-    protected fun setMagicalViewAction() {
+    private fun setMagicalViewAction() {
         //If the isPreview Zoom Effect effect is enabled, this method needs to be overloaded
         magicalView.setOnMojitoViewCallback(object : OnMagicalViewCallback() {
             fun onBeginBackMinAnim() {
@@ -37,8 +37,8 @@ class CustomPreviewFragment : PictureSelectorPreviewFragment() {
                 val currentHolder: BasePreviewHolder =
                     viewPageAdapter.getCurrentHolder(viewPager.getCurrentItem())
                         ?: return
-                currentHolder.coverImageView.getLayoutParams().width = itemViewParams.width
-                currentHolder.coverImageView.getLayoutParams().height = itemViewParams.height
+                currentHolder.coverImageView.layoutParams.width = itemViewParams.width
+                currentHolder.coverImageView.layoutParams.height = itemViewParams.height
                 currentHolder.coverImageView.setScaleType(ImageView.ScaleType.CENTER_CROP)
             }
 
@@ -49,12 +49,12 @@ class CustomPreviewFragment : PictureSelectorPreviewFragment() {
                 val media: LocalMedia = mData.get(viewPager.getCurrentItem())
                 val realWidth: Int
                 val realHeight: Int
-                if (media.isCut() && media.getCropImageWidth() > 0 && media.getCropImageHeight() > 0) {
-                    realWidth = media.getCropImageWidth()
-                    realHeight = media.getCropImageHeight()
+                if (media.isCut() && media.cropImageWidth  > 0 && media.cropImageHeight > 0) {
+                    realWidth = media.cropImageWidth
+                    realHeight = media.cropImageHeight
                 } else {
-                    realWidth = media.getWidth()
-                    realHeight = media.getHeight()
+                    realWidth = media.width
+                    realHeight = media.height
                 }
                 if (MediaUtils.isLongImage(realWidth, realHeight)) {
                     currentHolder.coverImageView.setScaleType(ImageView.ScaleType.CENTER_CROP)

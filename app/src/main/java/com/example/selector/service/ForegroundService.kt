@@ -9,7 +9,11 @@ import android.content.Intent
 import android.graphics.Color
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
-import java.lang.Exception
+import com.example.mygallery.R
+import com.example.selector.config.PictureSelectionConfig
+import com.example.selector.config.SelectMimeType
+import com.example.selector.utils.SdkVersionUtils
+import com.example.ucrop.BuildConfig.LIBRARY_PACKAGE_NAME
 
 class ForegroundService : Service() {
     override fun onBind(intent: Intent): IBinder? {
@@ -40,10 +44,10 @@ class ForegroundService : Service() {
      */
     private fun createForegroundNotification(): Notification {
         var importance = 0
-        if (SdkVersionUtils.isMaxN()) {
+        if (SdkVersionUtils.isMaxN) {
             importance = NotificationManager.IMPORTANCE_HIGH
         }
-        if (SdkVersionUtils.isO()) {
+        if (SdkVersionUtils.isO) {
             val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, importance)
             channel.lightColor = Color.BLUE
             channel.canBypassDnd()
@@ -52,9 +56,9 @@ class ForegroundService : Service() {
             val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
-        val config: PictureSelectionConfig = PictureSelectionConfig.getInstance()
+        val config: PictureSelectionConfig = PictureSelectionConfig.instance!!
         val contentText =
-            if (config.chooseMode === SelectMimeType.ofAudio()) getString(R.string.ps_use_sound) else getString(
+            if (config.chooseMode == SelectMimeType.ofAudio()) getString(R.string.ps_use_sound) else getString(
                 R.string.ps_use_camera)
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ps_ic_trans_1px)
@@ -65,7 +69,7 @@ class ForegroundService : Service() {
     }
 
     private val appName: String
-        private get() {
+         get() {
             try {
                 val packageInfo = packageManager.getPackageInfo(
                     packageName, 0)
@@ -78,8 +82,8 @@ class ForegroundService : Service() {
 
     companion object {
         private val CHANNEL_ID: String =
-            BuildConfig.LIBRARY_PACKAGE_NAME.toString() + "." + ForegroundService::class.java.name
-        private val CHANNEL_NAME: String = BuildConfig.LIBRARY_PACKAGE_NAME
+            LIBRARY_PACKAGE_NAME + "." + ForegroundService::class.java.name
+        private val CHANNEL_NAME: String = LIBRARY_PACKAGE_NAME
         private const val NOTIFICATION_ID = 1
         private var isForegroundServiceIng = false
 
@@ -90,9 +94,9 @@ class ForegroundService : Service() {
          */
         fun startForegroundService(context: Context) {
             try {
-                if (!isForegroundServiceIng && PictureSelectionConfig.getInstance().isCameraForegroundService) {
+                if (!isForegroundServiceIng && PictureSelectionConfig.instance!!.isCameraForegroundService) {
                     val intent = Intent(context, ForegroundService::class.java)
-                    if (SdkVersionUtils.isO()) {
+                    if (SdkVersionUtils.isO) {
                         context.startForegroundService(intent)
                     } else {
                         context.startService(intent)

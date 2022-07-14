@@ -67,22 +67,22 @@ abstract class PictureCommonFragment : Fragment(),
     /**
      * IBridgePictureBehavior
      */
-    protected var iBridgePictureBehavior: IBridgePictureBehavior? = null
+    private var iBridgePictureBehavior: IBridgePictureBehavior? = null
 
     /**
      * page
      */
-    protected var mPage = 1
+    var mPage = 1
 
     /**
      * Media Loader engine
      */
-    protected var mLoader: IBridgeMediaLoader? = null
+    var mLoader: IBridgeMediaLoader? = null
 
     /**
      * PictureSelector Config
      */
-    protected lateinit var config: PictureSelectionConfig
+    lateinit var config: PictureSelectionConfig
 
     /**
      * Loading Dialog
@@ -162,7 +162,7 @@ abstract class PictureCommonFragment : Fragment(),
                         }
                     })
         } else {
-            if (config!!.isAllFilesAccess) {
+            if (config.isAllFilesAccess) {
                 var isReadWrite = false
                 if (permissionArray.isNotEmpty()) {
                     for (s in permissionArray) {
@@ -184,7 +184,7 @@ abstract class PictureCommonFragment : Fragment(),
      *
      * @return
      */
-    private val isNormalDefaultEnter: Boolean
+    val isNormalDefaultEnter: Boolean
         get() = activity is PictureSelectorSupporterActivity || activity is PictureSelectorTransparentActivity
 
     override fun onCreateView(
@@ -337,7 +337,7 @@ abstract class PictureCommonFragment : Fragment(),
      * @param isSelected   选中或是取消
      * @return
      */
-    protected fun isCheckSelectValidity(currentMedia: LocalMedia, isSelected: Boolean): Int {
+    private fun isCheckSelectValidity(currentMedia: LocalMedia, isSelected: Boolean): Int {
         val curMimeType: String = currentMedia.mimeType ?: ""
         val curDuration: Long = currentMedia.duration
         val curFileSize: Long = currentMedia.size
@@ -819,7 +819,7 @@ abstract class PictureCommonFragment : Fragment(),
     /**
      * Start ACTION_IMAGE_CAPTURE
      */
-    protected fun startCameraImageCapture() {
+    private fun startCameraImageCapture() {
         if (!ActivityCompatHelper.isDestroy(requireActivity())) {
             onPermissionExplainEvent(false, emptyArray())
             if (PictureSelectionConfig.onCameraInterceptListener != null) {
@@ -862,7 +862,7 @@ abstract class PictureCommonFragment : Fragment(),
     /**
      * Start ACTION_VIDEO_CAPTURE
      */
-    protected fun startCameraVideoCapture() {
+    private fun startCameraVideoCapture() {
         if (!ActivityCompatHelper.isDestroy(requireActivity())) {
             onPermissionExplainEvent(false, emptyArray())
             if (PictureSelectionConfig.onCameraInterceptListener != null) {
@@ -1124,7 +1124,7 @@ abstract class PictureCommonFragment : Fragment(),
      * @param data
      * @return
      */
-    protected fun getOutputPath(data: Intent?): String? {
+    private fun getOutputPath(data: Intent?): String? {
         if (data == null) {
             return null
         }
@@ -1169,7 +1169,7 @@ abstract class PictureCommonFragment : Fragment(),
      *
      * @param absolutePath
      */
-    protected fun buildLocalMedia(absolutePath: String?): LocalMedia {
+    fun buildLocalMedia(absolutePath: String?): LocalMedia {
         val media: LocalMedia = LocalMedia.generateLocalMedia(context, absolutePath)
         media.chooseModel = config.chooseMode
         if (SdkVersionUtils.isQ && !PictureMimeType.isContent(absolutePath ?: "")) {
@@ -1284,7 +1284,7 @@ abstract class PictureCommonFragment : Fragment(),
     /**
      * 分发处理结果，比如压缩、裁剪、沙盒路径转换
      */
-    protected fun dispatchTransformResult() {
+    fun dispatchTransformResult() {
         if (checkCompleteSelectLimit()) {
             return
         }
@@ -1769,9 +1769,9 @@ abstract class PictureCommonFragment : Fragment(),
      * set app language
      */
     override fun initAppLanguage() {
-        val config: PictureSelectionConfig? = PictureSelectionConfig.instance
-        if (config?.language != LanguageConfig.UNKNOWN_LANGUAGE) {
-            config?.language?.let { PictureLanguageUtils.setAppLanguage(requireActivity(), it) }
+        val config: PictureSelectionconfig = PictureSelectionConfig.instance
+        if (config.language != LanguageConfig.UNKNOWN_LANGUAGE) {
+            config.language?.let { PictureLanguageUtils.setAppLanguage(requireActivity(), it) }
         }
     }
 
@@ -1843,7 +1843,7 @@ abstract class PictureCommonFragment : Fragment(),
     /**
      * setRequestedOrientation
      */
-    protected fun setRequestedOrientation() {
+    private fun setRequestedOrientation() {
         if (ActivityCompatHelper.isDestroy(activity)) {
             return
         }
@@ -1853,7 +1853,7 @@ abstract class PictureCommonFragment : Fragment(),
     /**
      * back current Fragment
      */
-    protected fun onBackCurrentFragment() {
+    fun onBackCurrentFragment() {
         if (!ActivityCompatHelper.isDestroy(activity)) {
             if (!isStateSaved) {
                 if (PictureSelectionConfig.viewLifecycle != null) {
@@ -1877,7 +1877,7 @@ abstract class PictureCommonFragment : Fragment(),
      * @param resultCode
      * @param result
      */
-    protected fun onSelectFinish(resultCode: Int, result: ArrayList<LocalMedia>?) {
+    private fun onSelectFinish(resultCode: Int, result: ArrayList<LocalMedia>?) {
         if (null != iBridgePictureBehavior) {
             val selectorResult: SelectorResult =
                 getResult(resultCode, result)
@@ -1888,7 +1888,7 @@ abstract class PictureCommonFragment : Fragment(),
     /**
      * exit PictureSelector
      */
-    protected fun onExitPictureSelector() {
+    fun onExitPictureSelector() {
         if (!ActivityCompatHelper.isDestroy(activity)) {
             if (isNormalDefaultEnter) {
                 if (PictureSelectionConfig.viewLifecycle != null) {

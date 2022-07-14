@@ -14,7 +14,7 @@ import android.util.DisplayMetrics
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
-import java.lang.Exception
+import com.example.selector.immersive.RomUtils
 
 object DensityUtil {
     /**
@@ -113,10 +113,10 @@ object DensityUtil {
             i++
         }
         if (isVisible) {
-            // 对于三星手机，android10以下非OneUI2的版本，比如 s8，note8 等设备上，
-            // 导航栏显示存在bug："当用户隐藏导航栏时显示输入法的时候导航栏会跟随显示"，会导致隐藏输入法之后判断错误
-            // 这个问题在 OneUI 2 & android 10 版本已修复
-            if (RomUtils.isSamsung()
+            // For Samsung mobile phones, non-OneUI2 versions below android10, such as s8, note8 and other devices,
+            // There is a bug in the display of the navigation bar: "When the user hides the navigation bar and displays the input method, the navigation bar will follow the display", which will lead to a wrong judgment after hiding the input method
+            // This issue is fixed in OneUI 2 & android 10 version
+            if (RomUtils.isSamsung
                 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
             ) {
                 try {
@@ -218,7 +218,7 @@ object DensityUtil {
         }
         val widthDp = metrics.widthPixels / metrics.density
         val heightDp = metrics.heightPixels / metrics.density
-        return Math.min(widthDp, heightDp)
+        return widthDp.coerceAtMost(heightDp)
     }
 
     fun isNavigationAtBottom(activity: Activity): Boolean {
@@ -235,4 +235,3 @@ object DensityUtil {
         return (dpValue * scale + 0.5f).toInt()
     }
 }
-SdkVersionUtils

@@ -1,6 +1,6 @@
 package com.example.selector.widget
 
-import java.util.HashSet
+import java.util.*
 
 class SlideSelectionHandler
 /**
@@ -20,7 +20,7 @@ class SlideSelectionHandler
         return this
     }
 
-    fun onSelectionStarted(start: Int) {
+    override fun onSelectionStarted(start: Int) {
         mOriginalSelection = HashSet()
         val selected = mSelectionHandler.selection
         if (selected != null) mOriginalSelection!!.addAll(selected)
@@ -31,12 +31,12 @@ class SlideSelectionHandler
         }
     }
 
-    fun onSelectionFinished(end: Int) {
+    override fun onSelectionFinished(end: Int) {
         mOriginalSelection = null
         if (mStartFinishedListener != null) mStartFinishedListener!!.onSelectionFinished(end)
     }
 
-    fun onSelectChange(start: Int, end: Int, isSelected: Boolean) {
+    override fun onSelectChange(start: Int, end: Int, isSelected: Boolean) {
         for (i in start..end) {
             checkedChangeSelection(i, i, isSelected != mOriginalSelection!!.contains(i))
         }

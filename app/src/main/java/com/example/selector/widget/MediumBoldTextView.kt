@@ -1,14 +1,13 @@
 package com.example.selector.widget
 
 import android.content.Context
-import android.content.res.TypedArray
 import android.graphics.Canvas
 import android.graphics.Paint
-import android.text.TextPaint
 import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatTextView
+import com.example.mygallery.R
 
-class MediumBoldTextView @JvmOverloads constructor(
+open class MediumBoldTextView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0,

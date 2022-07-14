@@ -5,7 +5,7 @@ import android.animation.ObjectAnimator
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 
-abstract class SlideInBottomAnimationAdapter(adapter: RecyclerView.Adapter<*>?) :
+ class SlideInBottomAnimationAdapter(adapter: RecyclerView.Adapter<*>?) :
     BaseAnimationAdapter(adapter) {
     override fun getAnimators(view: View?): Array<Animator> {
         return arrayOf(

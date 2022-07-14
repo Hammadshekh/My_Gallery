@@ -22,19 +22,18 @@ class CameraXPreviewViewTouchListener(context: Context?) :
         return true
     }
 
-    /**
-     * 缩放监听
-     */
-    var onScaleGestureListener: OnScaleGestureListener = object : SimpleOnScaleGestureListener() {
-        override fun onScale(detector: ScaleGestureDetector): Boolean {
-            val delta = detector.scaleFactor
-            if (mCustomTouchListener != null) {
-                mCustomTouchListener!!.zoom(delta)
+    //zoom monitor
+    private var onScaleGestureListener: OnScaleGestureListener =
+        object : SimpleOnScaleGestureListener() {
+            override fun onScale(detector: ScaleGestureDetector): Boolean {
+                val delta = detector.scaleFactor
+                if (mCustomTouchListener != null) {
+                    mCustomTouchListener!!.zoom(delta)
+                }
+                return true
             }
-            return true
         }
-    }
-    var onGestureListener: SimpleOnGestureListener = object : SimpleOnGestureListener() {
+    private var onGestureListener: SimpleOnGestureListener = object : SimpleOnGestureListener() {
         override fun onLongPress(e: MotionEvent) {}
         override fun onFling(
             e1: MotionEvent,
@@ -62,19 +61,13 @@ class CameraXPreviewViewTouchListener(context: Context?) :
     private var mCustomTouchListener: CustomTouchListener? = null
 
     interface CustomTouchListener {
-        /**
-         * 放大
-         */
+        // enlarge
         fun zoom(delta: Float)
 
-        /**
-         * 点击
-         */
+        //click
         fun click(x: Float, y: Float)
 
-        /**
-         * 双击
-         */
+        //double click
         fun doubleClick(x: Float, y: Float)
     }
 

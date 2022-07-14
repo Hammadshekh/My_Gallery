@@ -46,7 +46,7 @@ object SdkVersionUtils {
         get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
 
     /**
-     * 判断是否是Android R版本
+     * Determine whether it is the Android R version
      *
      * @return
      */

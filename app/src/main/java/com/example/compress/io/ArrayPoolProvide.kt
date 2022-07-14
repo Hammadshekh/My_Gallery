@@ -5,8 +5,7 @@ import android.net.Uri
 import java.io.Closeable
 import java.io.FileInputStream
 import java.io.InputStream
-import java.lang.Exception
-import java.util.HashSet
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 class ArrayPoolProvide {
@@ -32,7 +31,7 @@ class ArrayPoolProvide {
      * @param bufferSize
      */
     operator fun get(bufferSize: Int): ByteArray {
-        return arrayPool.get(bufferSize, ByteArray::class.java)
+        return arrayPool[bufferSize, ByteArray::class.java]
     }
 
     /**

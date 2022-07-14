@@ -6,10 +6,12 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
 import androidx.exifinterface.media.ExifInterface
+import com.example.selector.basic.PictureContentResolver
+import com.example.selector.config.PictureConfig
+import com.example.selector.config.PictureMimeType
 import java.io.ByteArrayOutputStream
 import java.io.FileOutputStream
 import java.io.InputStream
-import java.lang.Exception
 
 object BitmapUtils {
     private const val ARGB_8888_MEMORY_BYTE = 4
@@ -26,35 +28,43 @@ object BitmapUtils {
         var outputStream: FileOutputStream? = null
         var bitmap: Bitmap? = null
         try {
-            val degree = readPictureDegree(context, path)
-            if (degree > 0) {
-                val options = BitmapFactory.Options()
-                options.inJustDecodeBounds = true
-                if (PictureMimeType.isContent(path)) {
-                    inputStream = PictureContentResolver.getContentResolverOpenInputStream(context,
-                        Uri.parse(path))
-                    BitmapFactory.decodeStream(inputStream, null, options)
-                } else {
-                    BitmapFactory.decodeFile(path, options)
-                }
-                options.inSampleSize = computeSize(options.outWidth, options.outHeight)
-                options.inJustDecodeBounds = false
-                if (PictureMimeType.isContent(path)) {
-                    inputStream = PictureContentResolver.getContentResolverOpenInputStream(context,
-                        Uri.parse(path))
-                    bitmap = BitmapFactory.decodeStream(inputStream, null, options)
-                } else {
-                    bitmap = BitmapFactory.decodeFile(path, options)
-                }
-                if (bitmap != null) {
-                    bitmap = rotatingImage(bitmap, degree)
-                    outputStream = if (PictureMimeType.isContent(path)) {
-                        PictureContentResolver.getContentResolverOpenOutputStream(context,
-                            Uri.parse(path))
+            val degree = path?.let { readPictureDegree(context, it) }
+            if (degree != null) {
+                if (degree > 0) {
+                    val options = BitmapFactory.Options()
+                    options.inJustDecodeBounds = true
+                    if (PictureMimeType.isContent(path)) {
+                        inputStream = context?.let {
+                            PictureContentResolver.getContentResolverOpenInputStream(it,
+                                Uri.parse(path))
+                        }
+                        BitmapFactory.decodeStream(inputStream, null, options)
                     } else {
-                        FileOutputStream(path)
+                        BitmapFactory.decodeFile(path, options)
                     }
-                    saveBitmapFile(bitmap, outputStream)
+                    options.inSampleSize = computeSize(options.outWidth, options.outHeight)
+                    options.inJustDecodeBounds = false
+                    if (PictureMimeType.isContent(path)) {
+                        inputStream = context?.let {
+                            PictureContentResolver.getContentResolverOpenInputStream(it,
+                                Uri.parse(path))
+                        }
+                        bitmap = BitmapFactory.decodeStream(inputStream, null, options)
+                    } else {
+                        bitmap = BitmapFactory.decodeFile(path, options)
+                    }
+                    if (bitmap != null) {
+                        bitmap = degree?.let { rotatingImage(bitmap!!, it) }
+                        outputStream = if (PictureMimeType.isContent(path)) ({
+                            context?.let {
+                                PictureContentResolver.getContentResolverOpenOutputStream(it,
+                                    Uri.parse(path))
+                            }
+                        }) as FileOutputStream? else {
+                            FileOutputStream(path)
+                        }
+                        saveBitmapFile(bitmap, outputStream)
+                    }
                 }
             }
         } catch (e: Exception) {
@@ -110,16 +120,18 @@ object BitmapUtils {
      * @param filePath 图片绝对路径
      * @return degree旋转的角度
      */
-    fun readPictureDegree(context: Context?, filePath: String?): Int {
+    fun readPictureDegree(context: Context?, filePath: String): Int {
         val exifInterface: ExifInterface
         var inputStream: InputStream? = null
         return try {
             if (PictureMimeType.isContent(filePath)) {
-                inputStream = PictureContentResolver.getContentResolverOpenInputStream(context,
-                    Uri.parse(filePath))
-                exifInterface = ExifInterface(inputStream)
+                inputStream = context?.let {
+                    PictureContentResolver.getContentResolverOpenInputStream(it,
+                        Uri.parse(filePath))
+                }
+                exifInterface = inputStream?.let { ExifInterface(it) }!!
             } else {
-                exifInterface = ExifInterface(filePath!!)
+                exifInterface = ExifInterface(filePath)
             }
             val orientation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION,
                 ExifInterface.ORIENTATION_NORMAL)

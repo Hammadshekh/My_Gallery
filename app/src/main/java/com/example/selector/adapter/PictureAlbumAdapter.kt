@@ -16,11 +16,11 @@ import com.example.selector.manager.SelectedManager
 import com.example.selector.style.AlbumWindowStyle
 import com.example.selector.style.PictureSelectorStyle
 import com.example.ucrop.utils.FileUtils.isHasAudio
-import java.util.ArrayList
+import java.util.*
 
 class PictureAlbumAdapter : RecyclerView.Adapter<PictureAlbumAdapter.ViewHolder>() {
     private var albumList: List<LocalMediaFolder>? = null
-    fun bindAlbumData(albumList: List<LocalMediaFolder?>) {
+    fun bindAlbumData(albumList: List<LocalMediaFolder>) {
         this.albumList = ArrayList(albumList)
     }
 
@@ -41,7 +41,7 @@ class PictureAlbumAdapter : RecyclerView.Adapter<PictureAlbumAdapter.ViewHolder>
     @SuppressLint("NotifyDataSetChanged")
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val folder: LocalMediaFolder = albumList!![position]
-        val name: String = folder.getFolderName()
+        val name: String = folder.folderName.toString()
         val imageNum: Int = folder.folderTotalNum
         val imagePath: String = folder.firstImagePath.toString()
         holder.tvSelectTag.visibility = if (folder.isSelectTag) View.VISIBLE else View.INVISIBLE

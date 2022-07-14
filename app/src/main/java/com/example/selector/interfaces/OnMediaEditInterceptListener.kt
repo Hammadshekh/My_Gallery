@@ -18,9 +18,9 @@ interface OnMediaEditInterceptListener {
      * 1、LocalMedia media = new LocalMedia();
      * media.setEditorImage(true);
      * media.setCut(true);
-     * media.setCutPath("Your edit path"); or media.setCustomData("Your edit path");
+     * media.cutPath = ("Your edit path"); or media.customData = ("Your edit path");
      * or
-     * media.setCustomData("Your custom data");
+     * media.customData = ("Your custom data");
      *
      *
      *

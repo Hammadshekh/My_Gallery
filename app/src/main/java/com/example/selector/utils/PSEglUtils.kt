@@ -7,7 +7,6 @@ import android.opengl.GLES10
 import android.opengl.GLES20
 import android.os.Build
 import android.util.Log
-import java.lang.Exception
 import javax.microedition.khronos.egl.EGL10
 import javax.microedition.khronos.egl.EGLContext
 
@@ -27,7 +26,7 @@ object PSEglUtils {
 
     @get:TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     private val maxTextureEgl14: Int
-        private get() {
+         get() {
             val dpy = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY)
             val vers = IntArray(2)
             EGL14.eglInitialize(dpy, vers, 0, vers, 1)
@@ -71,7 +70,7 @@ object PSEglUtils {
     // missing in EGL10
     @get:TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     private val maxTextureEgl10: Int
-        private get() {
+         get() {
             val egl = EGLContext.getEGL() as EGL10
             val dpy = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY)
             val vers = IntArray(2)

@@ -7,8 +7,6 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.util.AttributeSet
 import android.view.GestureDetector
-import android.view.View.OnLongClickListener
-import android.widget.ImageView.ScaleType
 import androidx.appcompat.widget.AppCompatImageView
 
 class PhotoView @JvmOverloads constructor(
@@ -43,162 +41,158 @@ class PhotoView @JvmOverloads constructor(
     }
 
     override fun getScaleType(): ScaleType {
-        return attacher.getScaleType()
+        return attacher?.scaleType!!
     }
 
     override fun getImageMatrix(): Matrix {
-        return attacher.getImageMatrix()
+        return attacher?.imageMatrix!!
     }
 
     override fun setOnLongClickListener(l: OnLongClickListener?) {
-        attacher.setOnLongClickListener(l)
+        attacher?.setOnLongClickListener(l)
     }
 
     override fun setOnClickListener(l: OnClickListener?) {
-        attacher.setOnClickListener(l)
+        attacher!!.setOnClickListener(l)
     }
 
     override fun setScaleType(scaleType: ScaleType) {
         if (attacher == null) {
             pendingScaleType = scaleType
         } else {
-            attacher.setScaleType(scaleType)
+            attacher!!.scaleType = scaleType
         }
     }
 
     override fun setImageDrawable(drawable: Drawable?) {
         super.setImageDrawable(drawable)
         // setImageBitmap calls through to this method
-        if (attacher != null) {
-            attacher.update()
-        }
+        attacher?.update()
     }
 
     override fun setImageResource(resId: Int) {
         super.setImageResource(resId)
-        if (attacher != null) {
-            attacher.update()
-        }
+        attacher?.update()
     }
 
     override fun setImageURI(uri: Uri?) {
         super.setImageURI(uri)
-        if (attacher != null) {
-            attacher.update()
-        }
+        attacher?.update()
     }
 
     override fun setFrame(l: Int, t: Int, r: Int, b: Int): Boolean {
         val changed = super.setFrame(l, t, r, b)
         if (changed) {
-            attacher.update()
+            attacher?.update()
         }
         return changed
     }
 
     fun setRotationTo(rotationDegree: Float) {
-        attacher.setRotationTo(rotationDegree)
+        attacher?.setRotationTo(rotationDegree)
     }
 
     fun setRotationBy(rotationDegree: Float) {
-        attacher.setRotationBy(rotationDegree)
+        attacher?.setRotationBy(rotationDegree)
     }
 
     var isZoomable: Boolean
-        get() = attacher.isZoomable()
+        get() = attacher?.isZoomable == true
         set(zoomable) {
-            attacher.setZoomable(zoomable)
+            attacher?.isZoomable = zoomable
         }
     val displayRect: RectF
-        get() = attacher.getDisplayRect()
+        get() = attacher?.getDisplayRect(matrix)!!
 
     fun getDisplayMatrix(matrix: Matrix?) {
-        attacher.getDisplayMatrix(matrix)
+        if (matrix != null) {
+            attacher!!.getDisplayMatrix(matrix)
+        }
     }
 
     fun setDisplayMatrix(finalRectangle: Matrix?): Boolean {
-        return attacher.setDisplayMatrix(finalRectangle)
+        return attacher!!.setDisplayMatrix(finalRectangle)
     }
 
-    fun getSuppMatrix(matrix: Matrix?) {
-        attacher.getSuppMatrix(matrix)
+    fun getSuppMatrix(matrix: Matrix) {
+        attacher?.getSuppMatrix(matrix)
     }
 
     fun setSuppMatrix(matrix: Matrix?): Boolean {
-        return attacher.setDisplayMatrix(matrix)
+        return attacher?.setDisplayMatrix(matrix) == true
     }
 
     var minimumScale: Float
-        get() = attacher.getMinimumScale()
+        get() = attacher?.minimumScale!!
         set(minimumScale) {
-            attacher.setMinimumScale(minimumScale)
+            attacher!!.minimumScale =  minimumScale
         }
     var mediumScale: Float
-        get() = attacher.getMediumScale()
+        get() = attacher!!.mediumScale
         set(mediumScale) {
-            attacher.setMediumScale(mediumScale)
+            attacher!!.mediumScale = mediumScale
         }
     var maximumScale: Float
-        get() = attacher.getMaximumScale()
+        get() = attacher?.maximumScale!!
         set(maximumScale) {
-            attacher.setMaximumScale(maximumScale)
+            attacher!!.maximumScale = maximumScale
         }
     var scale: Float
-        get() = attacher.getScale()
+        get() = attacher?.scale!!
         set(scale) {
-            attacher.setScale(scale)
+            attacher!!.scale = scale
         }
 
     fun setAllowParentInterceptOnEdge(allow: Boolean) {
-        attacher.setAllowParentInterceptOnEdge(allow)
+        attacher!!.setAllowParentInterceptOnEdge(allow)
     }
 
     fun setScaleLevels(minimumScale: Float, mediumScale: Float, maximumScale: Float) {
-        attacher.setScaleLevels(minimumScale, mediumScale, maximumScale)
+        attacher!!.setScaleLevels(minimumScale, mediumScale, maximumScale)
     }
 
     fun setOnMatrixChangeListener(listener: OnMatrixChangedListener?) {
-        attacher.setOnMatrixChangeListener(listener)
+        attacher!!.setOnMatrixChangeListener(listener)
     }
 
     fun setOnPhotoTapListener(listener: OnPhotoTapListener?) {
-        attacher.setOnPhotoTapListener(listener)
+        attacher!!.setOnPhotoTapListener(listener)
     }
 
     fun setOnOutsidePhotoTapListener(listener: OnOutsidePhotoTapListener?) {
-        attacher.setOnOutsidePhotoTapListener(listener)
+        attacher!!.setOnOutsidePhotoTapListener(listener)
     }
 
     fun setOnViewTapListener(listener: OnViewTapListener?) {
-        attacher.setOnViewTapListener(listener)
+        attacher!!.setOnViewTapListener(listener)
     }
 
     fun setOnViewDragListener(listener: OnViewDragListener?) {
-        attacher.setOnViewDragListener(listener)
+        attacher!!.setOnViewDragListener(listener)
     }
 
     fun setScale(scale: Float, animate: Boolean) {
-        attacher.setScale(scale, animate)
+        attacher!!.setScale(scale, animate)
     }
 
     fun setScale(scale: Float, focalX: Float, focalY: Float, animate: Boolean) {
-        attacher.setScale(scale, focalX, focalY, animate)
+        attacher!!.setScale(scale, focalX, focalY, animate)
     }
 
     fun setZoomTransitionDuration(milliseconds: Int) {
-        attacher.setZoomTransitionDuration(milliseconds)
+        attacher!!.setZoomTransitionDuration(milliseconds)
     }
 
     fun setOnDoubleTapListener(onDoubleTapListener: GestureDetector.OnDoubleTapListener?) {
-        attacher.setOnDoubleTapListener(onDoubleTapListener)
+        attacher!!.setOnDoubleTapListener(onDoubleTapListener)
     }
 
     fun setOnScaleChangeListener(onScaleChangedListener: OnScaleChangedListener?) {
-        attacher.setOnScaleChangeListener(onScaleChangedListener)
+        attacher!!.setOnScaleChangeListener(onScaleChangedListener)
     }
 
     fun setOnSingleFlingListener(onSingleFlingListener: OnSingleFlingListener?) {
-        attacher.setOnSingleFlingListener(onSingleFlingListener)
+        attacher!!.setOnSingleFlingListener(onSingleFlingListener)
     }
 
     init {

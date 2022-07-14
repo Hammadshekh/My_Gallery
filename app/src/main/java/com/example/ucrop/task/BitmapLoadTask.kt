@@ -15,13 +15,9 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okio.BufferedSource
-import okio.Okio
 import okio.Sink
 import okio.sink
 import java.io.IOException
-import java.lang.Exception
-import java.lang.IllegalArgumentException
-import java.lang.NullPointerException
 import java.lang.ref.WeakReference
 
 class BitmapLoadTask(
@@ -184,10 +180,12 @@ class BitmapLoadTask(
         if (result.mBitmapWorkerException == null) {
             result.mBitmapResult?.let {
                 mInputUri?.let { it1 ->
-                    mBitmapLoadCallback.onBitmapLoaded(it,
-                        result.mExifInfo,
-                        it1,
-                        mOutputUri)
+                    result.mExifInfo?.let { it2 ->
+                        mBitmapLoadCallback.onBitmapLoaded(it,
+                            it2,
+                            it1,
+                            mOutputUri)
+                    }
                 }
             }
         } else {
